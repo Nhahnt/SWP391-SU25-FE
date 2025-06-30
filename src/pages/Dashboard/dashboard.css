@@ -1,0 +1,148 @@
+.admins-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.admins-header h2 {
+  font-size: 1.5rem;
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.add-admin-btn {
+  display: flex;
+  align-items: center;
+  background-color: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  gap: 8px;
+  transition: background 0.2s;
+}
+
+.add-admin-btn img,
+.delete-button img,
+.edit-button img {
+  width: 22px;
+  height: 22px;
+}
+
+.add-admin-btn:hover {
+  background-color: #1e40af;
+}
+
+.admins-table-wrapper {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-top: 10px;
+}
+
+.admins-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.admins-table th,
+.admins-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.admins-table th {
+  background: #f9fafb;
+  font-weight: 600;
+  color: #374151;
+}
+
+.admins-table tbody tr:hover {
+  background-color: #f3f4f6;
+}
+
+.action-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  margin-right: 6px;
+}
+
+.edit-button {
+  background-color: #3b82f6;
+  color: #fff;
+}
+
+.edit-button:hover {
+  background-color: #2563eb;
+}
+
+.delete-button {
+  background-color: #ef4444;
+  color: #fff;
+}
+
+.delete-button:hover {
+  background-color: #c81e1e;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.admins-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  min-width: 600px;
+}
+
+@media (max-width: 700px) {
+  .admins-table,
+  .admins-table thead,
+  .admins-table tbody,
+  .admins-table th,
+  .admins-table td,
+  .admins-table tr {
+    display: block;
+    width: 100%;
+  }
+
+  .admins-table thead {
+    display: none;
+  }
+
+  .admins-table tr {
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #e5e7eb;
+  }
+
+  .admins-table td {
+    position: relative;
+    padding-left: 50%;
+    text-align: left;
+    border: none;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .admins-table td:before {
+    position: absolute;
+    left: 1rem;
+    top: 0.75rem;
+    width: 45%;
+    white-space: nowrap;
+    font-weight: bold;
+    color: #374151;
+    content: attr(data-label);
+  }
+}
