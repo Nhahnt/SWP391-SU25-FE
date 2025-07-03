@@ -5,14 +5,14 @@ import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [username, setuserName] = useState("");
   const [password, setPassword] = useState("");
 
   const handleLogin = async () => {
     try {
       const response = await axios.post(
         "http://localhost:8080/api/login",
-        { email, password },
+        { userName: username, password },
         {
           headers: {
             "Content-Type": "application/json",
@@ -68,11 +68,11 @@ export default function Login() {
       <form onSubmit={(e) => e.preventDefault()}>
         <TextField
           fullWidth
-          label="Email"
+          label="userName"
           variant="outlined"
           margin="normal"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          value={username}
+          onChange={(e) => setuserName(e.target.value)}
         />
         <TextField
           fullWidth
