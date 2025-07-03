@@ -102,26 +102,28 @@ export default function HomePage() {
               We're here to support you on your journey to quit smoking. Take
               the first step towards a healthier life today.
             </Typography>
-            <Button
-              component={RouterLink}
-              to="/quit-plan"
-              variant="contained"
-              size="large"
-              sx={{
-                bgcolor: "#c2410c",
-                "&:hover": {
-                  bgcolor: "#9a3412",
-                  transform: "translateY(-1px)",
-                },
-                px: 4,
-                py: 1.5,
-                textTransform: "none",
-                fontSize: "1.1rem",
-                transition: "all 0.2s ease",
-              }}
-            >
-              Create a Quit Plan
-            </Button>
+            {
+              <Button
+                component={RouterLink}
+                to="/quit-plan"
+                variant="contained"
+                size="large"
+                sx={{
+                  bgcolor: "#c2410c",
+                  "&:hover": {
+                    bgcolor: "#9a3412",
+                    transform: "translateY(-1px)",
+                  },
+                  px: 4,
+                  py: 1.5,
+                  textTransform: "none",
+                  fontSize: "1.1rem",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                Create a Quit Plan
+              </Button>
+            }
           </Box>
         </Container>
       </Box>

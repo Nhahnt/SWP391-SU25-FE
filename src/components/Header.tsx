@@ -7,21 +7,25 @@ export default function Header() {
 
   // 🔁 Replace with actual auth logic
   const [isLoggedIn, setIsLoggedIn] = useState(true);
-  const [userRole, setUserRole] = useState("ADMIN");
+  const [userRole, setUserRole] = useState(
+    () => localStorage.getItem("role") || ""
+  );
 
   const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
     setIsLoggedIn(false);
+    setUserRole("");
+
     navigate("/");
   };
-
   return (
     <AppBar
       position="fixed"
       elevation={0}
       sx={{
         background: "#c2410c",
-        borderBottomLeftRadius: "0.5rem",
-        borderBottomRightRadius: "0.5rem",
+        height: "70px",
         zIndex: 100,
         height: "72px",
         justifyContent: "center",
@@ -55,22 +59,26 @@ export default function Header() {
 
           {isLoggedIn ? (
             <>
-              {userRole === "ADMIN" && (
+              {userRole === "admin" && (
                 <Button
                   component={Link}
-                  to="/admin-dashboard"
+                  to="/dashboard"
                   className="!text-white font-semibold normal-case"
                 >
                   Dashboard
                 </Button>
               )}
-              <Button
-                component={Link}
-                to="/profile-page"
-                className="!text-white font-semibold normal-case"
-              >
-                Profile
-              </Button>
+              {userRole === "admin" ||
+                userRole === "staff" ||
+                (userRole === "member" && (
+                  <Button
+                    component={Link}
+                    to="/profile"
+                    className="!text-white font-semibold normal-case"
+                  >
+                    Profile
+                  </Button>
+                ))}
               <Button
                 onClick={handleLogout}
                 className="!text-white font-semibold normal-case hover:text-blue-600 transition-colors duration-300"
@@ -82,7 +90,7 @@ export default function Header() {
             <Button
               component={Link}
               to="/login"
-              className="!text-black font-semibold normal-case hover:text-blue-600 transition-colors duration-300"
+              className="!text-white font-semibold normal-case hover:text-blue-600 transition-colors duration-300"
             >
               Login
             </Button>

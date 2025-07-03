@@ -1,25 +1,27 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Layout from "./Layout";
+import AuthLayout from "./AuthLayout";
+import ProtectedRoute from "./components/ProtectedRoute";
+
 import Home from "./pages/Home/Home";
 import Login from "./pages/Auth/Login/Login";
+import ForgotPassword from "./pages/Auth/ForgotPassword/ForgotPassword";
+import ResetPassword from "./pages/Auth/ResetPassword/ResetPassword";
+import Register from "./pages/Auth/Register/Register";
 import Dashboard from "./pages/Dashboard/Dashboard";
 import Blogs from "./pages/Blogs/Blogs";
-import Layout from "./Layout";
 import BlogDetail from "./pages/BlogDetail/PostDetail";
 import CreateBlogForm from "./pages/CreateBlog/CreateBlog";
 import NotFound from "./pages/NotFound/NotFound";
 import UserProfile from "./pages/Profile/Profile";
 import CreateQuitPlan from "./pages/QuitPlan/QuitPlan";
-import ProtectedRoute from "./components/ProtectedRoute";
-import AuthLayout from "./AuthLayout";
-import ForgotPassword from "./pages/Auth/ForgotPassword/ForgotPassword";
-import ResetPassword from "./pages/Auth/ResetPassword/ResetPassword";
-import Register from "./pages/Auth/Register/Register";
+import Unauthorized from "./pages/Unauthorized/Unauthorized";
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        
+        {/* Auth layout */}
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -27,16 +29,48 @@ export default function App() {
           <Route path="/register" element={<Register />} />
         </Route>
 
+        {/* Main layout */}
         <Route element={<Layout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/dashboard" element={<Dashboard />} />
+          <Route index element={<Home />} />
           <Route path="/blogs" element={<Blogs />} />
           <Route path="/blogs/:id" element={<BlogDetail />} />
-          <Route path="/create-blog" element={<CreateBlogForm />} />
-          <Route path="/profile" element={<UserProfile />} />
-          <Route path="/quit-plan" element={<CreateQuitPlan />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
+
+          {/* Protected routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "staff"]}>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["member", ""]}>
+                <Route path="/quit-plan" element={<CreateQuitPlan />} />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "staff", "member"]}>
+                <UserProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/create-blog"
+            element={
+              <ProtectedRoute>
+                <CreateBlogForm />
+              </ProtectedRoute>
+            }
+          />
+
           <Route path="*" element={<NotFound />} />
-          {/* 👈 route động */}
         </Route>
       </Routes>
     </BrowserRouter>
