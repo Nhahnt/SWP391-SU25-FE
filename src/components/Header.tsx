@@ -23,6 +23,8 @@ export default function Header() {
         borderBottomLeftRadius: "0.5rem",
         borderBottomRightRadius: "0.5rem",
         zIndex: 100,
+        height: "72px",
+        justifyContent: "center",
       }}
     >
       <Toolbar className="max-w-6xl mx-auto px-4 w-full flex items-center justify-between">
