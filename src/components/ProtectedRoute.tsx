@@ -5,10 +5,10 @@ type ProtectedRouteProps = {
   children: ReactNode;
   allowedRoles?: string[];
 };
-
+const defaultAllowedRoles = ["coach", "member", "staff", "admin"];
 export default function ProtectedRoute({
   children,
-  allowedRoles,
+  allowedRoles = defaultAllowedRoles,
 }: ProtectedRouteProps) {
   const token = localStorage.getItem("token");
   const userRole = localStorage.getItem("role");
@@ -17,10 +17,17 @@ export default function ProtectedRoute({
     return <Navigate to="/login" replace />;
   }
 
-  if (allowedRoles && (!userRole || !allowedRoles.includes(userRole))) {
-    return <Navigate to="/unauthorized" replace />;
+  if (allowedRoles) {
+    const normalizedUserRole = userRole?.toLowerCase();
+    const normalizedAllowed = allowedRoles.map((r) => r.toLowerCase());
+
+    if (
+      !normalizedUserRole ||
+      !normalizedAllowed.includes(normalizedUserRole)
+    ) {
+      return <Navigate to="/unauthorized" replace />;
+    }
   }
 
-  // ✅ Được phép truy cập
   return <>{children}</>;
 }

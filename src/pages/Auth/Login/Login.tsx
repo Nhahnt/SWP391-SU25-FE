@@ -1,12 +1,43 @@
 import { Box, Button, TextField, Typography, Paper } from "@mui/material";
+import axios from "axios";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleLogin = () => {
-    localStorage.setItem("token", "example-token");
-    navigate("/dashboard");
+  const handleLogin = async () => {
+    try {
+      const response = await axios.post(
+        "http://localhost:8080/api/login",
+        { email, password },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const { token, role } = response.data;
+
+      // Lưu vào localStorage
+      localStorage.setItem("token", token);
+      localStorage.setItem("role", role);
+
+      if (role === "ADMIN" || role === "STAFF") {
+        navigate("/dashboard");
+      }
+
+      // Cấu hình token mặc định cho axios
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+      // Chuyển hướng
+      navigate("/");
+    } catch (err) {
+      console.error("Đăng nhập thất bại", err);
+    }
   };
 
   return (
@@ -35,15 +66,23 @@ export default function Login() {
 
       {/* Form */}
       <form onSubmit={(e) => e.preventDefault()}>
-        <TextField fullWidth label="Email" variant="outlined" margin="normal" />
+        <TextField
+          fullWidth
+          label="Email"
+          variant="outlined"
+          margin="normal"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
         <TextField
           fullWidth
           label="Password"
           type="password"
           variant="outlined"
           margin="normal"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
         />
-
         {/* Forgot Password Link */}
         <Box className="text-right mt-1">
           <Typography

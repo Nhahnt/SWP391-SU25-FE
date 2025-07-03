@@ -20,7 +20,7 @@ export default function Layout() {
       </header> */}
       <Header />
       {/* Content */}
-      <main className="flex-1 space-y-2">
+      <main className="flex-1 space-y-2 mt-[70px]">
         <Outlet />
       </main>
 
