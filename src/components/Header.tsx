@@ -6,7 +6,7 @@ export default function Header() {
   const navigate = useNavigate();
 
   // 🔁 Replace with actual auth logic
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem("token"));
   const [userRole, setUserRole] = useState(
     () => localStorage.getItem("role") || ""
   );
@@ -14,6 +14,7 @@ export default function Header() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
+    localStorage.removeItem("username");
     setIsLoggedIn(false);
     setUserRole("");
 
@@ -27,7 +28,6 @@ export default function Header() {
         background: "#c2410c",
         height: "70px",
         zIndex: 100,
-        height: "72px",
         justifyContent: "center",
       }}
     >
@@ -59,7 +59,7 @@ export default function Header() {
 
           {isLoggedIn ? (
             <>
-              {userRole === "admin" && (
+              {userRole === "ADMIN" && (
                 <Button
                   component={Link}
                   to="/dashboard"
@@ -68,9 +68,9 @@ export default function Header() {
                   Dashboard
                 </Button>
               )}
-              {userRole === "admin" ||
-                userRole === "staff" ||
-                (userRole === "member" && (
+              {userRole === "ADMIN" ||
+                userRole === "STAFF" ||
+                (userRole === "MEMBER" && (
                   <Button
                     component={Link}
                     to="/profile"

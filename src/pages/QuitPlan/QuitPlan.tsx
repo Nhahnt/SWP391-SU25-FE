@@ -9,6 +9,7 @@ import {
   Typography,
   Button,
 } from "@mui/material";
+import axios from "axios";
 
 const options = ["2", "3", "4", "5", "6"];
 
@@ -16,33 +17,45 @@ const reasonsList = [
   { id: "r1", value: "health", label: "Health" },
   { id: "r2", value: "family", label: "Family" },
   { id: "r3", value: "money", label: "Save Money" },
+  { id: "r4", value: "appearance", label: "Appearance" },
+  { id: "r5", value: "example", label: "Become A Good Model" },
+  { id: "r6", value: "time", label: "Free Time" },
 ];
 
 const triggersList = [
   { id: "t1", value: "stress", label: "Stress" },
   { id: "t2", value: "social", label: "Socializing" },
   { id: "t3", value: "drinking", label: "Drinking Alcohol" },
+  { id: "t4", value: "meal", label: "After Meals" },
+  { id: "t5", value: "morning", label: "Morning Routine" },
+  { id: "t6", value: "time", label: "Free Time" },
 ];
 
 const strategiesList = [
   { id: "s1", value: "gum", label: "Chew Gum" },
   { id: "s2", value: "walk", label: "Go for a Walk" },
   { id: "s3", value: "call", label: "Call a Friend" },
+  { id: "s4", value: "expert", label: "Talk to an Expert" },
+  { id: "s5", value: "event", label: "Attend Quit-Smoking Events" },
+  { id: "s6", value: "advice", label: "Ask a Quitter" },
 ];
 
 export default function CreateQuitPlan() {
   const [quitDate, setQuitDate] = useState("");
   const [duration, setDuration] = useState("");
   const [dailyCigarettes, setDailyCigarettes] = useState("");
-  const [cigaretteType, setCigaretteType] = useState("");
+  // const [cigaretteType, setCigaretteType] = useState("");
   const [cigaretteCost, setCigaretteCost] = useState("");
-  const [currency, setCurrency] = useState("VND");
+  // const [currency, setCurrency] = useState("VND");
   const [reasons, setReasons] = useState<string[]>([]);
   const [triggers, setTriggers] = useState<string[]>([]);
   const [strategies, setStrategies] = useState<string[]>([]);
-  const [otherReasons, setOtherReasons] = useState("");
-  const [otherTriggers, setOtherTriggers] = useState("");
-  const [otherStrategies, setOtherStrategies] = useState("");
+  // const [otherReasons, setOtherReasons] = useState("");
+  // const [otherTriggers, setOtherTriggers] = useState("");
+  // const [otherStrategies, setOtherStrategies] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const toggleSelect = (list: string[], setList: Function, value: string) => {
     if (list.includes(value)) {
@@ -51,6 +64,27 @@ export default function CreateQuitPlan() {
       setList([...list, value]);
     }
   };
+
+  // const handleSubmit = async () => {
+  //   if(!quitDate) { setError("Vui lòng chọn ngày bắt đầu cai thuốc!"); return; }
+  //   if(!duration) { setError("Vui lòng chọn thời lượng của kế hoạch!"); return; }
+  //   if(!dailyCigarettes || parseInt(dailyCigarettes) <= 0) { setError("Vui lòng nhập số điếu hút mỗi ngày!"); return; }
+  //   if(!cigaretteCost || parseInt(dailyCigarettes) <= 0) { setError("Vui lòng nhập giá tiền một bao thuốc!"); return; }
+  //   if(reasons.length === 0) { setError("Vui lòng chọn ít nhất một lí do cai thuốc!"); return; }
+  //   if(triggers.length === 0) { setError("Vui lòng chọn ít nhất một điều khiến bạn hút thuốc!"); return; }
+  //   if(strategies.length === 0) { setError("Vui lòng chọn ít nhất một chiến lược cai thuốc!"); return; }
+    
+  //   setIsSubmitting(true);
+  //   setError("");
+
+  //   try {
+  //     const planRequest = {
+  //       startDate: quitDate,
+  //       durationWeeks: duration,
+
+  //     };
+  //   }
+  // }
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-10 space-y-6">
@@ -73,6 +107,9 @@ export default function CreateQuitPlan() {
           value={quitDate}
           onChange={(e) => setQuitDate(e.target.value)}
           InputLabelProps={{ shrink: true }}
+          inputProps={{
+            min: new Date().toISOString().split("T")[0]
+          }}
         />
       </div>
 
@@ -101,16 +138,16 @@ export default function CreateQuitPlan() {
         <TextField
           fullWidth
           type="number"
-          label="Average amount in a day"
+          label="Average cigarettes per day"
           value={dailyCigarettes}
           onChange={(e) => setDailyCigarettes(e.target.value)}
         />
-        <TextField
+        {/* <TextField
           fullWidth
           label="Type of tobacco"
           value={cigaretteType}
           onChange={(e) => setCigaretteType(e.target.value)}
-        />
+        /> */}
         <div className="flex gap-4">
           <TextField
             fullWidth
@@ -118,7 +155,7 @@ export default function CreateQuitPlan() {
             value={cigaretteCost}
             onChange={(e) => setCigaretteCost(e.target.value)}
           />
-          <FormControl className="w-[100px]">
+          {/* <FormControl className="w-[100px]">
             <InputLabel>Currency</InputLabel>
             <Select
               value={currency}
@@ -128,7 +165,10 @@ export default function CreateQuitPlan() {
               <MenuItem value="VND">VND</MenuItem>
               <MenuItem value="USD">USD</MenuItem>
             </Select>
-          </FormControl>
+          </FormControl> */}
+          <Typography variant="body1" className="font-semibold mt-4 text-gray-600">
+            VND
+          </Typography>
         </div>
       </div>
 
@@ -151,14 +191,14 @@ export default function CreateQuitPlan() {
             </div>
           ))}
         </div>
-        <TextField
+        {/* <TextField
           fullWidth
           label="Other reasons (optional)"
           multiline
           rows={2}
           value={otherReasons}
           onChange={(e) => setOtherReasons(e.target.value)}
-        />
+        /> */}
       </div>
 
       {/* Section 5 */}
@@ -180,14 +220,14 @@ export default function CreateQuitPlan() {
             </div>
           ))}
         </div>
-        <TextField
+        {/* <TextField
           fullWidth
           label="Other triggers (optional)"
           multiline
           rows={2}
           value={otherTriggers}
           onChange={(e) => setOtherTriggers(e.target.value)}
-        />
+        /> */}
       </div>
 
       {/* Section 6 */}
@@ -211,14 +251,14 @@ export default function CreateQuitPlan() {
             </div>
           ))}
         </div>
-        <TextField
+        {/* <TextField
           fullWidth
           label="Other strategies or notes (optional)"
           multiline
           rows={2}
           value={otherStrategies}
           onChange={(e) => setOtherStrategies(e.target.value)}
-        />
+        /> */}
       </div>
 
       <div>

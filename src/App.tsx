@@ -35,6 +35,7 @@ export default function App() {
           <Route path="/blogs" element={<Blogs />} />
           <Route path="/blogs/:id" element={<BlogDetail />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route path="/quit-plan" element={<CreateQuitPlan />} /> 
 
           {/* Protected routes */}
           <Route
@@ -45,14 +46,14 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/dashboard"
+          {/* <Route
+            path="/quit-plan"
             element={
               <ProtectedRoute allowedRoles={["member", ""]}>
-                <Route path="/quit-plan" element={<CreateQuitPlan />} />
+                <CreateQuitPlan />
               </ProtectedRoute>
             }
-          />
+          /> */}
           <Route
             path="/profile"
             element={
@@ -64,7 +65,7 @@ export default function App() {
           <Route
             path="/create-blog"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute allowedRoles={["admin", "staff", "member"]}>
                 <CreateBlogForm />
               </ProtectedRoute>
             }
