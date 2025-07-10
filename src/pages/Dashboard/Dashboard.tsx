@@ -31,16 +31,16 @@ export default function Dashboard() {
 
   return (
     <>
-      <div className="admins-header">
+      <div className="mng-header">
         <div className="bg-[red]">Admin Management</div>
-        <button className="button primary-button add-admin-btn">
+        <button className="button primary-button add-btn">
           <img src="/add-button.png" alt="add-btn" />
           <span className="font-bold">Add Admin</span>
         </button>
       </div>
 
-      <div className="admins-table-wrapper">
-        <table className="admins-table">
+      <div className="table-wrapper">
+        <table className="table">
           <thead>
             <tr>
               <th>Admin ID</th>

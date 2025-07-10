@@ -11,7 +11,7 @@ export default function Login() {
   const handleLogin = async () => {
     try {
       const response = await axios.post(
-        "http://localhost:8080/api/login",
+        "http://localhost:8082/api/login",
         { userName: username, password },
         {
           headers: {
@@ -26,17 +26,17 @@ export default function Login() {
       // Lưu vào localStorage
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);
+      localStorage.setItem("username", username);
 
       if (role === "ADMIN" || role === "STAFF") {
-        navigate("/dashboard"); 
+        navigate("/dashboard");
+      } else {
+        navigate("/");
       }
 
       // Cấu hình token mặc định cho axios
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
       axios.defaults.withCredentials = true;
-
-      // Chuyển hướng
-      navigate("/");
     } catch (err) {
       console.error("Đăng nhập thất bại", err);
     }
@@ -117,6 +117,26 @@ export default function Login() {
         >
           Đăng nhập
         </Button>
+
+        {/* Register Link */}
+        <Box className="text-center mt-4">
+          <Typography
+            variant="body2"
+            component="a"
+            href="/register"
+            sx={{
+              textDecoration: "none",
+              color: "#2563EB",
+              fontWeight: 500,
+              cursor: "pointer",
+              "&:hover": {
+                textDecoration: "underline",
+              },
+            }}
+          >
+            Chưa có tài khoản? Đăng ký
+          </Typography>
+        </Box>
       </form>
     </Paper>
   );

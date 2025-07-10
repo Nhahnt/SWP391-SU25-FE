@@ -6,7 +6,9 @@ export default function Header() {
   const navigate = useNavigate();
 
   // 🔁 Replace with actual auth logic
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    () => !!localStorage.getItem("token")
+  );
   const [userRole, setUserRole] = useState(
     () => localStorage.getItem("role") || ""
   );
@@ -14,11 +16,29 @@ export default function Header() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
+    localStorage.removeItem("username");
     setIsLoggedIn(false);
     setUserRole("");
 
     navigate("/");
   };
+
+  const navButtonStyles = {
+    color: "white",
+    fontWeight: 600,
+    textTransform: "none",
+    padding: "8px 16px",
+    borderRadius: "6px",
+    transition: "all 0.3s ease",
+    "&:hover": {
+      backgroundColor: "rgba(255, 255, 255, 0.15)",
+      textDecoration: "underline",
+      textDecorationColor: "#FFD700",
+      transform: "translateY(-1px)",
+      boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
+    },
+  };
+
   return (
     <AppBar
       position="fixed"
@@ -27,6 +47,7 @@ export default function Header() {
         background: "#c2410c",
         height: "70px",
         zIndex: 100,
+        justifyContent: "center",
       }}
     >
       <Toolbar className="max-w-6xl mx-auto px-4 w-full flex items-center justify-between">
@@ -50,36 +71,51 @@ export default function Header() {
           <Button
             component={Link}
             to="/"
-            className="!text-white font-semibold normal-case"
+            sx={navButtonStyles}
           >
             Home
           </Button>
 
+          <Button
+            component={Link}
+            to="/blogs"
+            sx={navButtonStyles}
+          >
+            Blogs
+          </Button>
+
           {isLoggedIn ? (
             <>
-              {userRole === "admin" && (
+              {userRole === "ADMIN" && (
                 <Button
                   component={Link}
                   to="/dashboard"
-                  className="!text-white font-semibold normal-case"
+                  sx={navButtonStyles}
                 >
                   Dashboard
                 </Button>
               )}
-              {userRole === "admin" ||
-                userRole === "staff" ||
-                (userRole === "member" && (
+              {userRole === "ADMIN" ||
+                userRole === "STAFF" ||
+                (userRole === "MEMBER" && (
                   <Button
                     component={Link}
                     to="/profile"
-                    className="!text-white font-semibold normal-case"
+                    sx={navButtonStyles}
                   >
                     Profile
                   </Button>
                 ))}
               <Button
                 onClick={handleLogout}
-                className="!text-white font-semibold normal-case hover:text-blue-600 transition-colors duration-300"
+                sx={{
+                  ...navButtonStyles,
+                  "&:hover": {
+                    ...navButtonStyles["&:hover"],
+                    backgroundColor: "rgba(220, 53, 69, 0.2)",
+                    textDecorationColor: "#FF6B6B",
+                  },
+                }}
               >
                 Logout
               </Button>
@@ -88,7 +124,14 @@ export default function Header() {
             <Button
               component={Link}
               to="/login"
-              className="!text-white font-semibold normal-case hover:text-blue-600 transition-colors duration-300"
+              sx={{
+                ...navButtonStyles,
+                "&:hover": {
+                  ...navButtonStyles["&:hover"],
+                  backgroundColor: "rgba(40, 167, 69, 0.2)",
+                  textDecorationColor: "#28A745",
+                },
+              }}
             >
               Login
             </Button>
