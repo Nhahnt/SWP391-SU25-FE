@@ -104,11 +104,20 @@ export default function Blogs() {
       </Box>
       <div className="w-full flex flex-row items-center justify-between p-4">
         <AppBreadcrumbs />
-        <SearchBar
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          className="mb-6"
-        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <SearchBar
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{ background: '#c2410c', fontWeight: 600, textTransform: 'none', boxShadow: 2 }}
+            onClick={() => navigate('/blogs/create')}
+          >
+            Add Blog
+          </Button>
+        </div>
       </div>
 
       <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 auto-rows-auto gap-6 bg-transparent px-4">

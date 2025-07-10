@@ -1,20 +1,23 @@
-import React, { useState } from "react";
-import { Box, Modal, Typography, IconButton, Fade, Backdrop, ToggleButton, ToggleButtonGroup, Divider } from "@mui/material";
+import React, { useState, useRef } from "react";
+import { Box, Modal, Typography, IconButton, Fade, Backdrop, ToggleButton, Divider, Popover, Button } from "@mui/material";
 
+// Busyness options
 const busynessOptions = [
   { value: "free", label: "Free" },
   { value: "spare", label: "Some time" },
   { value: "busy", label: "No time" },
 ];
 
+// Mood options (text and emoji on separate lines)
 const moodOptions = [
-  { value: "happy", label: "Happy 😊" },
-  { value: "neutral", label: "Neutral 😐" },
-  { value: "sad", label: "Sad 😢" },
-  { value: "stressed", label: "Stressed 😣" },
-  { value: "angry", label: "Angry 😠" },
+  { value: "happy", label: "Happy", emoji: "😊" },
+  { value: "neutral", label: "Neutral", emoji: "😐" },
+  { value: "sad", label: "Sad", emoji: "😢" },
+  { value: "stressed", label: "Stressed", emoji: "😣" },
+  { value: "angry", label: "Angry", emoji: "😠" },
 ];
 
+// Hardcoded suggestions based on busyness and mood
 const suggestions: Record<string, Record<string, string>> = {
   free: {
     happy: "Go for a walk or do something you enjoy! Celebrate your progress.",
@@ -39,6 +42,7 @@ const suggestions: Record<string, Record<string, string>> = {
   },
 };
 
+// Floating chat icon style
 const style = {
   position: "fixed" as const,
   bottom: 32,
@@ -46,22 +50,50 @@ const style = {
   zIndex: 1300,
 };
 
+// Modal container: horizontal flex for side-by-side layout
 const modalStyle = {
   position: "absolute" as const,
   bottom: 100,
   right: 32,
-  width: 400,
+  width: 600,
+  minHeight: 320,
   bgcolor: "#fff7ed",
   borderRadius: 4,
   boxShadow: 24,
-  p: 4,
+  p: 0,
   outline: "none",
   border: "2px solid #c2410c",
   display: "flex",
-  flexDirection: "column" as const,
-  gap: 2,
+  flexDirection: "row" as const,
+  overflow: "hidden",
 };
 
+// Left panel: options
+const leftPanelStyle = {
+  flex: 1.2,
+  p: 4,
+  display: "flex",
+  flexDirection: "column" as const,
+  gap: 2,
+  minWidth: 0,
+};
+
+// Right panel: suggestion (set minWidth to prevent overlap)
+const rightPanelStyle = {
+  flex: 1,
+  minWidth: 220,
+  maxWidth: 300,
+  bgcolor: "#fff",
+  borderLeft: "2px solid #c2410c",
+  p: 3,
+  display: "flex",
+  flexDirection: "column" as const,
+  alignItems: "flex-start" as const,
+  justifyContent: "flex-start" as const,
+  minHeight: 0,
+};
+
+// Option grid for busyness and mood
 const optionGrid = {
   display: "grid",
   gridTemplateColumns: "repeat(3, 1fr)",
@@ -69,6 +101,7 @@ const optionGrid = {
   mb: 2,
 };
 
+// Toggle button style for mood (text and emoji stacked)
 const toggleButtonSx = {
   fontWeight: 600,
   fontSize: 16,
@@ -77,6 +110,13 @@ const toggleButtonSx = {
   border: "1.5px solid #c2410c",
   background: "#fff",
   transition: "all 0.2s",
+  whiteSpace: "normal" as const,
+  display: "flex",
+  flexDirection: "column" as const,
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 0.5,
+  minHeight: 56,
   '&.Mui-selected': {
     background: "#c2410c",
     color: "#fff",
@@ -92,22 +132,35 @@ export default function MoodTracker() {
   const [open, setOpen] = useState(false);
   const [busyness, setBusyness] = useState<string | null>(null);
   const [mood, setMood] = useState<string | null>(null);
+  const [popoverOpen, setPopoverOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
-  const handleOpen = () => setOpen(true);
+  // Open/close modal handlers
+  const handleOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setOpen(true);
+    setAnchorEl(event.currentTarget);
+  };
   const handleClose = () => {
     setOpen(false);
     setBusyness(null);
     setMood(null);
+    setPopoverOpen(false);
   };
 
-  const handleBusyness = (_: any, newValue: string | null) => setBusyness(newValue);
-  const handleMood = (_: any, newValue: string | null) => setMood(newValue);
+  // Show suggestion popover when both selected
+  React.useEffect(() => {
+    if (busyness && mood) {
+      setPopoverOpen(true);
+    } else {
+      setPopoverOpen(false);
+    }
+  }, [busyness, mood]);
 
-  const showSuggestion = busyness && mood;
-  const suggestion = showSuggestion ? suggestions[busyness][mood] : "";
+  const suggestion = busyness && mood ? suggestions[busyness][mood] : "";
 
   return (
     <Box sx={style}>
+      {/* Floating chat icon */}
       <IconButton
         color="primary"
         size="large"
@@ -125,51 +178,81 @@ export default function MoodTracker() {
         slotProps={{ backdrop: { timeout: 200 } }}
       >
         <Fade in={open}>
-          <Box sx={modalStyle}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+          {/* Modal: only options panel */}
+          <Box sx={{ ...modalStyle, flexDirection: 'column', width: 400, minHeight: 320 }}>
+            {/* Header and close button */}
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2} p={2}>
               <Typography variant="h6" fontWeight="bold" color="#c2410c">Mood Tracker</Typography>
               <IconButton size="small" onClick={handleClose} sx={{ color: '#c2410c' }}>
                 <span style={{ fontSize: 20 }}>✖️</span>
               </IconButton>
             </Box>
             <Divider sx={{ mb: 2, borderColor: '#c2410c', opacity: 0.3 }} />
-            <Typography variant="subtitle1" fontWeight={600} color="#c2410c" mb={1}>How busy are you?</Typography>
-            <Box sx={optionGrid}>
-              {busynessOptions.map((opt) => (
-                <ToggleButton
-                  key={opt.value}
-                  value={opt.value}
-                  selected={busyness === opt.value}
-                  onChange={() => setBusyness(opt.value)}
-                  sx={toggleButtonSx}
-                >
-                  {opt.label}
-                </ToggleButton>
-              ))}
-            </Box>
-            <Typography variant="subtitle1" fontWeight={600} color="#c2410c" mb={1}>How do you feel?</Typography>
-            <Box sx={optionGrid}>
-              {moodOptions.map((opt) => (
-                <ToggleButton
-                  key={opt.value}
-                  value={opt.value}
-                  selected={mood === opt.value}
-                  onChange={() => setMood(opt.value)}
-                  sx={toggleButtonSx}
-                >
-                  {opt.label}
-                </ToggleButton>
-              ))}
-            </Box>
-            {showSuggestion && (
-              <Box mt={2} p={2} bgcolor="#fff" borderRadius={2} border="1.5px solid #c2410c" minHeight={70}>
-                <Typography variant="body1" fontWeight="bold" color="#c2410c" mb={0.5}>Suggestion:</Typography>
-                <Typography variant="body2" color="#222" sx={{ wordBreak: 'break-word' }}>{suggestion}</Typography>
+            {/* Busyness options */}
+            <Box sx={{ px: 4 }}>
+              <Typography variant="subtitle1" fontWeight={600} color="#c2410c" mb={1}>How busy are you?</Typography>
+              <Box sx={optionGrid}>
+                {busynessOptions.map((opt) => (
+                  <ToggleButton
+                    key={opt.value}
+                    value={opt.value}
+                    selected={busyness === opt.value}
+                    onChange={() => setBusyness(opt.value)}
+                    sx={toggleButtonSx}
+                  >
+                    {opt.label}
+                  </ToggleButton>
+                ))}
               </Box>
-            )}
+              {/* Mood options (text and emoji stacked) */}
+              <Typography variant="subtitle1" fontWeight={600} color="#c2410c" mb={1}>How do you feel?</Typography>
+              <Box sx={optionGrid}>
+                {moodOptions.map((opt) => (
+                  <ToggleButton
+                    key={opt.value}
+                    value={opt.value}
+                    selected={mood === opt.value}
+                    onChange={() => setMood(opt.value)}
+                    sx={toggleButtonSx}
+                  >
+                    {/* Mood label and emoji on separate lines, centered */}
+                    <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1.1 }}>
+                      <span>{opt.label}</span>
+                      <span style={{ fontSize: 24 }}>{opt.emoji}</span>
+                    </span>
+                  </ToggleButton>
+                ))}
+              </Box>
+            </Box>
           </Box>
         </Fade>
       </Modal>
+      {/* Suggestion Popover */}
+      <Popover
+        open={popoverOpen}
+        anchorEl={anchorEl}
+        onClose={() => setPopoverOpen(false)}
+        anchorOrigin={{ vertical: 'top', horizontal: 'left' }}
+        transformOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        sx={{ pointerEvents: 'auto' }}
+        disableRestoreFocus
+        PaperProps={{ sx: { p: 2, minWidth: 260, bgcolor: '#fff7ed', border: '2px solid #c2410c', borderRadius: 2 } }}
+      >
+        <Typography variant="body1" fontWeight="bold" color="#c2410c" mb={1}>
+          Suggestion
+        </Typography>
+        <Divider sx={{ mb: 1, borderColor: '#c2410c', opacity: 0.2 }} />
+        <Typography
+          variant="body2"
+          color="#222"
+          sx={{ wordBreak: 'break-word', minHeight: 40, maxHeight: 200, overflowY: 'auto' }}
+        >
+          {suggestion}
+        </Typography>
+        <Box mt={2} display="flex" justifyContent="flex-end">
+          <Button size="small" onClick={() => setPopoverOpen(false)} sx={{ color: '#c2410c' }}>Close</Button>
+        </Box>
+      </Popover>
     </Box>
   );
 }
