@@ -16,10 +16,13 @@ import NotFound from "./pages/NotFound/NotFound";
 import UserProfile from "./pages/Profile/Profile";
 import CreateQuitPlan from "./pages/QuitPlan/QuitPlan";
 import Unauthorized from "./pages/Unauthorized/Unauthorized";
+import MoodTracker from "./components/MoodTracker";
 
 export default function App() {
   return (
     <BrowserRouter>
+      <MoodTracker />
+
       <Routes>
         {/* Auth layout */}
         <Route element={<AuthLayout />}>
