@@ -30,13 +30,13 @@ export default function Login() {
 
       if (role === "ADMIN" || role === "STAFF") {
         navigate("/dashboard");
+      } else {
+        navigate("/");
       }
 
       // Cấu hình token mặc định cho axios
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-      // Chuyển hướng
-      navigate("/");
     } catch (err) {
       console.error("Đăng nhập thất bại", err);
     }
