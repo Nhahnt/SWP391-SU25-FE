@@ -28,11 +28,12 @@ export default function Login() {
       localStorage.setItem("role", role);
 
       if (role === "ADMIN" || role === "STAFF") {
-        navigate("/dashboard");
+        navigate("/dashboard"); 
       }
 
       // Cấu hình token mặc định cho axios
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      axios.defaults.withCredentials = true;
 
       // Chuyển hướng
       navigate("/");

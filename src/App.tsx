@@ -16,6 +16,7 @@ import NotFound from "./pages/NotFound/NotFound";
 import UserProfile from "./pages/Profile/Profile";
 import CreateQuitPlan from "./pages/QuitPlan/QuitPlan";
 import Unauthorized from "./pages/Unauthorized/Unauthorized";
+import QuitPlanDetail from "./pages/QuitPlan/QuitPlanDetail";
 
 export default function App() {
   return (
@@ -46,10 +47,18 @@ export default function App() {
             }
           />
           <Route
-            path="/dashboard"
+            path="/create-quit-plan"
             element={
               <ProtectedRoute allowedRoles={["member", ""]}>
-                <Route path="/quit-plan" element={<CreateQuitPlan />} />
+                <CreateQuitPlan />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/quit-plan/:id"
+            element={
+              <ProtectedRoute allowedRoles={["member", ""]}>
+                <QuitPlanDetail />
               </ProtectedRoute>
             }
           />
