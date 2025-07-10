@@ -36,7 +36,7 @@ export default function Login() {
 
       // Cấu hình token mặc định cho axios
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-
+      axios.defaults.withCredentials = true;
     } catch (err) {
       console.error("Đăng nhập thất bại", err);
     }
