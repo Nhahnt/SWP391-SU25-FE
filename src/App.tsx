@@ -17,6 +17,7 @@ import UserProfile from "./pages/Profile/Profile";
 import CreateQuitPlan from "./pages/QuitPlan/QuitPlan";
 import Unauthorized from "./pages/Unauthorized/Unauthorized";
 import QuitPlanDetail from "./pages/QuitPlan/QuitPlanDetail";
+import { ProgressTracking } from "./pages/ProgressTracking/ProgressTracking";
 
 export default function App() {
   return (
@@ -36,7 +37,6 @@ export default function App() {
           <Route path="/blogs" element={<Blogs />} />
           <Route path="/blogs/:id" element={<BlogDetail />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
-          <Route path="/quit-plan" element={<CreateQuitPlan />} /> 
 
           {/* Protected routes */}
           <Route
@@ -62,7 +62,16 @@ export default function App() {
                 <QuitPlanDetail />
               </ProtectedRoute>
             }
-          /> */}
+          />
+
+          <Route
+            path="/progress-tracking/:id"
+            element={
+              <ProtectedRoute allowedRoles={["member", ""]}>
+                <ProgressTracking />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/profile"
             element={
