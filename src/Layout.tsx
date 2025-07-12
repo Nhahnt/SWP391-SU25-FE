@@ -8,24 +8,15 @@ import Header from "./components/Header";
 export default function Layout() {
   const navigate = useNavigate();
   return (
-    <div className="min-h-screen flex flex-col ">
-      {/* Header dùng chung */}
-      {/* <header className="p-4 shadow-md text-white bg-[#c2410c]">
-        <h1
-          onClick={() => navigate("/")}
-          className="text-xl font-bold cursor-pointer hover:underline transition"
-        >
-          My App
-        </h1>
-      </header> */}
+    <div className="min-h-screen flex flex-col">
       <Header />
       {/* Content */}
-      <main className="flex-1 space-y-2 mt-[70px] bg-neutral-100">
+      <main className="flex-1 space-y-2 h-[85vh] bg-neutral-100">
         <Outlet />
       </main>
 
       {/* Footer dùng chung (nếu có) */}
-      <footer className="mt-4 p-4 flex justify-center items-center text-sm text-white bg-[#c2410c] min-h-[7vh]">
+      <footer className="p-4 flex justify-center items-center text-sm text-white bg-[#c2410c] h-5vh]">
         &copy; {new Date().getFullYear()} My App
       </footer>
     </div>

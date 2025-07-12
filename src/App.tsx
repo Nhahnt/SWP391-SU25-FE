@@ -18,6 +18,7 @@ import CreateQuitPlan from "./pages/QuitPlan/QuitPlan";
 import Unauthorized from "./pages/Unauthorized/Unauthorized";
 import QuitPlanDetail from "./pages/QuitPlan/QuitPlanDetail";
 import { ProgressTracking } from "./pages/ProgressTracking/ProgressTracking";
+import { Conversations } from "./pages/Conversations/Conversations";
 
 export default function App() {
   return (
@@ -69,6 +70,15 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={["member", ""]}>
                 <ProgressTracking />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/conversations/:id"
+            element={
+              <ProtectedRoute allowedRoles={["member", ""]}>
+                <Conversations />
               </ProtectedRoute>
             }
           />

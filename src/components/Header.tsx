@@ -41,13 +41,13 @@ export default function Header() {
 
   return (
     <AppBar
-      position="fixed"
+      position="relative"
       elevation={0}
       sx={{
         background: "#c2410c",
-        height: "70px",
-        zIndex: 100,
+        height: "10vh",
         justifyContent: "center",
+        display: "block",
       }}
     >
       <Toolbar className="max-w-6xl mx-auto px-4 w-full flex items-center justify-between">
@@ -68,41 +68,25 @@ export default function Header() {
 
         {/* Navigation */}
         <Box className="flex gap-4 items-center">
-          <Button
-            component={Link}
-            to="/"
-            sx={navButtonStyles}
-          >
+          <Button component={Link} to="/" sx={navButtonStyles}>
             Home
           </Button>
 
-          <Button
-            component={Link}
-            to="/blogs"
-            sx={navButtonStyles}
-          >
+          <Button component={Link} to="/blogs" sx={navButtonStyles}>
             Blogs
           </Button>
 
           {isLoggedIn ? (
             <>
               {userRole === "ADMIN" && (
-                <Button
-                  component={Link}
-                  to="/dashboard"
-                  sx={navButtonStyles}
-                >
+                <Button component={Link} to="/dashboard" sx={navButtonStyles}>
                   Dashboard
                 </Button>
               )}
               {userRole === "ADMIN" ||
                 userRole === "STAFF" ||
                 (userRole === "MEMBER" && (
-                  <Button
-                    component={Link}
-                    to="/profile"
-                    sx={navButtonStyles}
-                  >
+                  <Button component={Link} to="/profile" sx={navButtonStyles}>
                     Profile
                   </Button>
                 ))}
