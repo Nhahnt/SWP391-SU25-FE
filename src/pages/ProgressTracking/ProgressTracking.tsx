@@ -21,6 +21,11 @@ import {
   TextField,
   Tab,
 } from "@mui/material";
+import { TodayReportCard } from "./Components/TodayReport";
+import { CurrentStreakCard } from "./Components/CurrentStreak";
+import { EncouragementCard } from "./Components/Encouragement";
+import { WeeklyTargetCard } from "./Components/WeeklyTarget";
+import { WeeklyChartTabs } from "./Components/WeeklyChart";
 
 type DailyProgress = {
   date: string;
@@ -278,7 +283,13 @@ export function ProgressTracking() {
   const [inputCount, setInputCount] = React.useState<number | "">("");
   const [reportData, setReportData] = useState<WeeklyReport[]>([]);
   const [loading, setLoading] = useState(true);
-  const getTodayString = () => new Date().toISOString().split("T")[0];
+  const getTodayString = (): string => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  };
 
   const handleChange = (event: React.SyntheticEvent, newValue: string) => {
     setValue(newValue);
@@ -365,6 +376,63 @@ export function ProgressTracking() {
     };
   });
 
+  const submitTodayReport = async (count: number) => {
+    const date = getTodayString();
+    const target = 12;
+
+    let status: DailyProgress["status"];
+    if (count > target) status = "OVER";
+    else if (count === target) status = "ON_TARGET";
+    else status = "UNDER";
+
+    const message =
+      status === "OVER"
+        ? "Bạn đã hút vượt quá mục tiêu của ngày hôm nay!"
+        : status === "ON_TARGET"
+        ? "Bạn đã đạt đúng mục tiêu hôm nay!"
+        : "Tuyệt vời! Bạn hút ít hơn mục tiêu hôm nay!";
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(
+        "http://localhost:8082/api/smoking-records/record",
+        {
+          date,
+          cigarettesSmoked: count,
+          message,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // ✅ Gọi lại API để cập nhật lại biểu đồ sau khi báo cáo thành công
+      const res = await axios.get(
+        "http://localhost:8082/api/smoking-records/progress/all-weeks",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setReportData(res.data);
+
+      setTodayReport({
+        date,
+        cigarettesSmoked: count,
+        targetCigarettes: target,
+        status,
+      });
+
+      setInputCount("");
+    } catch (error) {
+      console.error("Lỗi khi gửi dữ liệu báo cáo hôm nay:", error);
+      alert("Có lỗi xảy ra khi gửi dữ liệu. Vui lòng thử lại.");
+    }
+  };
+
   return (
     <div className="w-[70%] mx-auto py-4 space-y-4">
       <Typography variant="h4" sx={{ color: "#c2410c", fontWeight: "bold" }}>
@@ -373,148 +441,32 @@ export function ProgressTracking() {
 
       <div className="flex gap-4">
         {/* Self Report */}
-        <Card className="flex-1">
-          <Box className="p-4 space-y-3">
-            <Typography variant="h6" sx={{ color: "#c2410c" }}>
-              Today's Report
-            </Typography>
-            <Typography variant="body2">
-              How many cigarettes did you smoke today?
-            </Typography>
-            <TextField
-              type="number"
-              fullWidth
-              value={inputCount}
-              onChange={(e) =>
-                setInputCount(e.target.value === "" ? "" : +e.target.value)
-              }
-              placeholder="Enter number..."
-              size="small"
-            />
-            <button
-              onClick={() => {
-                if (inputCount !== "" && !isNaN(inputCount)) {
-                  setTodayReport({
-                    date: getTodayString(),
-                    cigarettesSmoked: +inputCount,
-                    targetCigarettes: 12,
-                    status: "UNDER",
-                  });
-                  setInputCount("");
-                }
-              }}
-              className="px-4 py-2 bg-[#c2410c] text-white rounded-md hover:bg-[#a6360a]"
-            >
-              Save
-            </button>
-            {todayReport && (
-              <Typography variant="body2" color="text.secondary">
-                You reported smoking{" "}
-                <strong>{todayReport.cigarettesSmoked}</strong> on{" "}
-                <strong>{todayReport.date}</strong>.
-              </Typography>
-            )}
-          </Box>
-        </Card>
+        <TodayReportCard
+          inputCount={inputCount}
+          onChange={setInputCount}
+          onSubmit={() => {
+            if (inputCount !== "" && !isNaN(inputCount)) {
+              submitTodayReport(+inputCount);
+            }
+          }}
+          todayReport={todayReport}
+        />
 
         {/* Streak */}
-        <Card className="flex-1">
-          <Box className="p-4 text-center space-y-2">
-            <Typography variant="h6" sx={{ color: "#c2410c" }}>
-              Current Streak
-            </Typography>
-            <Typography variant="h4" sx={{ color: "#16a34a" }}>
-              {calculateCurrentStreak()} days
-            </Typography>
-            <Typography variant="body2">
-              of smoking below or equal to your daily target
-            </Typography>
-          </Box>
-        </Card>
+        <CurrentStreakCard streak={calculateCurrentStreak()} />
 
         {/* Encouragement */}
-        <Card className="flex-1">
-          <Box className="p-4 space-y-2 text-center">
-            <Typography variant="h6" sx={{ color: "#c2410c" }}>
-              Encouragement
-            </Typography>
-            <Typography>
-              {getEncouragementMessage(calculateCurrentStreak())}
-            </Typography>
-          </Box>
-        </Card>
+
+        <EncouragementCard
+          message={getEncouragementMessage(calculateCurrentStreak())}
+        />
       </div>
 
       {/* Bar Chart + Weekly Target */}
       <div className="flex gap-4 w-full">
-        <Card className="flex-[2]">
-          <TabContext value={value}>
-            <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
-              <TabList onChange={handleChange}>
-                {reportData.map((week) => (
-                  <Tab
-                    key={week.weekNumber}
-                    label={`Week ${week.weekNumber}`}
-                    value={week.weekNumber.toString()}
-                  />
-                ))}
-              </TabList>
-            </Box>
-            {reportData.map((week) => (
-              <TabPanel
-                key={week.weekNumber}
-                value={week.weekNumber.toString()}
-                sx={{ height: 300 }}
-              >
-                <AppBarChart
-                  data={week.dailyProgress.map((d) => ({
-                    name: d.date.slice(5),
-                    uv: d.cigarettesSmoked,
-                    fill:
-                      d.status === "OVER"
-                        ? "#f87171"
-                        : d.status === "NO_RECORD"
-                        ? "#d1d5db"
-                        : "#34d399",
-                  }))}
-                  target={week.targetCigarettesPerDay}
-                />
-              </TabPanel>
-            ))}
-          </TabContext>
-        </Card>
-
+        <WeeklyChartTabs data={reportData} />
         {/* Weekly Target Progress */}
-        <Card className="flex-1">
-          <Box className="p-4 space-y-4">
-            <Typography variant="h6" sx={{ color: "#c2410c" }}>
-              Weekly Targets
-            </Typography>
-            {weeklyTargets.map((ms) => {
-              const percent = Math.min((ms.current / ms.goal) * 100, 100);
-              const achieved = percent <= ms.goal;
-              return (
-                <Box key={ms.id} className="space-y-1">
-                  <Typography fontWeight="bold">
-                    {ms.label}: {ms.current} / {ms.goal}
-                  </Typography>
-                  <LinearProgress
-                    variant="determinate"
-                    value={percent}
-                    sx={{
-                      height: 10,
-                      borderRadius: 5,
-                      backgroundColor: "#f3f3f3",
-                      "& .MuiLinearProgress-bar": {
-                        backgroundColor: achieved ? "#16a34a" : "#f87171",
-                      },
-                    }}
-                  />
-                </Box>
-              );
-            })}
-          </Box>
-        </Card>
+        <WeeklyTargetCard targets={weeklyTargets} />
       </div>
 
       {/* Stats Table */}
