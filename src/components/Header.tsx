@@ -76,6 +76,10 @@ export default function Header() {
             Blogs
           </Button>
 
+          <Button component={Link} to="/quit-plan" sx={navButtonStyles}>
+            Quit Plan
+          </Button>
+
           {isLoggedIn ? (
             <>
               {userRole === "ADMIN" && (

@@ -9,26 +9,146 @@ import {
   Typography,
   Button,
 } from "@mui/material";
+import {
+  HeartPulse,
+  Users,
+  PiggyBank,
+  Smile,
+  Star,
+  AlarmClock,
+  Brain,
+  UsersRound,
+  Wine,
+  Utensils,
+  Coffee,
+} from "lucide-react";
 import axios from "axios";
+import { GroupedTriggerSelector } from "./Components/TriggersSection";
 
 const options = ["2", "3", "4", "5", "6"];
 
 const reasonsList = [
-  { id: "r1", value: "health", label: "Health" },
-  { id: "r2", value: "family", label: "Family" },
-  { id: "r3", value: "money", label: "Save Money" },
-  { id: "r4", value: "appearance", label: "Appearance" },
-  { id: "r5", value: "example", label: "Become A Good Model" },
-  { id: "r6", value: "time", label: "Free Time" },
+  { id: "r1", value: "health", label: "Health", icon: HeartPulse },
+  { id: "r2", value: "family", label: "Family", icon: Users },
+  { id: "r3", value: "money", label: "Save Money", icon: PiggyBank },
+  { id: "r4", value: "appearance", label: "Appearance", icon: Smile },
+  { id: "r5", value: "example", label: "Become A Good Model", icon: Star },
+  { id: "r6", value: "time", label: "Take Life Control", icon: AlarmClock },
 ];
 
-const triggersList = [
-  { id: "t1", value: "stress", label: "Stress" },
-  { id: "t2", value: "social", label: "Socializing" },
-  { id: "t3", value: "drinking", label: "Drinking Alcohol" },
-  { id: "t4", value: "meal", label: "After Meals" },
-  { id: "t5", value: "morning", label: "Morning Routine" },
-  { id: "t6", value: "time", label: "Free Time" },
+const groupedTriggers = [
+  {
+    group: "Social Situations",
+    triggers: [
+      {
+        id: "t1",
+        value: "offered",
+        label: "Being offered a cigarette",
+      },
+      {
+        id: "t2",
+        value: "drinking",
+        label: "Drinking alcohol or going to a bar",
+      },
+      {
+        id: "t3",
+        value: "party",
+        label: "Going to a party or social event",
+      },
+      {
+        id: "t4",
+        value: "others_smoking",
+        label: "Being around others who smoke",
+      },
+      {
+        id: "t5",
+        value: "seeing_smoke",
+        label: "Seeing someone else smoke",
+      },
+      {
+        id: "t6",
+        value: "smell_smoke",
+        label: "Smelling cigarette smoke",
+      },
+    ],
+  },
+  {
+    group: "Nicotine Withdrawal",
+    triggers: [
+      { id: "t7", value: "irritable", label: "Feeling irritable" },
+      {
+        id: "t8",
+        value: "restless",
+        label: "Feeling restless or jumpy",
+      },
+      {
+        id: "t9",
+        value: "cravings",
+        label: "Strong cravings to smoke",
+      },
+      {
+        id: "t10",
+        value: "concentration",
+        label: "Hard time concentrating",
+      },
+      {
+        id: "t11",
+        value: "waking_up",
+        label: "Waking up in the morning",
+      },
+    ],
+  },
+  {
+    group: "Routine Situations",
+    triggers: [
+      { id: "t12", value: "phone", label: "Being on my phone" },
+      {
+        id: "t13",
+        value: "downtime",
+        label: "Down time or between activities",
+      },
+      { id: "t14", value: "coffee", label: "Drinking coffee" },
+      { id: "t15", value: "meal", label: "Finishing a meal" },
+      {
+        id: "t16",
+        value: "tv",
+        label: "Seeing cigarettes on TV or movies",
+      },
+      { id: "t17", value: "waiting", label: "Waiting for a ride" },
+      { id: "t18", value: "walking", label: "Walking or driving" },
+      {
+        id: "t19",
+        value: "entertainment",
+        label: "Watching TV or gaming",
+      },
+      { id: "t20", value: "working", label: "Working or studying" },
+    ],
+  },
+  {
+    group: "My Emotions",
+    triggers: [
+      { id: "t21", value: "angry", label: "Angry" },
+      {
+        id: "t22",
+        value: "anxious",
+        label: "Anxious or nervous",
+      },
+      { id: "t23", value: "bored", label: "Bored" },
+      {
+        id: "t24",
+        value: "frustrated",
+        label: "Frustrated or upset",
+      },
+      { id: "t25", value: "happy", label: "Happy or excited" },
+      { id: "t26", value: "lonely", label: "Lonely" },
+      { id: "t27", value: "sad", label: "Sad or depressed" },
+      {
+        id: "t28",
+        value: "stressed",
+        label: "Stressed or overwhelmed",
+      },
+    ],
+  },
 ];
 
 const strategiesList = [
@@ -73,7 +193,7 @@ export default function CreateQuitPlan() {
   //   if(reasons.length === 0) { setError("Vui lòng chọn ít nhất một lí do cai thuốc!"); return; }
   //   if(triggers.length === 0) { setError("Vui lòng chọn ít nhất một điều khiến bạn hút thuốc!"); return; }
   //   if(strategies.length === 0) { setError("Vui lòng chọn ít nhất một chiến lược cai thuốc!"); return; }
-    
+
   //   setIsSubmitting(true);
   //   setError("");
 
@@ -87,7 +207,7 @@ export default function CreateQuitPlan() {
   // }
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-10 space-y-6">
+    <main className="max-w-5xl mx-auto px-4 py-10 space-y-6">
       <div>
         <Typography variant="h4" fontWeight="bold" gutterBottom>
           Build Your Personalized Quit Plan
@@ -108,7 +228,7 @@ export default function CreateQuitPlan() {
           onChange={(e) => setQuitDate(e.target.value)}
           InputLabelProps={{ shrink: true }}
           inputProps={{
-            min: new Date().toISOString().split("T")[0]
+            min: new Date().toISOString().split("T")[0],
           }}
         />
       </div>
@@ -166,7 +286,10 @@ export default function CreateQuitPlan() {
               <MenuItem value="USD">USD</MenuItem>
             </Select>
           </FormControl> */}
-          <Typography variant="body1" className="font-semibold mt-4 text-gray-600">
+          <Typography
+            variant="body1"
+            className="font-semibold mt-4 text-gray-600"
+          >
             VND
           </Typography>
         </div>
@@ -176,20 +299,25 @@ export default function CreateQuitPlan() {
       <div className="space-y-4">
         <Typography variant="h6">4. Why are you quitting?</Typography>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {reasonsList.map((r) => (
-            <div
-              key={r.id}
-              onClick={() => toggleSelect(reasons, setReasons, r.value)}
-              className={`border rounded p-3 cursor-pointer flex justify-between items-center transition duration-150 ${
-                reasons.includes(r.value)
-                  ? "bg-orange-100 border-orange-500"
-                  : "hover:border-orange-300"
-              }`}
-            >
-              <span>{r.label}</span>
-              {reasons.includes(r.value) && <div />}
-            </div>
-          ))}
+          {reasonsList.map((r) => {
+            const Icon = r.icon;
+            return (
+              <div
+                key={r.id}
+                onClick={() => toggleSelect(reasons, setReasons, r.value)}
+                className={`border rounded p-3 cursor-pointer flex flex-col justify-centes items-center gap-2 transition duration-150 ${
+                  reasons.includes(r.value)
+                    ? "bg-orange-100 border-orange-500"
+                    : "hover:border-orange-300"
+                }`}
+              >
+                <Typography variant="h6" fontWeight={500}>
+                  {r.label}
+                </Typography>
+                <Icon className="text-orange-500 w-7 h-7" />
+              </div>
+            );
+          })}
         </div>
         {/* <TextField
           fullWidth
@@ -204,22 +332,32 @@ export default function CreateQuitPlan() {
       {/* Section 5 */}
       <div className="space-y-4">
         <Typography variant="h6">5. Identify Your Triggers</Typography>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {triggersList.map((t) => (
-            <div
-              key={t.id}
-              onClick={() => toggleSelect(triggers, setTriggers, t.value)}
-              className={`border rounded p-3 cursor-pointer flex justify-between items-center transition duration-150 ${
-                triggers.includes(t.value)
-                  ? "bg-orange-100 border-orange-500"
-                  : "hover:border-orange-300"
-              }`}
-            >
-              <span>{t.label}</span>
-              {triggers.includes(t.value) && <div />}
-            </div>
-          ))}
-        </div>
+        {/* <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {triggersList.map((t) => {
+            const Icon = t.icon;
+            return (
+              <div
+                key={t.id}
+                onClick={() => toggleSelect(triggers, setTriggers, t.value)}
+                className={`border rounded p-3 cursor-pointer flex flex-col items-center gap-2 transition duration-150 ${
+                  triggers.includes(t.value)
+                    ? "bg-orange-100 border-orange-500"
+                    : "hover:border-orange-300"
+                }`}
+              >
+                <Typography variant="h6" fontWeight={500}>
+                  {t.label}
+                </Typography>
+                <Icon className="text-orange-500 w-7 h-7" />
+              </div>
+            );
+          })}
+        </div> */}
+        <GroupedTriggerSelector
+          groupedTriggers={groupedTriggers}
+          selected={triggers}
+          onToggle={(val) => toggleSelect(triggers, setTriggers, val)}
+        />
         {/* <TextField
           fullWidth
           label="Other triggers (optional)"
