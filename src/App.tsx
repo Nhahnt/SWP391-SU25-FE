@@ -57,7 +57,7 @@ export default function App() {
             }
           />
           <Route
-            path="/quit-plan/:id"
+            path="/quit-plan/"
             element={
               <ProtectedRoute allowedRoles={["member", ""]}>
                 <QuitPlanDetail />
@@ -66,7 +66,7 @@ export default function App() {
           />
 
           <Route
-            path="/progress-tracking/:id"
+            path="/progress-tracking"
             element={
               <ProtectedRoute allowedRoles={["member", ""]}>
                 <ProgressTracking />
