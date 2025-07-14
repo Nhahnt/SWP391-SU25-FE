@@ -170,9 +170,6 @@ export default function CreateQuitPlan() {
   const [reasons, setReasons] = useState<string[]>([]);
   const [triggers, setTriggers] = useState<string[]>([]);
   const [strategies, setStrategies] = useState<string[]>([]);
-  // const [otherReasons, setOtherReasons] = useState("");
-  // const [otherTriggers, setOtherTriggers] = useState("");
-  // const [otherStrategies, setOtherStrategies] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -262,12 +259,7 @@ export default function CreateQuitPlan() {
           value={dailyCigarettes}
           onChange={(e) => setDailyCigarettes(e.target.value)}
         />
-        {/* <TextField
-          fullWidth
-          label="Type of tobacco"
-          value={cigaretteType}
-          onChange={(e) => setCigaretteType(e.target.value)}
-        /> */}
+
         <div className="flex gap-4">
           <TextField
             fullWidth
@@ -275,17 +267,7 @@ export default function CreateQuitPlan() {
             value={cigaretteCost}
             onChange={(e) => setCigaretteCost(e.target.value)}
           />
-          {/* <FormControl className="w-[100px]">
-            <InputLabel>Currency</InputLabel>
-            <Select
-              value={currency}
-              label="Currency"
-              onChange={(e) => setCurrency(e.target.value)}
-            >
-              <MenuItem value="VND">VND</MenuItem>
-              <MenuItem value="USD">USD</MenuItem>
-            </Select>
-          </FormControl> */}
+
           <Typography
             variant="body1"
             className="font-semibold mt-4 text-gray-600"
@@ -319,53 +301,17 @@ export default function CreateQuitPlan() {
             );
           })}
         </div>
-        {/* <TextField
-          fullWidth
-          label="Other reasons (optional)"
-          multiline
-          rows={2}
-          value={otherReasons}
-          onChange={(e) => setOtherReasons(e.target.value)}
-        /> */}
       </div>
 
       {/* Section 5 */}
       <div className="space-y-4">
         <Typography variant="h6">5. Identify Your Triggers</Typography>
-        {/* <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {triggersList.map((t) => {
-            const Icon = t.icon;
-            return (
-              <div
-                key={t.id}
-                onClick={() => toggleSelect(triggers, setTriggers, t.value)}
-                className={`border rounded p-3 cursor-pointer flex flex-col items-center gap-2 transition duration-150 ${
-                  triggers.includes(t.value)
-                    ? "bg-orange-100 border-orange-500"
-                    : "hover:border-orange-300"
-                }`}
-              >
-                <Typography variant="h6" fontWeight={500}>
-                  {t.label}
-                </Typography>
-                <Icon className="text-orange-500 w-7 h-7" />
-              </div>
-            );
-          })}
-        </div> */}
+
         <GroupedTriggerSelector
           groupedTriggers={groupedTriggers}
           selected={triggers}
           onToggle={(val) => toggleSelect(triggers, setTriggers, val)}
         />
-        {/* <TextField
-          fullWidth
-          label="Other triggers (optional)"
-          multiline
-          rows={2}
-          value={otherTriggers}
-          onChange={(e) => setOtherTriggers(e.target.value)}
-        /> */}
       </div>
 
       {/* Section 6 */}
@@ -389,14 +335,6 @@ export default function CreateQuitPlan() {
             </div>
           ))}
         </div>
-        {/* <TextField
-          fullWidth
-          label="Other strategies or notes (optional)"
-          multiline
-          rows={2}
-          value={otherStrategies}
-          onChange={(e) => setOtherStrategies(e.target.value)}
-        /> */}
       </div>
 
       <div>
