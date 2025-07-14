@@ -29,12 +29,17 @@ import { useNavigate } from "react-router-dom";
 const options = ["2", "3", "4", "5", "6"];
 
 const reasonsList = [
-  { id: "r1", value: "health", label: "Health", icon: HeartPulse },
-  { id: "r2", value: "family", label: "Family", icon: Users },
-  { id: "r3", value: "money", label: "Save Money", icon: PiggyBank },
-  { id: "r4", value: "appearance", label: "Appearance", icon: Smile },
-  { id: "r5", value: "example", label: "Become A Good Model", icon: Star },
-  { id: "r6", value: "time", label: "Take Life Control", icon: AlarmClock },
+  { id: "r1", value: "HEALTH", label: "Health", icon: HeartPulse },
+  { id: "r2", value: "FAMILY_FRIENDS", label: "Family", icon: Users },
+  { id: "r3", value: "SAVE_MONEY", label: "Save Money", icon: PiggyBank },
+  { id: "r4", value: "LOOK_SMELL_BETTER", label: "Appearance", icon: Smile },
+  { id: "r5", value: "GOOD_EXAMPLE", label: "Become A Good Model", icon: Star },
+  {
+    id: "r6",
+    value: "TAKE_CONTROL",
+    label: "Take Life Control",
+    icon: AlarmClock,
+  },
 ];
 
 const groupedTriggers = [
