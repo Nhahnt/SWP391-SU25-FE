@@ -146,3 +146,22 @@
     content: attr(data-label);
   }
 }
+
+.dashboard-container {
+  display: flex;
+}
+
+.db-sidebar {
+  height: 100%;
+  width: 240px;
+  position: fixed;
+  margin: 0;
+  padding: 0;
+  background: #fff;
+}
+
+.db-content {
+  margin-left: 240px;
+  width: calc(100% - 180px);
+  padding: 20px;
+}

@@ -62,7 +62,7 @@ export default function UserProfile() {
         {/* <Avatar src="/avatar.png" sx={{ width: 56, height: 56 }} /> */}
         <div>
           <Typography variant="h5" className="font-semibold">
-            {user.fullName || user.username}
+            {user.fullName}
           </Typography>
           <Typography variant="body2" className="text-gray-500">
             Role: {user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : ""}
@@ -75,7 +75,7 @@ export default function UserProfile() {
           <TableBody>
             <TableRow>
               <TableCell className="font-medium">Username</TableCell>
-              <TableCell>{user.username}</TableCell>
+              <TableCell>{ user.userName }</TableCell>
             </TableRow>
             <TableRow>
               <TableCell className="font-medium">Email</TableCell>

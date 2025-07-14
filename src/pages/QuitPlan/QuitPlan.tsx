@@ -50,9 +50,6 @@ export default function CreateQuitPlan() {
   const [reasons, setReasons] = useState<string[]>([]);
   const [triggers, setTriggers] = useState<string[]>([]);
   const [strategies, setStrategies] = useState<string[]>([]);
-  // const [otherReasons, setOtherReasons] = useState("");
-  // const [otherTriggers, setOtherTriggers] = useState("");
-  // const [otherStrategies, setOtherStrategies] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -142,12 +139,7 @@ export default function CreateQuitPlan() {
           value={dailyCigarettes}
           onChange={(e) => setDailyCigarettes(e.target.value)}
         />
-        {/* <TextField
-          fullWidth
-          label="Type of tobacco"
-          value={cigaretteType}
-          onChange={(e) => setCigaretteType(e.target.value)}
-        /> */}
+
         <div className="flex gap-4">
           <TextField
             fullWidth
@@ -155,6 +147,7 @@ export default function CreateQuitPlan() {
             value={cigaretteCost}
             onChange={(e) => setCigaretteCost(e.target.value)}
           />
+<<<<<<< Updated upstream
           {/* <FormControl className="w-[100px]">
             <InputLabel>Currency</InputLabel>
             <Select
@@ -167,6 +160,13 @@ export default function CreateQuitPlan() {
             </Select>
           </FormControl> */}
           <Typography variant="body1" className="font-semibold mt-4 text-gray-600">
+=======
+
+          <Typography
+            variant="body1"
+            className="font-semibold mt-4 text-gray-600"
+          >
+>>>>>>> Stashed changes
             VND
           </Typography>
         </div>
@@ -191,19 +191,13 @@ export default function CreateQuitPlan() {
             </div>
           ))}
         </div>
-        {/* <TextField
-          fullWidth
-          label="Other reasons (optional)"
-          multiline
-          rows={2}
-          value={otherReasons}
-          onChange={(e) => setOtherReasons(e.target.value)}
-        /> */}
+
       </div>
 
       {/* Section 5 */}
       <div className="space-y-4">
         <Typography variant="h6">5. Identify Your Triggers</Typography>
+<<<<<<< Updated upstream
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {triggersList.map((t) => (
             <div
@@ -228,6 +222,15 @@ export default function CreateQuitPlan() {
           value={otherTriggers}
           onChange={(e) => setOtherTriggers(e.target.value)}
         /> */}
+=======
+
+        <GroupedTriggerSelector
+          groupedTriggers={groupedTriggers}
+          selected={triggers}
+          onToggle={(val) => toggleSelect(triggers, setTriggers, val)}
+        />
+
+>>>>>>> Stashed changes
       </div>
 
       {/* Section 6 */}
@@ -251,14 +254,7 @@ export default function CreateQuitPlan() {
             </div>
           ))}
         </div>
-        {/* <TextField
-          fullWidth
-          label="Other strategies or notes (optional)"
-          multiline
-          rows={2}
-          value={otherStrategies}
-          onChange={(e) => setOtherStrategies(e.target.value)}
-        /> */}
+
       </div>
 
       <div>

@@ -30,6 +30,8 @@ export default function Login() {
 
       if (role === "ADMIN" || role === "STAFF") {
         navigate("/dashboard");
+      } else if (role === "COACH") {
+        navigate("/coach-dashboard");
       } else {
         navigate("/");
       }

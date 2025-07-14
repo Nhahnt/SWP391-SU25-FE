@@ -86,17 +86,23 @@ export default function Header() {
 
           {isLoggedIn ? (
             <>
+<<<<<<< Updated upstream
               {userRole === "ADMIN" && (
                 <Button
                   component={Link}
                   to="/dashboard"
                   sx={navButtonStyles}
                 >
+=======
+              {userRole === "ADMIN" || userRole === "STAFF" && (
+                <Button component={Link} to="/dashboard" sx={navButtonStyles}>
+>>>>>>> Stashed changes
                   Dashboard
                 </Button>
               )}
               {userRole === "ADMIN" ||
                 userRole === "STAFF" ||
+                userRole === "COACH" ||
                 (userRole === "MEMBER" && (
                   <Button
                     component={Link}
