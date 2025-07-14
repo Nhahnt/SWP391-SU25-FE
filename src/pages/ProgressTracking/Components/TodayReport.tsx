@@ -5,13 +5,24 @@ import Card from "../../../components/shared/Card";
 import { DailyProgress } from "../models/type";
 
 interface Props {
+  reportDate: string;
+  setReportDate: (val: string) => void;
   inputCount: number | "";
   onChange: (val: number | "") => void;
   onSubmit: () => void;
   todayReport: DailyProgress | null;
 }
+const getTodayString = (): string => {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, "0");
+  const dd = String(today.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+};
 
 export const TodayReportCard = ({
+  reportDate,
+  setReportDate,
   inputCount,
   onChange,
   onSubmit,
@@ -23,8 +34,18 @@ export const TodayReportCard = ({
         <Typography variant="h6" sx={{ color: "#c2410c" }}>
           Today's Report
         </Typography>
+        <TextField
+          type="date"
+          value={reportDate}
+          onChange={(e) => setReportDate(e.target.value)}
+          fullWidth
+          inputProps={{
+            max: getTodayString(), // vẫn giới hạn không được chọn tương lai
+          }}
+        />
+
         <Typography variant="body2">
-          How many cigarettes did you smoke today?
+          How many cigarettes did you smoke?
         </Typography>
         <TextField
           type="number"
