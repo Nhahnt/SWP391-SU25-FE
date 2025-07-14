@@ -23,141 +23,183 @@ import {
   Coffee,
 } from "lucide-react";
 import axios from "axios";
-import { GroupedTriggerSelector } from "./Components/TriggersSection";
-
+import { GroupedSelector } from "./Components/GroupedSelector";
+import Card from "../../components/shared/Card";
+import { useNavigate } from "react-router-dom";
 const options = ["2", "3", "4", "5", "6"];
 
 const reasonsList = [
-  { id: "r1", value: "health", label: "Health", icon: HeartPulse },
-  { id: "r2", value: "family", label: "Family", icon: Users },
-  { id: "r3", value: "money", label: "Save Money", icon: PiggyBank },
-  { id: "r4", value: "appearance", label: "Appearance", icon: Smile },
-  { id: "r5", value: "example", label: "Become A Good Model", icon: Star },
-  { id: "r6", value: "time", label: "Take Life Control", icon: AlarmClock },
+  { id: "r1", value: "HEALTH", label: "Health", icon: HeartPulse },
+  { id: "r2", value: "FAMILY_FRIENDS", label: "Family", icon: Users },
+  { id: "r3", value: "SAVE_MONEY", label: "Save Money", icon: PiggyBank },
+  { id: "r4", value: "LOOK_SMELL_BETTER", label: "Appearance", icon: Smile },
+  { id: "r5", value: "GOOD_EXAMPLE", label: "Become A Good Model", icon: Star },
+  {
+    id: "r6",
+    value: "TAKE_CONTROL",
+    label: "Take Life Control",
+    icon: AlarmClock,
+  },
 ];
 
 const groupedTriggers = [
   {
     group: "Social Situations",
-    triggers: [
+    items: [
       {
         id: "t1",
-        value: "offered",
+        value: "OFFERED_CIGARETTE",
         label: "Being offered a cigarette",
       },
       {
         id: "t2",
-        value: "drinking",
+        value: "DRINKING_ALCOHOL",
         label: "Drinking alcohol or going to a bar",
       },
       {
         id: "t3",
-        value: "party",
+        value: "PARTY_OR_SOCIAL_EVENT",
         label: "Going to a party or social event",
       },
       {
         id: "t4",
-        value: "others_smoking",
+        value: "AROUND_OTHERS_SMOKING",
         label: "Being around others who smoke",
       },
       {
         id: "t5",
-        value: "seeing_smoke",
+        value: "SEEING_SOMEONE_SMOKE",
         label: "Seeing someone else smoke",
       },
       {
         id: "t6",
-        value: "smell_smoke",
+        value: "SMELLING_CIGARETTE_SMOKE",
         label: "Smelling cigarette smoke",
       },
     ],
   },
   {
     group: "Nicotine Withdrawal",
-    triggers: [
-      { id: "t7", value: "irritable", label: "Feeling irritable" },
+    items: [
+      { id: "t7", value: "IRRITABLE", label: "Feeling irritable" },
       {
         id: "t8",
-        value: "restless",
+        value: "RESTLESS_OR_JUMPY",
         label: "Feeling restless or jumpy",
       },
-      {
-        id: "t9",
-        value: "cravings",
-        label: "Strong cravings to smoke",
-      },
+      { id: "t9", value: "STRONG_CRAVINGS", label: "Strong cravings to smoke" },
       {
         id: "t10",
-        value: "concentration",
+        value: "HARD_TIME_CONCENTRATING",
         label: "Hard time concentrating",
       },
-      {
-        id: "t11",
-        value: "waking_up",
-        label: "Waking up in the morning",
-      },
+      { id: "t11", value: "WAKING_UP", label: "Waking up in the morning" },
     ],
   },
   {
     group: "Routine Situations",
-    triggers: [
-      { id: "t12", value: "phone", label: "Being on my phone" },
+    items: [
+      { id: "t12", value: "ON_MY_PHONE", label: "Being on my phone" },
       {
         id: "t13",
-        value: "downtime",
+        value: "DOWN_TIME",
         label: "Down time or between activities",
       },
-      { id: "t14", value: "coffee", label: "Drinking coffee" },
-      { id: "t15", value: "meal", label: "Finishing a meal" },
+      { id: "t14", value: "DRINKING_COFFEE", label: "Drinking coffee" },
+      { id: "t15", value: "FINISHING_A_MEAL", label: "Finishing a meal" },
       {
         id: "t16",
-        value: "tv",
+        value: "CIGARETTES_ON_TV",
         label: "Seeing cigarettes on TV or movies",
       },
-      { id: "t17", value: "waiting", label: "Waiting for a ride" },
-      { id: "t18", value: "walking", label: "Walking or driving" },
+      { id: "t17", value: "WAITING_FOR_RIDE", label: "Waiting for a ride" },
+      { id: "t18", value: "WALKING_OR_DRIVING", label: "Walking or driving" },
       {
         id: "t19",
-        value: "entertainment",
+        value: "WATCHING_TV_OR_GAMES",
         label: "Watching TV or gaming",
       },
-      { id: "t20", value: "working", label: "Working or studying" },
+      { id: "t20", value: "WORKING_OR_STUDYING", label: "Working or studying" },
     ],
   },
   {
     group: "My Emotions",
-    triggers: [
-      { id: "t21", value: "angry", label: "Angry" },
-      {
-        id: "t22",
-        value: "anxious",
-        label: "Anxious or nervous",
-      },
-      { id: "t23", value: "bored", label: "Bored" },
-      {
-        id: "t24",
-        value: "frustrated",
-        label: "Frustrated or upset",
-      },
-      { id: "t25", value: "happy", label: "Happy or excited" },
-      { id: "t26", value: "lonely", label: "Lonely" },
-      { id: "t27", value: "sad", label: "Sad or depressed" },
-      {
-        id: "t28",
-        value: "stressed",
-        label: "Stressed or overwhelmed",
-      },
+    items: [
+      { id: "t21", value: "ANGRY", label: "Angry" },
+      { id: "t22", value: "ANXIOUS", label: "Anxious or nervous" },
+      { id: "t23", value: "BORED", label: "Bored" },
+      { id: "t24", value: "FRUSTRATED", label: "Frustrated or upset" },
+      { id: "t25", value: "HAPPY", label: "Happy or excited" },
+      { id: "t26", value: "LONELY", label: "Lonely" },
+      { id: "t27", value: "SAD", label: "Sad or depressed" },
+      { id: "t28", value: "STRESSED", label: "Stressed or overwhelmed" },
     ],
   },
 ];
 
-const strategiesList = [
-  { id: "s1", value: "gum", label: "Chew Gum" },
-  { id: "s2", value: "walk", label: "Go for a Walk" },
-  { id: "s3", value: "call", label: "Call a Friend" },
-  { id: "s4", value: "expert", label: "Talk to an Expert" },
-  { id: "s5", value: "event", label: "Attend Quit-Smoking Events" },
-  { id: "s6", value: "advice", label: "Ask a Quitter" },
+const groupedSupportMethods = [
+  {
+    group: "Support from People",
+    items: [
+      {
+        value: "PP_SHARE_WITH_IMPORTANT_PEOPLE",
+        label: "Share with important people",
+      },
+      { value: "PP_FIND_QUIT_BUDDY", label: "Find a quit buddy" },
+      {
+        value: "PP_ASK_SUCCESSFUL_PEOPLE",
+        label: "Ask people who quit successfully",
+      },
+      { value: "PP_JOIN_ONLINE_COMMUNITY", label: "Join an online community" },
+      { value: "PP_REACH_OUT_OTHER", label: "Reach out to others for support" },
+    ],
+  },
+  {
+    group: "Support from Experts",
+    items: [
+      {
+        value: "EX_TALK_HEALTH_PROFESSIONAL",
+        label: "Talk to a health professional",
+      },
+      { value: "EX_INPERSON_COUNSELING", label: "In-person counseling" },
+      { value: "EX_CALL_QUITLINE", label: "Call a quitline" },
+      {
+        value: "EX_SIGNUP_SMOKEFREE_TEXT",
+        label: "Sign up for SmokeFree texts",
+      },
+      {
+        value: "EX_DOWNLOAD_SMOKEFREE_APP",
+        label: "Download the SmokeFree app",
+      },
+      {
+        value: "EX_CHAT_ONLINE_COUNSELOR",
+        label: "Chat with an online counselor",
+      },
+      {
+        value: "EX_CONNECT_OTHER_EXPERTS",
+        label: "Connect with other experts",
+      },
+    ],
+  },
+  {
+    group: "Distraction Methods",
+    items: [
+      { value: "DI_DRINK_WATER", label: "Drink water" },
+      { value: "DI_EAT_CRUNCHY_SNACK", label: "Eat a crunchy snack" },
+      { value: "DI_DEEP_BREATHS", label: "Take deep breaths" },
+      { value: "DI_EXERCISE", label: "Exercise or move your body" },
+      {
+        value: "DI_PLAY_GAME_OR_LISTEN_MEDIA",
+        label: "Play a game or listen to music",
+      },
+      { value: "DI_TEXT_OR_CALL_SUPPORTER", label: "Text or call a supporter" },
+      {
+        value: "DI_GO_TO_NONSMOKING_PLACE",
+        label: "Go to a non-smoking place",
+      },
+      { value: "DI_FIND_OTHER_DISTRACT", label: "Find other distractions" },
+    ],
+  },
 ];
 
 export default function CreateQuitPlan() {
@@ -176,6 +218,7 @@ export default function CreateQuitPlan() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   const toggleSelect = (list: string[], setList: Function, value: string) => {
     if (list.includes(value)) {
@@ -185,31 +228,90 @@ export default function CreateQuitPlan() {
     }
   };
 
-  // const handleSubmit = async () => {
-  //   if(!quitDate) { setError("Vui lòng chọn ngày bắt đầu cai thuốc!"); return; }
-  //   if(!duration) { setError("Vui lòng chọn thời lượng của kế hoạch!"); return; }
-  //   if(!dailyCigarettes || parseInt(dailyCigarettes) <= 0) { setError("Vui lòng nhập số điếu hút mỗi ngày!"); return; }
-  //   if(!cigaretteCost || parseInt(dailyCigarettes) <= 0) { setError("Vui lòng nhập giá tiền một bao thuốc!"); return; }
-  //   if(reasons.length === 0) { setError("Vui lòng chọn ít nhất một lí do cai thuốc!"); return; }
-  //   if(triggers.length === 0) { setError("Vui lòng chọn ít nhất một điều khiến bạn hút thuốc!"); return; }
-  //   if(strategies.length === 0) { setError("Vui lòng chọn ít nhất một chiến lược cai thuốc!"); return; }
+  const handleSubmit = async () => {
+    console.log("Submitting quit plan with data:", {
+      quitDate,
+      duration,
+      dailyCigarettes,
+      cigaretteCost,
+      reasons,
+      triggers,
+      strategies,
+    });
+    if (!quitDate) {
+      setError("Vui lòng chọn ngày bắt đầu cai thuốc!");
+      return;
+    }
+    if (!duration) {
+      setError("Vui lòng chọn thời lượng của kế hoạch!");
+      return;
+    }
+    if (!dailyCigarettes || parseInt(dailyCigarettes) <= 0) {
+      setError("Vui lòng nhập số điếu hút mỗi ngày!");
+      return;
+    }
+    if (!cigaretteCost || parseInt(cigaretteCost) <= 0) {
+      setError("Vui lòng nhập giá tiền một bao thuốc!");
+      return;
+    }
+    if (reasons.length === 0) {
+      setError("Vui lòng chọn ít nhất một lý do cai thuốc!");
+      return;
+    }
+    if (triggers.length === 0) {
+      setError("Vui lòng chọn ít nhất một yếu tố kích thích!");
+      return;
+    }
+    if (strategies.length === 0) {
+      setError("Vui lòng chọn ít nhất một phương pháp hỗ trợ!");
+      return;
+    }
 
-  //   setIsSubmitting(true);
-  //   setError("");
+    setIsSubmitting(true);
+    setError("");
+    setSuccess("");
 
-  //   try {
-  //     const planRequest = {
-  //       startDate: quitDate,
-  //       durationWeeks: duration,
+    try {
+      const payload = {
+        startDate: quitDate,
+        durationWeeks: parseInt(duration),
+        numberOfCigarettes: parseInt(dailyCigarettes),
+        pricePerPack: parseInt(cigaretteCost),
+        reasons,
+        triggers,
+        supportMethods: strategies,
+      };
+      const token = localStorage.getItem("token");
 
-  //     };
-  //   }
-  // }
+      const response = await axios.post(
+        "http://localhost:8082/api/plans",
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setSuccess("Kế hoạch của bạn đã được tạo thành công!");
+      navigate("/quit-plan");
+    } catch (err: any) {
+      console.error(err);
+      setError("Đã xảy ra lỗi khi tạo kế hoạch.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <main className="max-w-5xl mx-auto px-4 py-10 space-y-6">
       <div>
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
+        <Typography
+          variant="h4"
+          fontWeight="bold"
+          gutterBottom
+          sx={{ color: "#c2410c" }}
+        >
           Build Your Personalized Quit Plan
         </Typography>
         <Typography className="text-gray-600">
@@ -221,78 +323,69 @@ export default function CreateQuitPlan() {
       {/* Section 1 */}
       <div className="space-y-2">
         <Typography variant="h6">1. Set Your Quit Date</Typography>
-        <TextField
-          fullWidth
-          type="date"
-          value={quitDate}
-          onChange={(e) => setQuitDate(e.target.value)}
-          InputLabelProps={{ shrink: true }}
-          inputProps={{
-            min: new Date().toISOString().split("T")[0],
-          }}
-        />
+        <Card>
+          <TextField
+            fullWidth
+            type="date"
+            value={quitDate}
+            onChange={(e) => setQuitDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            inputProps={{
+              min: new Date().toISOString().split("T")[0],
+            }}
+          />
+        </Card>
       </div>
 
       {/* Section 2 */}
       <div className="space-y-2">
         <Typography variant="h6">2. Duration of Quit Plan</Typography>
-        <FormControl fullWidth>
-          <InputLabel>Choose Duration</InputLabel>
-          <Select
-            value={duration}
-            label="Choose Duration"
-            onChange={(e) => setDuration(e.target.value)}
-          >
-            {options.map((week) => (
-              <MenuItem key={week} value={week}>
-                {week} weeks {week === "6" && "(preferred)"}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <Card>
+          <FormControl fullWidth>
+            <InputLabel>Choose Duration</InputLabel>
+            <Select
+              value={duration}
+              label="Choose Duration"
+              onChange={(e) => setDuration(e.target.value)}
+            >
+              {options.map((week) => (
+                <MenuItem key={week} value={week}>
+                  {week} weeks {week === "6" && "(preferred)"}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Card>
       </div>
 
       {/* Section 3 */}
       <div className="space-y-4">
         <Typography variant="h6">3. Smoking Status</Typography>
-        <TextField
-          fullWidth
-          type="number"
-          label="Average cigarettes per day"
-          value={dailyCigarettes}
-          onChange={(e) => setDailyCigarettes(e.target.value)}
-        />
-        {/* <TextField
-          fullWidth
-          label="Type of tobacco"
-          value={cigaretteType}
-          onChange={(e) => setCigaretteType(e.target.value)}
-        /> */}
-        <div className="flex gap-4">
+        <Card>
+          <TextField
+            fullWidth
+            type="number"
+            label="Average cigarettes per day"
+            value={dailyCigarettes}
+            onChange={(e) => setDailyCigarettes(e.target.value)}
+          />
+        </Card>
+
+        <Card className="flex gap-4 justify-center">
           <TextField
             fullWidth
             label="Cost of each pack"
             value={cigaretteCost}
             onChange={(e) => setCigaretteCost(e.target.value)}
           />
-          {/* <FormControl className="w-[100px]">
-            <InputLabel>Currency</InputLabel>
-            <Select
-              value={currency}
-              label="Currency"
-              onChange={(e) => setCurrency(e.target.value)}
-            >
-              <MenuItem value="VND">VND</MenuItem>
-              <MenuItem value="USD">USD</MenuItem>
-            </Select>
-          </FormControl> */}
+          \
           <Typography
             variant="body1"
             className="font-semibold mt-4 text-gray-600"
           >
             VND
           </Typography>
-        </div>
+        </Card>
       </div>
 
       {/* Section 4 */}
@@ -302,7 +395,7 @@ export default function CreateQuitPlan() {
           {reasonsList.map((r) => {
             const Icon = r.icon;
             return (
-              <div
+              <Card
                 key={r.id}
                 onClick={() => toggleSelect(reasons, setReasons, r.value)}
                 className={`border rounded p-3 cursor-pointer flex flex-col justify-centes items-center gap-2 transition duration-150 ${
@@ -311,96 +404,52 @@ export default function CreateQuitPlan() {
                     : "hover:border-orange-300"
                 }`}
               >
-                <Typography variant="h6" fontWeight={500}>
+                <Typography
+                  variant="h6"
+                  fontWeight={500}
+                  sx={{ color: "#c2410c" }}
+                >
                   {r.label}
                 </Typography>
-                <Icon className="text-orange-500 w-7 h-7" />
-              </div>
+                <Icon className="text-[#c2410c] w-7 h-7" />
+              </Card>
             );
           })}
         </div>
-        {/* <TextField
-          fullWidth
-          label="Other reasons (optional)"
-          multiline
-          rows={2}
-          value={otherReasons}
-          onChange={(e) => setOtherReasons(e.target.value)}
-        /> */}
       </div>
 
       {/* Section 5 */}
       <div className="space-y-4">
         <Typography variant="h6">5. Identify Your Triggers</Typography>
-        {/* <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {triggersList.map((t) => {
-            const Icon = t.icon;
-            return (
-              <div
-                key={t.id}
-                onClick={() => toggleSelect(triggers, setTriggers, t.value)}
-                className={`border rounded p-3 cursor-pointer flex flex-col items-center gap-2 transition duration-150 ${
-                  triggers.includes(t.value)
-                    ? "bg-orange-100 border-orange-500"
-                    : "hover:border-orange-300"
-                }`}
-              >
-                <Typography variant="h6" fontWeight={500}>
-                  {t.label}
-                </Typography>
-                <Icon className="text-orange-500 w-7 h-7" />
-              </div>
-            );
-          })}
-        </div> */}
-        <GroupedTriggerSelector
-          groupedTriggers={groupedTriggers}
+
+        <GroupedSelector
+          groupedItems={groupedTriggers}
           selected={triggers}
           onToggle={(val) => toggleSelect(triggers, setTriggers, val)}
         />
-        {/* <TextField
-          fullWidth
-          label="Other triggers (optional)"
-          multiline
-          rows={2}
-          value={otherTriggers}
-          onChange={(e) => setOtherTriggers(e.target.value)}
-        /> */}
       </div>
 
       {/* Section 6 */}
       <div className="space-y-4">
         <Typography variant="h6">
-          6. How Will You Do It? (Strategies)
+          6. How Will You Do It? (Support Methods)
         </Typography>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {strategiesList.map((s) => (
-            <div
-              key={s.id}
-              onClick={() => toggleSelect(strategies, setStrategies, s.value)}
-              className={`border rounded p-3 cursor-pointer flex justify-between items-center transition duration-150 ${
-                strategies.includes(s.value)
-                  ? "bg-orange-100 border-orange-500"
-                  : "hover:border-orange-300"
-              }`}
-            >
-              <span>{s.label}</span>
-              {strategies.includes(s.value) && <div />}
-            </div>
-          ))}
-        </div>
-        {/* <TextField
-          fullWidth
-          label="Other strategies or notes (optional)"
-          multiline
-          rows={2}
-          value={otherStrategies}
-          onChange={(e) => setOtherStrategies(e.target.value)}
-        /> */}
+        <GroupedSelector
+          groupedItems={groupedSupportMethods}
+          selected={strategies}
+          onToggle={(val) => toggleSelect(strategies, setStrategies, val)}
+        />
       </div>
 
-      <div>
-        <Button variant="contained" color="primary" size="large">
+      <div className="flex justify-end">
+        <Button
+          variant="contained"
+          color="primary"
+          size="large"
+          sx={{ backgroundColor: "#c2410c" }}
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+        >
           Create My Plan
         </Button>
       </div>
