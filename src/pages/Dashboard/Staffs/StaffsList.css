@@ -1,0 +1,73 @@
+.popup-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.popup-content {
+  background: #fff;
+  border-radius: 8px;
+  min-width: 320px;
+  padding: 24px;
+  box-shadow: 0 2px 8px #888;
+  position: relative;
+}
+
+.delete-btn {
+  background: #e53935;
+  color: #fff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: font-weight 0.2s;
+}
+.delete-btn:hover {
+  font-weight: bold;
+}
+
+.add-btn-modal {
+  background: #007bff;
+  color: #fff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: font-weight 0.2s;
+}
+.add-btn-modal:hover {
+  font-weight: bold;
+}
+
+.cancel-btn {
+  background: none;
+  color: #333;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: font-weight 0.2s;
+}
+.cancel-btn:hover {
+  font-weight: bold;
+}
+
+.add-popup-input {
+  border: 1.5px solid #bbb;
+  border-radius: 5px;
+  padding: 10px 12px;
+  font-size: 1rem;
+  margin-bottom: 2px;
+  outline: none;
+  transition: border 0.2s;
+}
+.add-popup-input:focus {
+  border: 1.5px solid #007bff;
+}
