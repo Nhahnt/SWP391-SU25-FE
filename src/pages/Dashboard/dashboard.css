@@ -146,3 +146,26 @@
     content: attr(data-label);
   }
 }
+
+.dashboard-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.db-sidebar {
+  width: 220px;
+  min-width: 220px;
+  background: #fff7ed;
+  border-right: 2px solid #f3f3f3;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.04);
+  position: relative;
+  z-index: 10;
+}
+
+.db-content {
+  flex: 1;
+  padding: 32px 24px;
+  background: #fff;
+  min-height: 100vh;
+  overflow-x: auto;
+}

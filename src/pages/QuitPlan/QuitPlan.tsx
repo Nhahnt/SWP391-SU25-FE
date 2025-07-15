@@ -212,9 +212,6 @@ export default function CreateQuitPlan() {
   const [reasons, setReasons] = useState<string[]>([]);
   const [triggers, setTriggers] = useState<string[]>([]);
   const [strategies, setStrategies] = useState<string[]>([]);
-  // const [otherReasons, setOtherReasons] = useState("");
-  // const [otherTriggers, setOtherTriggers] = useState("");
-  // const [otherStrategies, setOtherStrategies] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);

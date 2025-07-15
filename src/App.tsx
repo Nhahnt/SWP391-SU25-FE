@@ -20,6 +20,11 @@ import MoodTracker from "./components/MoodTracker";
 import QuitPlanDetail from "./pages/QuitPlan/QuitPlanDetail";
 import { ProgressTracking } from "./pages/ProgressTracking/ProgressTracking";
 import { Conversations } from "./pages/Conversations/Conversations";
+import CoachDashboard from "./pages/CoachDashboard/CoachDashboard";
+import MembersList from "./pages/Dashboard/Members/MembersList";
+import CoachesList from "./pages/Dashboard/Coaches/CoachesList";
+import StaffsList from "./pages/Dashboard/Staffs/StaffsList";
+import Feedback from "./pages/Dashboard/Feedback/Feedback";
 
 export default function App() {
   return (
@@ -41,6 +46,7 @@ export default function App() {
           <Route path="/blogs" element={<Blogs />} />
           <Route path="/blogs/:id" element={<BlogDetail />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
+          <Route path="/quit-plan" element={<CreateQuitPlan />} />
 
           {/* Protected routes */}
           <Route
@@ -52,39 +58,45 @@ export default function App() {
             }
           />
           <Route
-            path="/create-quit-plan"
+            path="/dashboard/members"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "staff"]}>
+                <MembersList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/coaches"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "staff"]}>
+                <CoachesList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/staffs"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "staff"]}>
+                <StaffsList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/feedback"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "staff"]}>
+                <Feedback />
+              </ProtectedRoute>
+            }
+          />
+          {/* <Route
+            path="/quit-plan"
             element={
               <ProtectedRoute allowedRoles={["member", ""]}>
                 <CreateQuitPlan />
               </ProtectedRoute>
             }
-          />
-          <Route
-            path="/quit-plan/"
-            element={
-              <ProtectedRoute allowedRoles={["member", ""]}>
-                <QuitPlanDetail />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/progress-tracking"
-            element={
-              <ProtectedRoute allowedRoles={["member", ""]}>
-                <ProgressTracking />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/conversations/:id"
-            element={
-              <ProtectedRoute allowedRoles={["member", ""]}>
-                <Conversations />
-              </ProtectedRoute>
-            }
-          />
+          /> */}
           <Route
             path="/profile"
             element={
@@ -98,6 +110,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={["admin", "staff", "member"]}>
                 <CreateBlogForm />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/coach-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["coach"]}>
+                <CoachDashboard />
               </ProtectedRoute>
             }
           />
