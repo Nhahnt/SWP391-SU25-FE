@@ -39,10 +39,14 @@ export default function Blogs() {
   const [loading, setLoading] = useState(true);
   const isStaff = localStorage.getItem("role") === "staff";
   const navigate = useNavigate();
-
+  const token = localStorage.getItem("token");
   useEffect(() => {
     axios
-      .get("http://localhost:8082/api/blogs")
+      .get("http://localhost:8082/api/blogs", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
       .then((res) => {
         setBlogs(res.data);
       })
