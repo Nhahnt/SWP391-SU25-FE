@@ -41,14 +41,45 @@ export default function Blogs() {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
   useEffect(() => {
+    const pageable = {
+      page: 0, // hoặc state riêng nếu muốn phân trang động
+      size: 10,
+      sort: ["createdAt,desc"], // hoặc ["title,asc"]
+    };
+
     axios
       .get("http://localhost:8082/api/blogs", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        params: {
+          "pageable.page": pageable.page,
+          "pageable.size": pageable.size,
+          "pageable.sort": pageable.sort,
+        },
+        paramsSerializer: (params) => {
+          // Xử lý mảng sort thành chuỗi query
+          const query = new URLSearchParams();
+          for (const key in params) {
+            const value = params[key];
+            if (Array.isArray(value)) {
+              value.forEach((v) => query.append(key, v));
+            } else {
+              query.append(key, value);
+            }
+          }
+          return query.toString();
+        },
       })
       .then((res) => {
-        setBlogs(res.data);
+        if (Array.isArray(res.data)) {
+          setBlogs(res.data);
+        } else if (Array.isArray(res.data.content)) {
+          setBlogs(res.data.content);
+        } else {
+          console.error("Unexpected response:", res.data);
+          setBlogs([]);
+        }
       })
       .catch((err) => {
         console.error("Failed to load blogs:", err);
