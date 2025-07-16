@@ -1,15 +1,16 @@
-import { useState, useEffect } from "react";
-import SearchBar from "../../components/shared/SearchBar";
-import { Box, Container, CircularProgress } from "@mui/material";
-import AppBreadcrumbs from "../../components/shared/BreadCrumbs";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
+  Box,
+  CircularProgress,
   Card,
   CardMedia,
   CardContent,
   Button,
   Typography,
 } from "@mui/material";
+import SearchBar from "../../components/shared/SearchBar";
+import AppBreadcrumbs from "../../components/shared/BreadCrumbs";
 import axios from "axios";
 
 export type Blog = {
@@ -36,60 +37,84 @@ export default function Blogs() {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [searchText, setSearchText] = useState("");
   const [expandedPostIds, setExpandedPostIds] = useState<number[]>([]);
-  const [loading, setLoading] = useState(true);
-  const isStaff = localStorage.getItem("role") === "staff";
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingInitial, setLoadingInitial] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
-  useEffect(() => {
-    const pageable = {
-      page: 0, // hoặc state riêng nếu muốn phân trang động
-      size: 10,
-      sort: ["createdAt,desc"], // hoặc ["title,asc"]
-    };
+  const isStaff = localStorage.getItem("role") === "staff";
 
-    axios
-      .get("http://localhost:8082/api/blogs", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+  const fetchBlogs = async (currentPage: number, isLoadMore = false) => {
+    isLoadMore ? setLoadingMore(true) : setLoadingInitial(true);
+
+    try {
+      const res = await axios.get("http://localhost:8082/api/blogs", {
+        headers: { Authorization: `Bearer ${token}` },
         params: {
-          "pageable.page": pageable.page,
-          "pageable.size": pageable.size,
-          "pageable.sort": pageable.sort,
+          "pageable.page": currentPage,
+          "pageable.size": 10,
+          "pageable.sort": ["createdAt,desc"],
         },
         paramsSerializer: (params) => {
-          // Xử lý mảng sort thành chuỗi query
           const query = new URLSearchParams();
           for (const key in params) {
             const value = params[key];
-            if (Array.isArray(value)) {
-              value.forEach((v) => query.append(key, v));
-            } else {
-              query.append(key, value);
-            }
+            Array.isArray(value)
+              ? value.forEach((v) => query.append(key, v))
+              : query.append(key, value);
           }
           return query.toString();
         },
-      })
-      .then((res) => {
-        if (Array.isArray(res.data)) {
-          setBlogs(res.data);
-        } else if (Array.isArray(res.data.content)) {
-          setBlogs(res.data.content);
-        } else {
-          console.error("Unexpected response:", res.data);
-          setBlogs([]);
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to load blogs:", err);
-      })
-      .finally(() => setLoading(false));
+      });
+
+      const data = Array.isArray(res.data) ? res.data : res.data.content || [];
+      setBlogs((prev) => [...prev, ...data]);
+
+      if (data.length === 0 || data.length < 10) setHasMore(false);
+    } catch (err) {
+      console.error("Failed to load blogs:", err);
+      setHasMore(false);
+    } finally {
+      setLoadingInitial(false);
+      setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBlogs(0);
   }, []);
 
-  const filteredBlogs = blogs.filter((blog) =>
-    blog.title.toLowerCase().includes(searchText.toLowerCase())
-  );
+  useEffect(() => {
+    if (page > 0) fetchBlogs(page, true);
+  }, [page]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const handleScroll = () => {
+      const nearBottom =
+        el.scrollTop + el.clientHeight >= el.scrollHeight - 100;
+
+      if (nearBottom && hasMore && !loadingMore && !debounceRef.current) {
+        debounceRef.current = setTimeout(() => {
+          setPage((prev) => prev + 1);
+          debounceRef.current = null;
+        }, 300);
+      }
+    };
+
+    el.addEventListener("scroll", handleScroll);
+    return () => {
+      el.removeEventListener("scroll", handleScroll);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [loadingMore, hasMore]);
 
   const toggleExpanded = (id: number) => {
     setExpandedPostIds((prev) =>
@@ -97,28 +122,25 @@ export default function Blogs() {
     );
   };
 
-  function formatCategory(category: string | undefined): string {
-    switch (category) {
-      case "QUIT_JOURNEY":
-        return "Quit Journey";
-      case "SUCCES_STORY":
-        return "Success Story";
-      case "EXPERIENCE":
-        return "Experience";
-      case "MOTIVATION":
-        return "Motivational";
-      case "CHALLENGE":
-        return "Challenge";
-      case "LIFE_STORY":
-        return "Life Story";
-      default:
-        return "";
-    }
-  }
+  const formatCategory = (category: string | undefined): string => {
+    const map: Record<string, string> = {
+      QUIT_JOURNEY: "Quit Journey",
+      SUCCES_STORY: "Success Story",
+      EXPERIENCE: "Experience",
+      MOTIVATION: "Motivational",
+      CHALLENGE: "Challenge",
+      LIFE_STORY: "Life Story",
+    };
+    return category ? map[category] || "" : "";
+  };
+
+  const filteredBlogs = blogs.filter((blog) =>
+    blog.title.toLowerCase().includes(searchText.toLowerCase())
+  );
 
   return (
-    <div className="w-full flex flex-col items-center space-y-4">
-      <div className="w-full flex flex-row items-center justify-between p-4 sticky top-0 z-10 bg-white shadow-sm">
+    <div className="w-full flex flex-col items-center space-y-4 h-[80vh]">
+      <div className="w-full flex justify-between items-center p-4 sticky top-0 z-10 bg-white shadow-sm">
         <AppBreadcrumbs />
         <SearchBar
           value={searchText}
@@ -135,8 +157,12 @@ export default function Blogs() {
         )}
       </div>
 
-      <div className="w-[80%] md:w-[50%] flex flex-col gap-6 px-4 pb-4">
-        {loading ? (
+      <div
+        ref={containerRef}
+        className="w-full md:w-[60%] flex flex-col gap-6 px-4 pb-4 overflow-y-auto flex-1"
+        style={{ maxHeight: "calc(100vh - 40px)" }}
+      >
+        {loadingInitial ? (
           <div className="w-full flex justify-center py-10">
             <CircularProgress />
           </div>
@@ -146,7 +172,7 @@ export default function Blogs() {
           filteredBlogs.map((blog) => (
             <Card
               key={blog.id}
-              className="shadow-sm rounded-xl transition-all duration-200 bg-white"
+              className="shadow-sm rounded-xl transition-all duration-200 bg-white min-h-[60vh]"
             >
               <div className="flex items-center gap-3 px-4 pt-4">
                 <div>
@@ -177,7 +203,7 @@ export default function Blogs() {
                 }}
               />
 
-              <CardContent sx={{ paddingX: 2, paddingBottom: 1 }}>
+              <CardContent sx={{ px: 2, pb: 1 }}>
                 <Typography variant="body1" className="mb-2">
                   {expandedPostIds.includes(blog.id)
                     ? blog.content
@@ -202,6 +228,18 @@ export default function Blogs() {
               </CardContent>
             </Card>
           ))
+        )}
+
+        {loadingMore && (
+          <div className="w-full flex justify-center py-4">
+            <CircularProgress size={28} />
+          </div>
+        )}
+
+        {!hasMore && !loadingInitial && (
+          <p className="text-center text-gray-400 text-sm py-4">
+            Đã hiển thị tất cả bài viết.
+          </p>
         )}
       </div>
     </div>
