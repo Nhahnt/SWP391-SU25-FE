@@ -105,7 +105,7 @@ export default function HomePage() {
             {
               <Button
                 component={RouterLink}
-                to="/create-quit-plan"
+                to="/quit-plan"
                 variant="contained"
                 size="large"
                 sx={{

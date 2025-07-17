@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
 import axios from "axios";
 import {
   Box,
@@ -10,6 +11,10 @@ import {
   TableHead,
   TableRow,
   Typography,
+  Button,
+  Snackbar,
+  Alert,
+  CircularProgress,
 } from "@mui/material";
 
 import { TodayReportCard } from "./Components/TodayReport";
@@ -25,6 +30,29 @@ export function ProgressTracking() {
   const [inputCount, setInputCount] = useState<number | "">("");
   const [reportData, setReportData] = useState<WeeklyReport[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [hasPlan, setHasPlan] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkPlan = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        await axios.get("http://localhost:8082/api/plans", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setHasPlan(true);
+      } catch (err: any) {
+        if (err?.response?.status === 404) {
+          setHasPlan(false);
+        } else {
+          setHasPlan(false); // fallback for other errors
+        }
+      }
+    };
+    checkPlan();
+  }, []);
 
   useEffect(() => {
     const fetchProgress = async () => {
@@ -154,13 +182,110 @@ export function ProgressTracking() {
     }
   };
 
+  const handleDeletePlan = async () => {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete your quit plan? This action cannot be undone."
+      )
+    )
+      return;
+    setDeleteLoading(true);
+    setDeleteError("");
+    try {
+      const token = localStorage.getItem("token");
+      await axios.delete("http://localhost:8082/api/plans", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setDeleteSuccess(true);
+      setReportData([]);
+    } catch (err: any) {
+      setDeleteError(err?.response?.data || "Failed to delete quit plan.");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   const streak = calculateCurrentStreak();
+
+  if (hasPlan === null) {
+    return (
+      <div className="w-full flex justify-center items-center h-64">
+        <CircularProgress />
+      </div>
+    );
+  }
+
+  if (!hasPlan) {
+    return (
+      <div className="w-full flex flex-col items-center justify-center h-64">
+        <Typography
+          variant="h5"
+          sx={{ color: "#c2410c", fontWeight: "bold", mb: 2 }}
+        >
+          You have no Quit Plan
+        </Typography>
+        <Typography variant="body1" sx={{ mb: 2 }}>
+          Click the button below to create one!
+        </Typography>
+        <Button
+          component={RouterLink}
+          to="/quit-plan"
+          variant="contained"
+          size="large"
+          sx={{
+            bgcolor: "#c2410c",
+            "&:hover": {
+              bgcolor: "#9a3412",
+              transform: "translateY(-1px)",
+            },
+            px: 4,
+            py: 1.5,
+            textTransform: "none",
+            fontSize: "1.1rem",
+            transition: "all 0.2s ease",
+          }}
+        >
+          Create a Quit Plan
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="w-[70%] mx-auto py-4 space-y-4">
       <Typography variant="h4" sx={{ color: "#c2410c", fontWeight: "bold" }}>
         Progress Tracking
       </Typography>
+      <div className="flex justify-end mb-2">
+        <Button
+          variant="outlined"
+          color="error"
+          onClick={handleDeletePlan}
+          disabled={deleteLoading}
+        >
+          {deleteLoading ? "Deleting..." : "Delete Quit Plan"}
+        </Button>
+      </div>
+      <Snackbar
+        open={deleteSuccess}
+        autoHideDuration={4000}
+        onClose={() => setDeleteSuccess(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert severity="success" onClose={() => setDeleteSuccess(false)}>
+          Quit plan deleted successfully.
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        open={!!deleteError}
+        autoHideDuration={4000}
+        onClose={() => setDeleteError("")}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert severity="error" onClose={() => setDeleteError("")}>
+          {deleteError}
+        </Alert>
+      </Snackbar>
 
       <div className="flex gap-4">
         <TodayReportCard

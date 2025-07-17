@@ -41,13 +41,13 @@ export default function Header() {
 
   return (
     <AppBar
-      position="relative"
+      position="fixed"
       elevation={0}
       sx={{
         background: "#c2410c",
-        height: "10vh",
+        height: "70px",
+        zIndex: 100,
         justifyContent: "center",
-        display: "block",
       }}
     >
       <Toolbar className="max-w-6xl mx-auto px-4 w-full flex items-center justify-between">
@@ -68,29 +68,49 @@ export default function Header() {
 
         {/* Navigation */}
         <Box className="flex gap-4 items-center">
-          <Button component={Link} to="/" sx={navButtonStyles}>
+          <Button
+            component={Link}
+            to="/"
+            sx={navButtonStyles}
+          >
             Home
           </Button>
 
-          <Button component={Link} to="/blogs" sx={navButtonStyles}>
+          <Button
+            component={Link}
+            to="/blogs"
+            sx={navButtonStyles}
+          >
             Blogs
-          </Button>
-
-          <Button component={Link} to="/quit-plan" sx={navButtonStyles}>
-            Quit Plan
           </Button>
 
           {isLoggedIn ? (
             <>
-              {userRole === "ADMIN" && (
+              {userRole === "ADMIN" || userRole === "STAFF" && (
                 <Button component={Link} to="/dashboard" sx={navButtonStyles}>
                   Dashboard
                 </Button>
               )}
+
+              {userRole === "MEMBER" && (
+                <Button
+                  component={Link}
+                  to="/view-quit-plan"
+                  sx={navButtonStyles}
+                >
+                  View Quit Plan
+                </Button>
+              )}
+
               {userRole === "ADMIN" ||
                 userRole === "STAFF" ||
+                userRole === "COACH" ||
                 (userRole === "MEMBER" && (
-                  <Button component={Link} to="/profile" sx={navButtonStyles}>
+                  <Button
+                    component={Link}
+                    to="/profile"
+                    sx={navButtonStyles}
+                  >
                     Profile
                   </Button>
                 ))}

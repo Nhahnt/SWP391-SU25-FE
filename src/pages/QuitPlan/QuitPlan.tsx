@@ -267,7 +267,11 @@ export default function CreateQuitPlan() {
             value={cigaretteCost}
             onChange={(e) => setCigaretteCost(e.target.value)}
           />
+<<<<<<< Updated upstream
 
+=======
+          /
+>>>>>>> Stashed changes
           <Typography
             variant="body1"
             className="font-semibold mt-4 text-gray-600"

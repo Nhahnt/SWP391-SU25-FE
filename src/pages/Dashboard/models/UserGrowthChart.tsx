@@ -1,11 +1,11 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 const userGrowthData = [
-  { month: "Jan", users: 120 },
+  { month: "Jan", users: 80 },
   { month: "Feb", users: 180 },
-  { month: "Mar", users: 250 },
-  { month: "Apr", users: 320 },
-  { month: "May", users: 400 },
+  { month: "Mar", users: 290 },
+  { month: "Apr", users: 330 },
+  { month: "May", users: 350 },
 ];
 
 export default function UserGrowthChart() {

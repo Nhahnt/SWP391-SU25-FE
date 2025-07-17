@@ -47,6 +47,8 @@ export default function App() {
           <Route path="/blogs/:id" element={<BlogDetail />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
           <Route path="/quit-plan" element={<CreateQuitPlan />} />
+          <Route path="/view-quit-plan" element={<QuitPlanDetail />} />
+          <Route path="/progress-tracking" element={<ProgressTracking />} />
 
           {/* Protected routes */}
           <Route
@@ -89,14 +91,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          {/* <Route
-            path="/quit-plan"
-            element={
-              <ProtectedRoute allowedRoles={["member", ""]}>
-                <CreateQuitPlan />
-              </ProtectedRoute>
-            }
-          /> */}
+
           <Route
             path="/profile"
             element={
@@ -118,6 +113,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={["coach"]}>
                 <CoachDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/conversations"
+            element={
+              <ProtectedRoute allowedRoles={["member", "coach"]}>
+                <Conversations />
               </ProtectedRoute>
             }
           />
