@@ -8,10 +8,15 @@ import {
   CardContent,
   Button,
   Typography,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
 } from "@mui/material";
 import SearchBar from "../../components/shared/SearchBar";
 import AppBreadcrumbs from "../../components/shared/BreadCrumbs";
 import axios from "axios";
+import { Link } from "react-router-dom";
 
 export type Blog = {
   id: number;
@@ -47,6 +52,7 @@ export default function Blogs() {
   const [userReactions, setUserReactions] = useState<
     Record<number, "like" | "dislike" | null>
   >({});
+  const [category, setCategory] = useState("__");
 
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -55,7 +61,11 @@ export default function Blogs() {
   const token = localStorage.getItem("token");
   const isStaff = localStorage.getItem("role") === "staff";
 
-  const fetchBlogs = async (currentPage: number, isLoadMore = false) => {
+  const fetchBlogs = async (
+    currentPage: number,
+    isLoadMore = false,
+    category: string = "__"
+  ) => {
     isLoadMore ? setLoadingMore(true) : setLoadingInitial(true);
 
     try {
@@ -63,8 +73,8 @@ export default function Blogs() {
         headers: { Authorization: `Bearer ${token}` },
         params: {
           page: currentPage,
-          limit: 10,
-          category: "__",
+          size: 10,
+          category: category,
         },
         paramsSerializer: (params) => {
           const query = new URLSearchParams();
@@ -96,8 +106,8 @@ export default function Blogs() {
   }, []);
 
   useEffect(() => {
-    if (page > 0) fetchBlogs(page, true);
-  }, [page]);
+    if (page > 0) fetchBlogs(page, true, category);
+  }, [page, category]);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -147,7 +157,12 @@ export default function Blogs() {
     try {
       const res = await axios.post(
         `http://localhost:8082/api/blogs/${blog.id}/${action}`,
-        blog
+        blog,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       return res.data;
     } catch (err) {
@@ -168,6 +183,27 @@ export default function Blogs() {
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
         />
+        <Box sx={{ minWidth: 180 }}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Category</InputLabel>
+            <Select
+              value={category}
+              label="Category"
+              onChange={(e) => {
+                const val = e.target.value;
+                setCategory(val);
+              }}
+            >
+              <MenuItem value="__">All Categories</MenuItem>
+              <MenuItem value="QUIT_JOURNEY">Quit Journey</MenuItem>
+              <MenuItem value="SUCCES_STORY">Success Story</MenuItem>
+              <MenuItem value="EXPERIENCE">Experience</MenuItem>
+              <MenuItem value="MOTIVATION">Motivational</MenuItem>
+              <MenuItem value="CHALLENGE">Challenge</MenuItem>
+              <MenuItem value="LIFE_STORY">Life Story</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
         {isStaff && (
           <Button
             variant="contained"
@@ -207,23 +243,24 @@ export default function Blogs() {
                   </p>
                 </div>
               </div>
-
-              <CardMedia
-                component="img"
-                image={blog.thumbnail || "/no-image.png"}
-                alt={blog.title}
-                onError={(e) => {
-                  const img = e.target as HTMLImageElement;
-                  img.onerror = null;
-                  img.src = "/no-image.png";
-                }}
-                sx={{
-                  height: 360,
-                  width: "100%",
-                  objectFit: "cover",
-                  marginTop: 2,
-                }}
-              />
+              <Link to={`/blogs/${blog.id}`}>
+                <CardMedia
+                  component="img"
+                  image={blog.thumbnail || "/no-image.png"}
+                  alt={blog.title}
+                  onError={(e) => {
+                    const img = e.target as HTMLImageElement;
+                    img.onerror = null;
+                    img.src = "/no-image.png";
+                  }}
+                  sx={{
+                    height: 360,
+                    width: "100%",
+                    objectFit: "cover",
+                    marginTop: 2,
+                  }}
+                />
+              </Link>
 
               <CardContent sx={{ px: 2, pb: 1 }}>
                 {/* Content */}

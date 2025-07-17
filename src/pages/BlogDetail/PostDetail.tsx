@@ -1,26 +1,71 @@
 import { useParams } from "react-router-dom";
-import { Container, Typography, Box, CardMedia, Divider } from "@mui/material";
+import {
+  Container,
+  Typography,
+  Box,
+  CardMedia,
+  Divider,
+  CircularProgress,
+} from "@mui/material";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
-const mockBlog = {
-  title: "How to Quit Smoking",
-  image:
-    "https://images.unsplash.com/photo-1512067053627-3cb65e51a128?q=80&w=1170&auto=format&fit=crop",
-  content: `
-    Quitting smoking is one of the best decisions you can make for your health. 
-    In this article, we'll explore the steps to break free from nicotine addiction, 
-    from mental preparation to handling withdrawal symptoms and staying smoke-free for life.
-    
-    - Step 1: Set a quit date.
-    - Step 2: Remove all tobacco products.
-    - Step 3: Seek support from friends, family, or professionals.
-    - Step 4: Practice stress-relief techniques like deep breathing or walking.
-    
-    Remember: You are not alone, and it's never too late to quit!
-  `,
-};
+interface Blog {
+  id: number;
+  title: string;
+  content: string;
+  thumbnail: string;
+  userId: number;
+  authorName: string | null;
+  createdAt: string;
+  updatedAt: string;
+  category: string;
+  featured: boolean;
+  published: boolean;
+}
 
 export default function BlogDetail() {
   const { id } = useParams();
+  const [blog, setBlog] = useState<Blog | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBlog = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        const res = await axios.get(`http://localhost:8082/api/blogs/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setBlog(res.data);
+      } catch (err) {
+        console.error("Không thể load blog:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) fetchBlog();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <Container maxWidth="md" className="py-8 text-center">
+        <CircularProgress />
+      </Container>
+    );
+  }
+
+  if (!blog) {
+    return (
+      <Container maxWidth="md" className="py-8 text-center">
+        <Typography variant="h6">Không tìm thấy bài viết.</Typography>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="md" className="py-8">
@@ -29,21 +74,21 @@ export default function BlogDetail() {
         component="h1"
         className="font-bold text-center mb-6"
       >
-        {mockBlog.title}
+        {blog.title}
       </Typography>
 
       <CardMedia
         component="img"
         height="400"
-        image={mockBlog.image}
-        alt={mockBlog.title}
+        image={blog.thumbnail}
+        alt={blog.title}
         className="rounded-lg shadow-md object-cover mb-6"
       />
 
       <Divider className="my-6" />
 
       <Box className="prose max-w-none text-justify text-gray-800 text-lg leading-relaxed">
-        {mockBlog.content.split("\n").map((line, idx) => (
+        {blog.content.split("\n").map((line, idx) => (
           <Typography key={idx} paragraph>
             {line.trim()}
           </Typography>
@@ -51,7 +96,7 @@ export default function BlogDetail() {
       </Box>
 
       <Typography className="mt-8 text-sm text-gray-500 text-center">
-        Blog ID: {id}
+        Viết bởi: {blog.authorName || "Ẩn danh"} | Blog ID: {blog.id}
       </Typography>
     </Container>
   );
