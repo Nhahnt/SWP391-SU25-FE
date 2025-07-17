@@ -28,7 +28,8 @@ export type Blog = {
     | "EXPERIENCE"
     | "MOTIVATION"
     | "CHALLENGE"
-    | "LIFE_STORY";
+    | "LIFE_STORY"
+    | "__";
   featured: boolean;
   published: boolean;
 };
@@ -41,6 +42,11 @@ export default function Blogs() {
   const [hasMore, setHasMore] = useState(true);
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [likes, setLikes] = useState<Record<number, number>>({});
+  const [dislikes, setDislikes] = useState<Record<number, number>>({});
+  const [userReactions, setUserReactions] = useState<
+    Record<number, "like" | "dislike" | null>
+  >({});
 
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -53,12 +59,12 @@ export default function Blogs() {
     isLoadMore ? setLoadingMore(true) : setLoadingInitial(true);
 
     try {
-      const res = await axios.get("http://localhost:8082/api/blogs", {
+      const res = await axios.get("http://localhost:8082/api/blogs/feed", {
         headers: { Authorization: `Bearer ${token}` },
         params: {
-          "pageable.page": currentPage,
-          "pageable.size": 10,
-          "pageable.sort": ["createdAt,desc"],
+          page: currentPage,
+          limit: 10,
+          category: "__",
         },
         paramsSerializer: (params) => {
           const query = new URLSearchParams();
@@ -134,6 +140,22 @@ export default function Blogs() {
     return category ? map[category] || "" : "";
   };
 
+  const handleBlogLikeToggle = async (
+    blog: Blog,
+    action: "like" | "unlike"
+  ) => {
+    try {
+      const res = await axios.post(
+        `http://localhost:8082/api/blogs/${blog.id}/${action}`,
+        blog
+      );
+      return res.data;
+    } catch (err) {
+      console.error(`Không thể ${action} blog`, err);
+      throw err;
+    }
+  };
+
   const filteredBlogs = blogs.filter((blog) =>
     blog.title.toLowerCase().includes(searchText.toLowerCase())
   );
@@ -172,7 +194,7 @@ export default function Blogs() {
           filteredBlogs.map((blog) => (
             <Card
               key={blog.id}
-              className="shadow-sm rounded-xl transition-all duration-200 bg-white min-h-[60vh]"
+              className="shadow-sm rounded-xl transition-all duration-200 bg-white min-h-[70vh]"
             >
               <div className="flex items-center gap-3 px-4 pt-4">
                 <div>
@@ -204,6 +226,7 @@ export default function Blogs() {
               />
 
               <CardContent sx={{ px: 2, pb: 1 }}>
+                {/* Content */}
                 <Typography variant="body1" className="mb-2">
                   {expandedPostIds.includes(blog.id)
                     ? blog.content
@@ -212,19 +235,50 @@ export default function Blogs() {
                     : blog.content}
                 </Typography>
 
-                {blog.content.length > 200 && (
-                  <Box sx={{ textAlign: "right" }}>
+                {/* Reaction buttons */}
+                <Box className="flex items-center justify-between mt-2">
+                  <div className="flex gap-2 items-center">
                     <Button
                       size="small"
-                      sx={{ color: "#c2410c" }}
-                      onClick={() => toggleExpanded(blog.id)}
+                      variant={
+                        userReactions[blog.id] === "like"
+                          ? "contained"
+                          : "outlined"
+                      }
+                      sx={{ minWidth: 60 }}
+                      onClick={() => handleBlogLikeToggle(blog, "like")}
                     >
-                      {expandedPostIds.includes(blog.id)
-                        ? "Thu gọn"
-                        : "Xem thêm"}
+                      👍 {likes[blog.id] || 0}
                     </Button>
-                  </Box>
-                )}
+
+                    <Button
+                      size="small"
+                      variant={
+                        userReactions[blog.id] === "dislike"
+                          ? "contained"
+                          : "outlined"
+                      }
+                      sx={{ minWidth: 60 }}
+                      onClick={() => handleBlogLikeToggle(blog, "unlike")}
+                    >
+                      👎 {dislikes[blog.id] || 0}
+                    </Button>
+                  </div>
+
+                  {blog.content.length > 200 && (
+                    <Box sx={{ textAlign: "right" }}>
+                      <Button
+                        size="small"
+                        sx={{ color: "#c2410c" }}
+                        onClick={() => toggleExpanded(blog.id)}
+                      >
+                        {expandedPostIds.includes(blog.id)
+                          ? "Thu gọn"
+                          : "Xem thêm"}
+                      </Button>
+                    </Box>
+                  )}
+                </Box>
               </CardContent>
             </Card>
           ))

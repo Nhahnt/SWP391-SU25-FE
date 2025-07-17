@@ -12,7 +12,7 @@ export default function Header() {
   const [userRole, setUserRole] = useState(
     () => localStorage.getItem("role") || ""
   );
-
+  const role = localStorage.getItem("role");
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
@@ -75,6 +75,12 @@ export default function Header() {
           <Button component={Link} to="/blogs" sx={navButtonStyles}>
             Blogs
           </Button>
+
+          {(role === "COACH" || role === "MEMBER") && (
+            <Button component={Link} to="/conversations" sx={navButtonStyles}>
+              Chat
+            </Button>
+          )}
 
           <Button component={Link} to="/quit-plan" sx={navButtonStyles}>
             Quit Plan

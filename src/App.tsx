@@ -89,7 +89,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-         <Route
+          <Route
             path="/quit-plan"
             element={
               <ProtectedRoute allowedRoles={["member", ""]}>
@@ -116,7 +116,7 @@ export default function App() {
           />
 
           <Route
-            path="/conversations/:id"
+            path="/conversations"
             element={
               <ProtectedRoute allowedRoles={["member", "coach"]}>
                 <ChatScreen />
