@@ -4,16 +4,22 @@ import ChatBox from "./components/Chatbox";
 import { Client, StompSubscription } from "@stomp/stompjs";
 
 const ChatScreen = () => {
-  const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null);
+  const [selectedMemberId, setSelectedMemberId] = useState<number | null>(
+    () => {
+      const stored = localStorage.getItem("memberId");
+      return stored ? parseInt(stored, 10) : null;
+    }
+  );
+
   const [stompClient, setStompClient] = useState<Client | null>(null);
   const currentSubRef = useRef<StompSubscription | null>(null);
-
+  const role = localStorage.getItem("role");
   const coachId = localStorage.getItem("coachId");
 
   // Khởi tạo STOMP client
   useEffect(() => {
     const client = new Client({
-      brokerURL: "ws://localhost:8082/ws", // Đổi lại nếu URL khác
+      brokerURL: "ws://localhost:8082/ws",
       reconnectDelay: 5000,
       onConnect: () => {
         console.log("Connected to WebSocket");
@@ -37,7 +43,6 @@ const ChatScreen = () => {
 
     if (!coachId || !stompClient || !stompClient.connected) return;
 
-    // Hủy sub cũ nếu có
     currentSubRef.current?.unsubscribe();
 
     const topic = `/topic/chat.${memberId}.${coachId}`;
@@ -54,7 +59,9 @@ const ChatScreen = () => {
 
   return (
     <div className="flex h-screen">
-      <Sidebar onSelectMember={handleSelectMember} />
+      {(role === "coach" || role === "COACH") && (
+        <Sidebar onSelectMember={handleSelectMember} />
+      )}
       <div className="flex-1">
         {selectedMemberId ? (
           <ChatBox

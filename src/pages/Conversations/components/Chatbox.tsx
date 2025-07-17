@@ -43,12 +43,12 @@ const ChatBox = ({ memberId, coachId, stompClient }: Props) => {
 
   const handleSend = () => {
     if (!newMessage.trim() || !stompClient || !stompClient.connected) return;
-
+    const role = localStorage.getItem("role");
     const payload = {
       content: newMessage,
       memberId,
       coachId,
-      senderIsCoach: true,
+      senderIsCoach: role === "COACH" || role === "coach" ? true : false,
       sentAt: new Date().toISOString(),
     };
 
