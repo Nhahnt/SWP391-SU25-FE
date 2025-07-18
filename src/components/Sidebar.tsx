@@ -78,9 +78,9 @@ export default function DashboardSidebar() {
             Staffs
           </MenuItem>
         </SubMenu>
-        <MenuItem component={<Link to="/dashboard/feedback" />} active={isActive("/dashboard/feedback")}>
+        {/* <MenuItem component={<Link to="/dashboard/feedback" />} active={isActive("/dashboard/feedback")}>
           Feedback
-        </MenuItem>
+        </MenuItem> */}
       </Menu>
     </ProSidebar>
   );
