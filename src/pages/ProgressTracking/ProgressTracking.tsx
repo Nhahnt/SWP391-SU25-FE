@@ -46,9 +46,13 @@ export function ProgressTracking() {
       } catch (err: any) {
         if (err?.response?.status === 404) {
           setHasPlan(false);
+<<<<<<< Updated upstream
         } else {
           setHasPlan(false); // fallback for other errors
         }
+=======
+        } 
+>>>>>>> Stashed changes
       }
     };
     checkPlan();
@@ -207,7 +211,11 @@ export function ProgressTracking() {
 
   const streak = calculateCurrentStreak();
 
+<<<<<<< Updated upstream
   if (hasPlan === null) {
+=======
+  if (hasPlan === null || loading) {
+>>>>>>> Stashed changes
     return (
       <div className="w-full flex justify-center items-center h-64">
         <CircularProgress />

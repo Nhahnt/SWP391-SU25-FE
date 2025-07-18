@@ -11,7 +11,12 @@ import {
   CircularProgress,
 } from "@mui/material";
 import Card from "../../components/shared/Card";
+<<<<<<< Updated upstream
 import { useParams } from "react-router-dom";
+=======
+import axios from "axios";
+import { Link } from "react-router-dom";
+>>>>>>> Stashed changes
 
 const options = ["2", "3", "4", "5", "6"];
 
@@ -27,11 +32,66 @@ const triggersList = [
   { id: "t3", value: "drinking", label: "Drinking Alcohol" },
 ];
 
+<<<<<<< Updated upstream
 const strategiesList = [
   { id: "s1", value: "gum", label: "Chew Gum" },
   { id: "s2", value: "walk", label: "Go for a Walk" },
   { id: "s3", value: "call", label: "Call a Friend" },
 ];
+=======
+const triggerTips = {
+  Stress: {
+    emoji: "🧘‍♂️",
+    description: "Stress is one of the most common triggers for smoking...",
+    tips: [
+      "Practice deep breathing or meditation",
+      "Take short walks or stretch",
+      "Listen to calming music or journal your thoughts",
+    ],
+  },
+  Socializing: {
+    emoji: "🎉",
+    description: "Being around others, especially in smoking environments...",
+    tips: [
+      "Tell friends you're quitting",
+      "Bring gum or a fidget item",
+      "Stay close to non-smoking friends",
+    ],
+  },
+  "Drinking Alcohol": {
+    emoji: "🍺",
+    description:
+      "Alcohol lowers inhibition and is often linked to social smoking...",
+    tips: [
+      "Avoid bars during early quit days",
+      "Switch to non-alcoholic drinks",
+      "Plan ahead how to handle cravings",
+    ],
+  },
+};
+
+interface PlanData {
+  startDate: string;
+  numberOfCigarettes: number;
+  pricePerPack: number;
+  dailyCost: number;
+  weeklyCost: number;
+  monthlyCost: number;
+  yearlyCost: number;
+  reasons: string[];
+  triggers: string[];
+  tips: string[];
+  taperingSchedule: TaperingScheduleItem[];
+}
+
+export interface TaperingScheduleItem {
+  weekNumber: number;
+  startDate: string; // ISO date string, e.g., "2025-07-14"
+  endDate: string; // ISO date string
+  cigarettesPerDay: number;
+  note: string | null;
+}
+>>>>>>> Stashed changes
 
 export default function QuitPlanDetail() {
 <<<<<<< Updated upstream
@@ -201,6 +261,50 @@ export default function QuitPlanDetail() {
     return (
       <div className="w-full flex justify-center items-center h-64">
         <CircularProgress />
+      </div>
+    );
+  }
+
+  if (hasPlan === null || loading) {
+    return (
+      <div className="w-full flex justify-center items-center h-64">
+        <CircularProgress />
+      </div>
+    );
+  }
+
+  if (!hasPlan) {
+    return (
+      <div className="w-full flex flex-col items-center justify-center h-64">
+        <Typography
+          variant="h5"
+          sx={{ color: "#c2410c", fontWeight: "bold", mb: 2 }}
+        >
+          You have no Quit Plan
+        </Typography>
+        <Typography variant="body1" sx={{ mb: 2 }}>
+          Click the button below to create one!
+        </Typography>
+        <Button
+          component={Link}
+          to="/quit-plan"
+          variant="contained"
+          size="large"
+          sx={{
+            bgcolor: "#c2410c",
+            "&:hover": {
+              bgcolor: "#9a3412",
+              transform: "translateY(-1px)",
+            },
+            px: 4,
+            py: 1.5,
+            textTransform: "none",
+            fontSize: "1.1rem",
+            transition: "all 0.2s ease",
+          }}
+        >
+          Create a Quit Plan
+        </Button>
       </div>
     );
   }
@@ -708,10 +812,25 @@ export default function QuitPlanDetail() {
             Avoid Triggers
           </Typography>
 
+<<<<<<< Updated upstream
           {Object.entries(triggerTips).map(([trigger, data]) => (
             <div
               key={trigger}
               className="bg-white rounded-md shadow-md p-4 space-y-3"
+=======
+      <div className="space-y-4">
+        <Typography variant="h5" className="text-orange-700">
+          Prepare for quitting
+        </Typography>
+        <Typography variant="subtitle1" className="text-gray-600 w-[90%]">
+          Quitting smoking is easier when you plan ahead...
+        </Typography>
+        {/* <div className="bg-white rounded-md shadow-md p-4 space-y-3">
+          {quitChecklist.map((item, index) => (
+            <label
+              key={index}
+              className="flex items-start space-x-3 cursor-pointer hover:bg-gray-50 rounded-md p-2 transition"
+>>>>>>> Stashed changes
             >
               <Typography
                 variant="h6"
@@ -733,8 +852,13 @@ export default function QuitPlanDetail() {
               </ul>
             </div>
           ))}
+<<<<<<< Updated upstream
         </div>
       )}
+=======
+        </div> */}
+      </div>
+>>>>>>> Stashed changes
 
       {isEditting ? (
         <Button
