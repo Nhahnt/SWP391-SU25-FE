@@ -7,6 +7,7 @@ export default function Login() {
   const navigate = useNavigate();
   const [username, setuserName] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleLogin = async () => {
     try {
@@ -21,12 +22,13 @@ export default function Login() {
         }
       );
 
-      const { token, role } = response.data;
+      const { token, role, memberId } = response.data;
 
       // Lưu vào localStorage
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);
       localStorage.setItem("username", username);
+      localStorage.setItem("memberId", memberId);
 
       if (role === "ADMIN" || role === "STAFF") {
         navigate("/dashboard");
@@ -37,8 +39,27 @@ export default function Login() {
       // Cấu hình token mặc định cho axios
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
       axios.defaults.withCredentials = true;
-    } catch (err) {
-      console.error("Đăng nhập thất bại", err);
+      setErrorMsg("");
+    } catch (err: any) {
+      let message = "Đăng nhập thất bại";
+      if (err.response) {
+        // Server responded with a status code outside 2xx
+        if (err.response.data && typeof err.response.data === "string") {
+          message = err.response.data;
+        } else if (err.response.data && err.response.data.message) {
+          message = err.response.data.message;
+        } else {
+          message = `Lỗi: ${err.response.status}`;
+        }
+      } else if (err.request) {
+        // No response received
+        message = "Không thể kết nối đến máy chủ.";
+      } else if (err.message) {
+        message = err.message;
+      }
+      setErrorMsg(message);
+      alert(message);
+      console.error(message, err);
     }
   };
 
@@ -68,6 +89,11 @@ export default function Login() {
 
       {/* Form */}
       <form onSubmit={(e) => e.preventDefault()}>
+        {errorMsg && (
+          <Typography color="error" textAlign="center" sx={{ mb: 1 }}>
+            {errorMsg}
+          </Typography>
+        )}
         <TextField
           fullWidth
           label="userName"

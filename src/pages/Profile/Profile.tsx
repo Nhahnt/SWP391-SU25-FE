@@ -11,9 +11,14 @@ import {
   Tab,
   Box,
   Button,
+  TextField,
+  IconButton
 } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Cancel';
 
 function TabPanel(props: any) {
   const { children, value, index, ...other } = props;
@@ -31,6 +36,9 @@ function TabPanel(props: any) {
 }
 
 const API_BASE = "http://localhost:8082/api";
+const token = localStorage.getItem("token");
+const usernameStr = localStorage.getItem("username");
+const memberId = localStorage.getItem("memberId");
 
 export default function UserProfile() {
   const [user, setUser] = useState<any>(null);
@@ -40,55 +48,60 @@ export default function UserProfile() {
   const [uploadMsg, setUploadMsg] = useState("");
   const [avatar, setAvatar] = useState<string | null>(null);
   const [tabValue, setTabValue] = useState(0);
+  const [editMode, setEditMode] = useState(false);
+  const [editData, setEditData] = useState<any>({});
+  const [editLoading, setEditLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const token = localStorage.getItem("token");
-        const usernameStr = localStorage.getItem("username");
-        const response = await axios.get(
-          `${API_BASE}/account/${usernameStr}/profile`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            withCredentials: true,
-          }
-        );
-        setUser(response.data);
-        if (response.data && response.data.memberId) {
-          fetchAvatar(response.data.memberId, token);
+  const fetchAvatar = async () => {
+    try {
+      const res = await axios.get(
+        `${API_BASE}/avatar/current`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
         }
-      } catch (err: any) {
-        setError("Failed to load profile");
-      } finally {
-        setLoading(false);
-      }
-    };
-    const fetchAvatar = async (memberId: number, token: string | null) => {
-      try {
-        const res = await axios.get(
-          `${API_BASE}/member/${memberId}/avatar`, // doesnt work yet due to not having memberID
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            responseType: "text",
-            withCredentials: true,
-          }
-        );
-        if (res.data) {
-          setAvatar(`data:image/jpeg;base64,${res.data}`);
-        } else {
-          setAvatar(null);
-        }
-      } catch {
+      );
+      if (res.data && res.data.avatarUrl) {
+        setAvatar(res.data.avatarUrl);
+      } else {
         setAvatar(null);
       }
-    };
+    } catch {
+      setAvatar(null);
+    }
+  };
+
+  const fetchProfile = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await axios.get(
+        `${API_BASE}/account/${usernameStr}/profile`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          withCredentials: true,
+        }
+      );
+      setUser(response.data);
+      setEditData({
+        fullName: response.data.fullName || "",
+        email: response.data.email || "",
+        phone: response.data.phone || ""
+      });
+      fetchAvatar();
+    } catch (err: any) {
+      setError("Failed to load profile");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchProfile();
   }, []);
 
@@ -100,16 +113,15 @@ export default function UserProfile() {
   };
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0 || !user) return;
+    if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
     setUploading(true);
     setUploadMsg("");
     try {
-      const token = localStorage.getItem("token");
       const formData = new FormData();
       formData.append("file", file);
       await axios.post(
-        `${API_BASE}/member/${user.memberId}/avatar`, // doesnt work yet due to not having memberID
+        `${API_BASE}/avatar/upload`,
         formData,
         {
           headers: {
@@ -120,22 +132,7 @@ export default function UserProfile() {
         }
       );
       setUploadMsg("Avatar uploaded successfully!");
-      // Refresh avatar after upload
-      if (user.memberId) {
-        const res = await axios.get(
-          `${API_BASE}/member/${user.memberId}/avatar`, // doesnt work yet due to not having memberID
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-            responseType: "text",
-            withCredentials: true,
-          }
-        );
-        if (res.data) {
-          setAvatar(`data:image/jpeg;base64,${res.data}`);
-        }
-      }
+      await fetchAvatar();
     } catch (err: any) {
       setUploadMsg("Failed to upload avatar");
     } finally {
@@ -145,6 +142,50 @@ export default function UserProfile() {
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
+  };
+
+  const handleEditClick = () => {
+    setEditMode(true);
+  };
+
+  const handleEditCancel = () => {
+    setEditMode(false);
+    setEditData({
+      fullName: user.fullName || "",
+      email: user.email || "",
+      phone: user.phone || ""
+    });
+  };
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditData({ ...editData, [e.target.name]: e.target.value });
+  };
+
+  const handleEditSave = async () => {
+    setEditLoading(true);
+    try {
+      await axios.put(
+        `${API_BASE}/account/${usernameStr}/profile`,
+        {
+          fullName: editData.fullName,
+          email: editData.email,
+          phone: editData.phone
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          withCredentials: true,
+        }
+      );
+      setEditMode(false);
+      fetchProfile();
+    } catch (err) {
+      setError("Failed to update profile");
+    } finally {
+      setEditLoading(false);
+    }
   };
 
   if (loading) {
@@ -216,20 +257,29 @@ export default function UserProfile() {
                 boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
               }}
             >
-              {user.fullName ? user.fullName.charAt(0) : user.username.charAt(0)}
+              {user.fullName
+                ? user.fullName.charAt(0)
+                : user.userName.charAt(0)}
             </Avatar>
             <Box>
               <Typography
                 variant="h5"
                 sx={{ fontWeight: "bold", color: "#c2410c" }}
               >
-                {user.fullName || user.username}
+                {user.fullName || user.userName}
               </Typography>
               <Typography variant="body1" sx={{ color: "#757575" }}>
                 Role: {user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : ""}
               </Typography>
             </Box>
-            <Box sx={{ ml: "auto", display: "flex", flexDirection: "column", alignItems: "end" }}>
+            <Box
+              sx={{
+                ml: "auto",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "end",
+              }}
+            >
               <Button
                 variant="contained"
                 sx={{
@@ -256,7 +306,15 @@ export default function UserProfile() {
                 onChange={handleAvatarChange}
               />
               {uploadMsg && (
-                <span className={`mt-2 text-sm ${uploadMsg.includes("success") ? "text-green-600" : "text-red-600"}`}>{uploadMsg}</span>
+                <span
+                  className={`mt-2 text-sm ${
+                    uploadMsg.includes("success")
+                      ? "text-green-600"
+                      : "text-red-600"
+                  }`}
+                >
+                  {uploadMsg}
+                </span>
               )}
             </Box>
           </Box>
@@ -286,51 +344,192 @@ export default function UserProfile() {
             </Tabs>
           </Box>
           <TabPanel value={tabValue} index={0}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-              <Box sx={{ p: 1, borderBottom: { xs: '1px solid #eee', sm: 'none' } }}>
-                <Typography variant="body2" sx={{ color: "#9e9e9e", fontWeight: "medium" }}>Username</Typography>
-                <Typography variant="body1" sx={{ color: "#424242", fontWeight: "bold" }}>{user.username}</Typography>
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+                gap: 2,
+              }}
+            >
+              <Box
+                sx={{
+                  p: 1,
+                  borderBottom: { xs: "1px solid #eee", sm: "none" },
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{ color: "#9e9e9e", fontWeight: "medium" }}
+                >
+                  Username
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{ color: "#424242", fontWeight: "bold" }}
+                >
+                  {user.userName}
+                </Typography>
               </Box>
-              <Box sx={{ p: 1, borderBottom: { xs: '1px solid #eee', sm: 'none' } }}>
-                <Typography variant="body2" sx={{ color: "#9e9e9e", fontWeight: "medium" }}>Email</Typography>
-                <Typography variant="body1" sx={{ color: "#424242", fontWeight: "bold" }}>{user.email}</Typography>
+              <Box
+                sx={{
+                  p: 1,
+                  borderBottom: { xs: "1px solid #eee", sm: "none" },
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{ color: "#9e9e9e", fontWeight: "medium" }}
+                >
+                  Email
+                </Typography>
+                {editMode ? (
+                  <TextField
+                    name="email"
+                    value={editData.email}
+                    onChange={handleEditChange}
+                    size="small"
+                    fullWidth
+                  />
+                ) : (
+                  <Typography
+                    variant="body1"
+                    sx={{ color: "#424242", fontWeight: "bold" }}
+                  >
+                    {user.email}
+                  </Typography>
+                )}
               </Box>
-              <Box sx={{ p: 1, borderBottom: { xs: '1px solid #eee', sm: 'none' } }}>
-                <Typography variant="body2" sx={{ color: "#9e9e9e", fontWeight: "medium" }}>Full Name</Typography>
-                <Typography variant="body1" sx={{ color: "#424242", fontWeight: "bold" }}>{user.fullName}</Typography>
+              <Box
+                sx={{
+                  p: 1,
+                  borderBottom: { xs: "1px solid #eee", sm: "none" },
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{ color: "#9e9e9e", fontWeight: "medium" }}
+                >
+                  Full Name
+                </Typography>
+                {editMode ? (
+                  <TextField
+                    name="fullName"
+                    value={editData.fullName}
+                    onChange={handleEditChange}
+                    size="small"
+                    fullWidth
+                  />
+                ) : (
+                  <Typography
+                    variant="body1"
+                    sx={{ color: "#424242", fontWeight: "bold" }}
+                  >
+                    {user.fullName}
+                  </Typography>
+                )}
               </Box>
-              <Box sx={{ p: 1, borderBottom: { xs: '1px solid #eee', sm: 'none' } }}>
-                <Typography variant="body2" sx={{ color: "#9e9e9e", fontWeight: "medium" }}>Phone Number</Typography>
-                <Typography variant="body1" sx={{ color: "#424242", fontWeight: "bold" }}>{user.phone}</Typography>
+              <Box
+                sx={{
+                  p: 1,
+                  borderBottom: { xs: "1px solid #eee", sm: "none" },
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{ color: "#9e9e9e", fontWeight: "medium" }}
+                >
+                  Phone Number
+                </Typography>
+                {editMode ? (
+                  <TextField
+                    name="phone"
+                    value={editData.phone}
+                    onChange={handleEditChange}
+                    size="small"
+                    fullWidth
+                  />
+                ) : (
+                  <Typography
+                    variant="body1"
+                    sx={{ color: "#424242", fontWeight: "bold" }}
+                  >
+                    {user.phone}
+                  </Typography>
+                )}
               </Box>
-              <Box sx={{ p: 1, borderBottom: { xs: '1px solid #eee', sm: 'none' } }}>
-                <Typography variant="body2" sx={{ color: "#9e9e9e", fontWeight: "medium" }}>Role</Typography>
-                <Typography variant="body1" sx={{ color: "#424242", fontWeight: "bold" }}>
-                  {user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : ""}
+              <Box
+                sx={{
+                  p: 1,
+                  borderBottom: { xs: "1px solid #eee", sm: "none" },
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{ color: "#9e9e9e", fontWeight: "medium" }}
+                >
+                  Role
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{ color: "#424242", fontWeight: "bold" }}
+                >
+                  {user.role
+                    ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
+                    : ""}
                 </Typography>
               </Box>
             </Box>
-            <Button
-              variant="contained"
-              sx={{
-                bgcolor: "#c2410c",
-                "&:hover": { bgcolor: "#a0300a" },
-                color: "white",
-                fontWeight: "semibold",
-                py: 1,
-                px: 3,
-                borderRadius: "8px",
-                textTransform: "none",
-                display: "block",
-                mx: "auto",
-                mt: 4,
-              }}
-            >
-              Edit Personal Info
-            </Button>
+            {editMode ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 3 }}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<SaveIcon />}
+                  onClick={handleEditSave}
+                  disabled={editLoading}
+                >
+                  Save
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  startIcon={<CancelIcon />}
+                  onClick={handleEditCancel}
+                  disabled={editLoading}
+                >
+                  Cancel
+                </Button>
+              </Box>
+            ) : (
+              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                <Button
+                  variant="contained"
+                  sx={{
+                    bgcolor: "#c2410c",
+                    "&:hover": { bgcolor: "#a0300a" },
+                    color: "white",
+                    fontWeight: "semibold",
+                    py: 1,
+                    px: 3,
+                    borderRadius: "8px",
+                    textTransform: "none",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                  startIcon={<EditIcon />}
+                  onClick={handleEditClick}
+                >
+                  Edit Personal Info
+                </Button>
+              </Box>
+            )}
           </TabPanel>
           <TabPanel value={tabValue} index={1}>
-            <Typography variant="body1" sx={{ color: "#9e9e9e", textAlign: "center" }}>
+            <Typography
+              variant="body1"
+              sx={{ color: "#9e9e9e", textAlign: "center" }}
+            >
               You haven't written any blogs yet.
             </Typography>
           </TabPanel>

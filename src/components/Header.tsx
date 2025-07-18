@@ -17,6 +17,7 @@ export default function Header() {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     localStorage.removeItem("username");
+    localStorage.removeItem("memberId");
     setIsLoggedIn(false);
     setUserRole("");
 

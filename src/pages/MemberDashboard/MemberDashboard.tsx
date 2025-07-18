@@ -12,6 +12,7 @@ export default function MemberDashboard() {
   const [userData, setUserData] = useState<any>(null);
   const [progressWeeks, setProgressWeeks] = useState<any[]>([]);
   const [plan, setPlan] = useState<any>(null);
+  const [showDebug, setShowDebug] = useState(false);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -76,6 +77,12 @@ export default function MemberDashboard() {
     );
   }
 
+  // Filter progressWeeks to only include weeks whose weekStartDate is today or earlier
+  const today = new Date();
+  const filteredProgressWeeks = progressWeeks.filter(
+    w => new Date(w.weekStartDate) <= today
+  );
+
   return (
     <main>
       <Box className="dashboard-root">
@@ -116,7 +123,7 @@ export default function MemberDashboard() {
         </Box>
 
         <div className="dashboard-main-grid">
-          <ProgressBarCard plan={plan} progressWeeks={progressWeeks} />
+          <ProgressBarCard plan={plan} progressWeeks={filteredProgressWeeks} />
 
           <div className="dashboard-card">
             <div className="dashboard-card-content">
@@ -148,7 +155,7 @@ export default function MemberDashboard() {
               </Typography>
             </div>
             <Typography variant="h3" className="dashboard-highlight-text text-green-600">
-              ${userData.moneySaved.toFixed(2)}
+              {userData.moneySaved.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })}
             </Typography>
             <Typography variant="body1" className="dashboard-card-desc">
               By not smoking
@@ -266,6 +273,51 @@ export default function MemberDashboard() {
             )}
           </div>
         </div>
+        {/* Debug button and panel */}
+        <button
+          onClick={() => setShowDebug(v => !v)}
+          style={{
+            position: 'fixed',
+            bottom: 10,
+            left: 10,
+            zIndex: 10000,
+            background: 'white',
+            border: '1px solid #ccc',
+            borderRadius: '50%',
+            width: 32,
+            height: 32,
+            fontSize: 20,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 0 8px rgba(0,0,0,0.10)'
+          }}
+          title="Show debug info"
+        >
+          🐞
+        </button>
+        {showDebug && (
+          <div style={{
+            position: 'fixed',
+            bottom: 50,
+            left: 10,
+            background: '#fff',
+            zIndex: 9999,
+            fontSize: 12,
+            padding: 8,
+            border: '1px solid #ccc',
+            maxHeight: '40vh',
+            maxWidth: '40vw',
+            overflow: 'auto',
+            resize: 'both',
+            boxShadow: '0 0 8px rgba(0,0,0,0.15)'
+          }}>
+            <div><b>plan.taperingSchedule:</b> <pre style={{whiteSpace: 'pre-wrap', wordBreak: 'break-all'}}>{JSON.stringify(plan?.taperingSchedule, null, 2)}</pre></div>
+            <div><b>progressWeeks:</b> <pre style={{whiteSpace: 'pre-wrap', wordBreak: 'break-all'}}>{JSON.stringify(progressWeeks, null, 2)}</pre></div>
+            <div><b>filteredProgressWeeks (used for progress):</b> <pre style={{whiteSpace: 'pre-wrap', wordBreak: 'break-all'}}>{JSON.stringify(filteredProgressWeeks, null, 2)}</pre></div>
+          </div>
+        )}
       </Box>
     </main>
   );
