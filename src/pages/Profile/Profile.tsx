@@ -15,7 +15,6 @@ import {
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 
-// TabPanel component for tabs
 function TabPanel(props: any) {
   const { children, value, index, ...other } = props;
   return (
@@ -31,6 +30,8 @@ function TabPanel(props: any) {
   );
 }
 
+const API_BASE = "http://localhost:8082/api";
+
 export default function UserProfile() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -39,7 +40,6 @@ export default function UserProfile() {
   const [uploadMsg, setUploadMsg] = useState("");
   const [avatar, setAvatar] = useState<string | null>(null);
   const [tabValue, setTabValue] = useState(0);
-  // useRef is used to get a reference to the hidden file input, so we can trigger it programmatically from a custom button
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -50,7 +50,7 @@ export default function UserProfile() {
         const token = localStorage.getItem("token");
         const usernameStr = localStorage.getItem("username");
         const response = await axios.get(
-          `http://localhost:8082/api/account/${usernameStr}/profile`,
+          `${API_BASE}/account/${usernameStr}/profile`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -59,7 +59,6 @@ export default function UserProfile() {
           }
         );
         setUser(response.data);
-        // Fetch avatar after profile
         if (response.data && response.data.memberId) {
           fetchAvatar(response.data.memberId, token);
         }
@@ -72,7 +71,7 @@ export default function UserProfile() {
     const fetchAvatar = async (memberId: number, token: string | null) => {
       try {
         const res = await axios.get(
-          `http://localhost:8082/api/member/${memberId}/avatar`,
+          `${API_BASE}/member/${memberId}/avatar`, // doesnt work yet due to not having memberID
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -91,12 +90,11 @@ export default function UserProfile() {
       }
     };
     fetchProfile();
-    // eslint-disable-next-line
   }, []);
 
   const handleAvatarButtonClick = () => {
     if (fileInputRef.current) {
-      fileInputRef.current.value = ""; // reset file input
+      fileInputRef.current.value = "";
       fileInputRef.current.click();
     }
   };
@@ -111,7 +109,7 @@ export default function UserProfile() {
       const formData = new FormData();
       formData.append("file", file);
       await axios.post(
-        `http://localhost:8082/api/member/${user.memberId}/avatar`,
+        `${API_BASE}/member/${user.memberId}/avatar`, // doesnt work yet due to not having memberID
         formData,
         {
           headers: {
@@ -125,7 +123,7 @@ export default function UserProfile() {
       // Refresh avatar after upload
       if (user.memberId) {
         const res = await axios.get(
-          `http://localhost:8082/api/member/${user.memberId}/avatar`,
+          `${API_BASE}/member/${user.memberId}/avatar`, // doesnt work yet due to not having memberID
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -191,15 +189,13 @@ export default function UserProfile() {
           p: { xs: 2, sm: 3, lg: 4 },
           fontFamily: "Inter, sans-serif",
           color: "#424242",
-          mt: { xs: "80px", sm: "80px" }, // Add margin-top to avoid header overlap
-          width: "100%",
-          maxWidth: "none", // remove max width
+          mt: { xs: "80px", sm: "80px" },
         }}
       >
         <Paper
           elevation={4}
           sx={{
-            maxWidth: { xs: "100%", md: "1200px" }, // wider!
+            maxWidth: { xs: "100%", md: "800px" },
             mx: "auto",
             mt: { xs: 2, sm: 4 },
             p: { xs: 2, sm: 3 },

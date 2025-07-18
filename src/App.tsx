@@ -25,6 +25,7 @@ import MembersList from "./pages/Dashboard/Members/MembersList";
 import CoachesList from "./pages/Dashboard/Coaches/CoachesList";
 import StaffsList from "./pages/Dashboard/Staffs/StaffsList";
 import Feedback from "./pages/Dashboard/Feedback/Feedback";
+import MemberDashboard from "./pages/MemberDashboard/MemberDashboard";
 
 export default function App() {
   return (
@@ -100,6 +101,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
           <Route
             path="/create-blog"
             element={
@@ -113,6 +115,14 @@ export default function App() {
             element={
               <ProtectedRoute allowedRoles={["coach"]}>
                 <CoachDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/member-dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["member"]}>
+                <MemberDashboard />
               </ProtectedRoute>
             }
           />

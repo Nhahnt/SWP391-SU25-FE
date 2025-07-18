@@ -1,0 +1,248 @@
+/* Root container */
+.dashboard-root {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding: 2rem 1rem 2rem 1rem;
+  font-family: 'Inter', sans-serif;
+  color: #424242;
+  margin-top: 80px;
+}
+
+.dashboard-loading {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Card styles */
+.dashboard-card {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #eeeeee;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  padding: 2rem 1.5rem;
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.dashboard-quitplan {
+  background: #fff;
+  color: #c2410c;
+  box-shadow: 0 8px 24px rgba(194,65,12,0.08);
+  border-left: 8px solid #c2410c;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 2.5rem;
+  padding: 2rem 2rem 2rem 2.5rem;
+}
+.dashboard-quitplan-content {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+.dashboard-quitplan-btn {
+  background: #c2410c !important;
+  color: white !important;
+  font-weight: bold !important;
+  border-radius: 8px !important;
+  padding: 0.75rem 2rem !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+  text-transform: none !important;
+  font-size: 1rem !important;
+  margin-left: 1.5rem !important;
+  margin-top: 0 !important;
+  border: none !important;
+}
+.dashboard-quitplan-btn:hover {
+  background: #a0300a !important;
+  color: white !important;
+}
+.dashboard-quitplan .dashboard-card-title {
+  color: #c2410c;
+  font-weight: 700;
+  font-size: 1.5rem;
+}
+.dashboard-quitplan .dashboard-card-desc {
+  color: #616161;
+  font-size: 1.1rem;
+  margin-top: 0.5rem;
+}
+.dashboard-quitplan .dashboard-emoji {
+  font-size: 2.5rem;
+  margin-right: 1rem;
+}
+
+/* Main grid layout */
+.dashboard-main-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto 2rem auto;
+}
+@media (min-width: 768px) {
+  .dashboard-main-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .dashboard-topblogs {
+    grid-column: span 2;
+  }
+}
+
+.dashboard-card-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.dashboard-emoji {
+  font-size: 2rem;
+  margin-right: 0.5rem;
+}
+.dashboard-card-title {
+  font-weight: 600;
+  color: #c2410c;
+  font-size: 1.25rem;
+}
+.dashboard-card-desc {
+  color: #757575;
+  margin-top: 0.5rem;
+  font-size: 1rem;
+}
+.dashboard-progress-bar {
+  height: 10px !important;
+  border-radius: 5px !important;
+  background-color: #e0e0e0 !important;
+  margin-bottom: 0.5rem;
+}
+.dashboard-progress-bar .MuiLinearProgress-bar {
+  background-color: #c2410c !important;
+}
+.dashboard-progress-text {
+  font-weight: bold;
+  color: #c2410c;
+  margin-top: 1rem;
+  text-align: center;
+  font-size: 1.5rem;
+}
+.dashboard-highlight-text {
+  font-weight: bold;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
+  text-align: center;
+}
+.dashboard-btn-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+.dashboard-outline-btn {
+  color: #c2410c !important;
+  border-color: #c2410c !important;
+  text-transform: none !important;
+  font-weight: bold !important;
+}
+.dashboard-outline-btn:hover {
+  background: #c2410c1a !important;
+  border-color: #c2410c !important;
+}
+.dashboard-orange-btn {
+  background: #c2410c !important;
+  color: white !important;
+  text-transform: none !important;
+  font-weight: bold !important;
+}
+.dashboard-orange-btn:hover {
+  background: #a0300a !important;
+}
+.dashboard-link-btn {
+  color: #c2410c !important;
+  margin-top: 0.75rem !important;
+  display: block !important;
+  text-transform: none !important;
+  font-weight: 500 !important;
+}
+.dashboard-link-btn:hover {
+  text-decoration: underline !important;
+}
+
+/* Blog list */
+.dashboard-blog-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex-grow: 1;
+}
+.dashboard-blog-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f5f5f5;
+}
+.dashboard-blog-list-item:last-child {
+  border-bottom: none;
+}
+.dashboard-blog-title {
+  font-weight: 500;
+  color: #424242;
+}
+.dashboard-blog-meta {
+  color: #9e9e9e;
+  font-size: 0.95rem;
+}
+
+/* Quick Actions */
+.dashboard-quick-actions {
+  max-width: 900px;
+  margin: 2rem auto 2rem auto;
+  text-align: center;
+}
+.dashboard-quick-title {
+  font-weight: bold;
+  color: #616161;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+.dashboard-quick-btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.italic {
+  font-style: italic;
+}
+
+@media (max-width: 767px) {
+  .dashboard-main-grid {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-topblogs {
+    grid-column: span 1;
+  }
+  .dashboard-card {
+    padding: 1.25rem 0.75rem;
+  }
+  .dashboard-quitplan {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.25rem 1rem 1.25rem 1.25rem;
+  }
+  .dashboard-quitplan-btn {
+    margin-left: 0 !important;
+    margin-top: 1rem !important;
+    width: 100%;
+  }
+}

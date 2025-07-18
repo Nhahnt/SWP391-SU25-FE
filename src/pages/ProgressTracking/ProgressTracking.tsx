@@ -25,6 +25,8 @@ import { WeeklyChartTabs } from "./Components/WeeklyChart";
 import { DailyProgress, WeeklyReport } from "./models/type";
 import Card from "../../components/shared/Card";
 
+const API_BASE = "http://localhost:8082/api";
+
 export function ProgressTracking() {
   const [todayReport, setTodayReport] = useState<DailyProgress | null>(null);
   const [inputCount, setInputCount] = useState<number | "">("");
@@ -39,7 +41,7 @@ export function ProgressTracking() {
     const checkPlan = async () => {
       try {
         const token = localStorage.getItem("token");
-        await axios.get("http://localhost:8082/api/plans", {
+        await axios.get(`${API_BASE}/plans`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setHasPlan(true);
@@ -57,7 +59,7 @@ export function ProgressTracking() {
       try {
         const token = localStorage.getItem("token");
         const res = await axios.get(
-          "http://localhost:8082/api/smoking-records/progress/all-weeks",
+          `${API_BASE}/smoking-records/progress/all-weeks`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -155,13 +157,13 @@ export function ProgressTracking() {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        "http://localhost:8082/api/smoking-records/record",
+        `${API_BASE}/smoking-records/record`,
         { date, cigarettesSmoked: count, message },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       const res = await axios.get(
-        "http://localhost:8082/api/smoking-records/progress/all-weeks",
+        `${API_BASE}/smoking-records/progress/all-weeks`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setReportData(res.data);
@@ -191,7 +193,7 @@ export function ProgressTracking() {
     setDeleteError("");
     try {
       const token = localStorage.getItem("token");
-      await axios.delete("http://localhost:8082/api/plans", {
+      await axios.delete(`${API_BASE}/plans`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setDeleteSuccess(true);
