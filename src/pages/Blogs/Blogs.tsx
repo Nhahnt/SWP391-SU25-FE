@@ -1,159 +1,337 @@
-import { useState } from "react";
-import SearchBar from "../../components/shared/SearchBar";
-import { Box, Container } from "@mui/material";
-import AppBreadcrumbs from "../../components/shared/BreadCrumbs";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-
 import {
+  Box,
+  CircularProgress,
   Card,
   CardMedia,
   CardContent,
-  CardActions,
   Button,
   Typography,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
 } from "@mui/material";
+import SearchBar from "../../components/shared/SearchBar";
+import AppBreadcrumbs from "../../components/shared/BreadCrumbs";
+import axios from "axios";
+import { Link } from "react-router-dom";
 
-type Blog = {
+export type Blog = {
   id: number;
   title: string;
   content: string;
-  image: string;
+  thumbnail: string;
+  userId: number | null;
+  authorName: string | null;
+  createdAt: string;
+  updatedAt: string;
+  category:
+    | "QUIT_JOURNEY"
+    | "SUCCES_STORY"
+    | "EXPERIENCE"
+    | "MOTIVATION"
+    | "CHALLENGE"
+    | "LIFE_STORY"
+    | "__";
+  featured: boolean;
+  published: boolean;
 };
 
-const mockBlogs: Blog[] = [
-  {
-    id: 1,
-    title: "How to Quit Smoking",
-    content: "Learn effective steps to quit smoking and regain your health.",
-    image:
-      "https://images.unsplash.com/photo-1512067053627-3cb65e51a128?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", // man quitting smoking
-  },
-  {
-    id: 2,
-    title: "Healthy Habits for a Better Life",
-    content: "Discover daily habits that improve your body and mind.",
-    image:
-      "https://images.unsplash.com/photo-1512067053627-3cb65e51a128?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", // healthy food
-  },
-  {
-    id: 3,
-    title: "Benefits of Quitting Smoking",
-    content: "See how your body heals after quitting cigarettes.",
-    image:
-      "https://images.unsplash.com/photo-1512067053627-3cb65e51a128?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", // lungs
-  },
-  {
-    id: 4,
-    title: "Support Systems that Help",
-    content: "Find the right community or app to support your journey.",
-    image:
-      "https://images.unsplash.com/photo-1512067053627-3cb65e51a128?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", // support group
-  },
-  {
-    id: 5,
-    title: "Managing Withdrawal Symptoms",
-    content: "Tips to reduce cravings and deal with withdrawal.",
-    image:
-      "https://images.unsplash.com/photo-1512067053627-3cb65e51a128?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", // calm/relaxation
-  },
-];
-
 export default function Blogs() {
-  const navigate = useNavigate();
+  const [blogs, setBlogs] = useState<Blog[]>([]);
   const [searchText, setSearchText] = useState("");
+  const [expandedPostIds, setExpandedPostIds] = useState<number[]>([]);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingInitial, setLoadingInitial] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [likes, setLikes] = useState<Record<number, number>>({});
+  const [dislikes, setDislikes] = useState<Record<number, number>>({});
+  const [userReactions, setUserReactions] = useState<
+    Record<number, "like" | "dislike" | null>
+  >({});
+  const [category, setCategory] = useState("__");
 
-  const filteredBlogs = mockBlogs.filter((blog) =>
+  const containerRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+
+  const navigate = useNavigate();
+  const token = localStorage.getItem("token");
+  const isStaff = localStorage.getItem("role") === "staff";
+
+  const fetchBlogs = async (
+    currentPage: number,
+    isLoadMore = false,
+    category: string = "__"
+  ) => {
+    isLoadMore ? setLoadingMore(true) : setLoadingInitial(true);
+
+    try {
+      const res = await axios.get("http://localhost:8082/api/blogs/feed", {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          page: currentPage,
+          size: 10,
+          category: category,
+        },
+        paramsSerializer: (params) => {
+          const query = new URLSearchParams();
+          for (const key in params) {
+            const value = params[key];
+            Array.isArray(value)
+              ? value.forEach((v) => query.append(key, v))
+              : query.append(key, value);
+          }
+          return query.toString();
+        },
+      });
+
+      const data = Array.isArray(res.data) ? res.data : res.data.content || [];
+      setBlogs((prev) => [...prev, ...data]);
+
+      if (data.length === 0 || data.length < 10) setHasMore(false);
+    } catch (err) {
+      console.error("Failed to load blogs:", err);
+      setHasMore(false);
+    } finally {
+      setLoadingInitial(false);
+      setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBlogs(0);
+  }, []);
+
+  useEffect(() => {
+    if (page > 0) fetchBlogs(page, true, category);
+  }, [page, category]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const handleScroll = () => {
+      const nearBottom =
+        el.scrollTop + el.clientHeight >= el.scrollHeight - 100;
+
+      if (nearBottom && hasMore && !loadingMore && !debounceRef.current) {
+        debounceRef.current = setTimeout(() => {
+          setPage((prev) => prev + 1);
+          debounceRef.current = null;
+        }, 300);
+      }
+    };
+
+    el.addEventListener("scroll", handleScroll);
+    return () => {
+      el.removeEventListener("scroll", handleScroll);
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [loadingMore, hasMore]);
+
+  const toggleExpanded = (id: number) => {
+    setExpandedPostIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const formatCategory = (category: string | undefined): string => {
+    const map: Record<string, string> = {
+      QUIT_JOURNEY: "Quit Journey",
+      SUCCES_STORY: "Success Story",
+      EXPERIENCE: "Experience",
+      MOTIVATION: "Motivational",
+      CHALLENGE: "Challenge",
+      LIFE_STORY: "Life Story",
+    };
+    return category ? map[category] || "" : "";
+  };
+
+  const handleBlogLikeToggle = async (
+    blog: Blog,
+    action: "like" | "unlike"
+  ) => {
+    try {
+      const res = await axios.post(
+        `http://localhost:8082/api/blogs/${blog.id}/${action}`,
+        blog,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return res.data;
+    } catch (err) {
+      console.error(`Không thể ${action} blog`, err);
+      throw err;
+    }
+  };
+
+  const filteredBlogs = blogs.filter((blog) =>
     blog.title.toLowerCase().includes(searchText.toLowerCase())
   );
 
   return (
-    <div className="w-full flex flex-col items-center bg-white space-y-4">
-      {/* Full Width Hero Section */}
-      <Box
-        sx={{
-          background: `
-            linear-gradient(to bottom right, rgba(255, 242, 224, 0.8), rgba(255, 255, 255, 0.9)),
-            url('/smoking_background.jpg')
-          `,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-
-          display: "flex",
-          alignItems: "center",
-          width: "100%",
-          height: 240,
-        }}
-      >
-        <Container maxWidth="lg">
-          <Box textAlign="center" py={8}>
-            <Typography variant="h3" fontWeight="bold" gutterBottom>
-              <Box
-                component="span"
-                sx={{
-                  background: "black",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
-              >
-                Blogs
-              </Box>
-            </Typography>
-          </Box>
-        </Container>
-      </Box>
-      <div className="w-full flex flex-row items-center justify-between p-4">
+    <div className="w-full flex flex-col items-center space-y-4 h-[80vh]">
+      <div className="w-full flex justify-between items-center p-4 sticky top-0 z-10 bg-white shadow-sm">
         <AppBreadcrumbs />
         <SearchBar
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          className="mb-6"
         />
-      </div>
-
-      <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 auto-rows-auto gap-6 bg-transparent px-4">
-        {filteredBlogs.map((blog) => (
-          <Card
-            key={blog.id}
-            className="shadow-md rounded-lg transform transition-all duration-300 ease-in-out hover:shadow-xl hover:-translate-y-1"
-          >
-            <CardMedia
-              component="img"
-              image={blog.image}
-              alt={blog.title}
-              sx={{
-                height: 320,
-                width: "100%",
-                objectFit: "cover",
-              }}
-            />
-            <CardContent
-              sx={{
-                padding: 2,
+        <Box sx={{ minWidth: 180 }}>
+          <FormControl fullWidth size="small">
+            <InputLabel>Category</InputLabel>
+            <Select
+              value={category}
+              label="Category"
+              onChange={(e) => {
+                const val = e.target.value;
+                setCategory(val);
               }}
             >
-              <Typography
-                variant="h6"
-                component="div"
-                className="font-bold mb-2"
-              >
-                {blog.title}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {blog.content}
-              </Typography>
-            </CardContent>
-            <CardActions>
-              <Button
-                size="small"
-                color="primary"
-                onClick={() => navigate(`/blogs/${blog.id}`)}
-              >
-                See more
-              </Button>
-            </CardActions>
-          </Card>
-        ))}
+              <MenuItem value="__">All Categories</MenuItem>
+              <MenuItem value="QUIT_JOURNEY">Quit Journey</MenuItem>
+              <MenuItem value="SUCCES_STORY">Success Story</MenuItem>
+              <MenuItem value="EXPERIENCE">Experience</MenuItem>
+              <MenuItem value="MOTIVATION">Motivational</MenuItem>
+              <MenuItem value="CHALLENGE">Challenge</MenuItem>
+              <MenuItem value="LIFE_STORY">Life Story</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+        {isStaff && (
+          <Button
+            variant="contained"
+            sx={{ backgroundColor: "#c2410c" }}
+            onClick={() => navigate("/create-blog")}
+          >
+            Create Blog
+          </Button>
+        )}
+      </div>
+
+      <div
+        ref={containerRef}
+        className="w-full md:w-[60%] flex flex-col gap-6 px-4 pb-4 overflow-y-auto flex-1"
+        style={{ maxHeight: "calc(100vh - 40px)" }}
+      >
+        {loadingInitial ? (
+          <div className="w-full flex justify-center py-10">
+            <CircularProgress />
+          </div>
+        ) : filteredBlogs.length === 0 ? (
+          <p className="text-center text-gray-500">Cannot find any blogs.</p>
+        ) : (
+          filteredBlogs.map((blog) => (
+            <Card
+              key={blog.id}
+              className="shadow-sm rounded-xl transition-all duration-200 bg-white min-h-[70vh]"
+            >
+              <div className="flex items-center gap-3 px-4 pt-4">
+                <div>
+                  <p className="font-medium">
+                    {blog.authorName || "Anonymous"}{" "}
+                    {"> " + formatCategory(blog.category)}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {new Date(blog.createdAt).toLocaleDateString("vi-VN")}
+                  </p>
+                </div>
+              </div>
+              <Link to={`/blogs/${blog.id}`}>
+                <CardMedia
+                  component="img"
+                  image={blog.thumbnail || "/no-image.png"}
+                  alt={blog.title}
+                  onError={(e) => {
+                    const img = e.target as HTMLImageElement;
+                    img.onerror = null;
+                    img.src = "/no-image.png";
+                  }}
+                  sx={{
+                    height: 360,
+                    width: "100%",
+                    objectFit: "cover",
+                    marginTop: 2,
+                  }}
+                />
+              </Link>
+
+              <CardContent sx={{ px: 2, pb: 1 }}>
+                {/* Content */}
+                <Typography variant="body1" className="mb-2">
+                  {expandedPostIds.includes(blog.id)
+                    ? blog.content
+                    : blog.content.length > 200
+                    ? `${blog.content.slice(0, 200)}...`
+                    : blog.content}
+                </Typography>
+
+                {/* Reaction buttons */}
+                <Box className="flex items-center justify-between mt-2">
+                  <div className="flex gap-2 items-center">
+                    <Button
+                      size="small"
+                      variant={
+                        userReactions[blog.id] === "like"
+                          ? "contained"
+                          : "outlined"
+                      }
+                      sx={{ minWidth: 60 }}
+                      onClick={() => handleBlogLikeToggle(blog, "like")}
+                    >
+                      👍 {likes[blog.id] || 0}
+                    </Button>
+
+                    <Button
+                      size="small"
+                      variant={
+                        userReactions[blog.id] === "dislike"
+                          ? "contained"
+                          : "outlined"
+                      }
+                      sx={{ minWidth: 60 }}
+                      onClick={() => handleBlogLikeToggle(blog, "unlike")}
+                    >
+                      👎 {dislikes[blog.id] || 0}
+                    </Button>
+                  </div>
+
+                  {blog.content.length > 200 && (
+                    <Box sx={{ textAlign: "right" }}>
+                      <Button
+                        size="small"
+                        sx={{ color: "#c2410c" }}
+                        onClick={() => toggleExpanded(blog.id)}
+                      >
+                        {expandedPostIds.includes(blog.id)
+                          ? "Thu gọn"
+                          : "Xem thêm"}
+                      </Button>
+                    </Box>
+                  )}
+                </Box>
+              </CardContent>
+            </Card>
+          ))
+        )}
+
+        {loadingMore && (
+          <div className="w-full flex justify-center py-4">
+            <CircularProgress size={28} />
+          </div>
+        )}
+
+        {!hasMore && !loadingInitial && (
+          <p className="text-center text-gray-400 text-sm py-4">
+            Đã hiển thị tất cả bài viết.
+          </p>
+        )}
       </div>
     </div>
   );

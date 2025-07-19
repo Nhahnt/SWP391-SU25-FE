@@ -24,6 +24,15 @@ import { WeeklyTargetCard } from "./Components/WeeklyTarget";
 import { WeeklyChartTabs } from "./Components/WeeklyChart";
 import { DailyProgress, WeeklyReport } from "./models/type";
 import Card from "../../components/shared/Card";
+import { report } from "process";
+
+const getTodayString = (): string => {
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, "0");
+  const dd = String(today.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+};
 
 const API_BASE = "http://localhost:8082/api";
 
@@ -31,6 +40,7 @@ export function ProgressTracking() {
   const [todayReport, setTodayReport] = useState<DailyProgress | null>(null);
   const [inputCount, setInputCount] = useState<number | "">("");
   const [reportData, setReportData] = useState<WeeklyReport[]>([]);
+  const [reportDate, setReportDate] = useState(getTodayString());
   const [loading, setLoading] = useState(true);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
@@ -74,14 +84,6 @@ export function ProgressTracking() {
 
     fetchProgress();
   }, []);
-
-  const getTodayString = (): string => {
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, "0");
-    const dd = String(today.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
-  };
 
   const calculateCurrentStreak = (): number => {
     const allDays: DailyProgress[] = reportData
@@ -138,10 +140,9 @@ export function ProgressTracking() {
     };
   });
 
-  const submitTodayReport = async (count: number) => {
-    const date = getTodayString();
+  const submitTodayReport = async (count: number, date: string) => {
     const target = 12;
-
+    console.log(reportData);
     let status: DailyProgress["status"];
     if (count > target) status = "OVER";
     else if (count === target) status = "ON_TARGET";
@@ -289,11 +290,13 @@ export function ProgressTracking() {
 
       <div className="flex gap-4">
         <TodayReportCard
+          reportDate={reportDate}
+          setReportDate={setReportDate}
           inputCount={inputCount}
           onChange={setInputCount}
           onSubmit={() => {
             if (inputCount !== "" && !isNaN(inputCount)) {
-              submitTodayReport(+inputCount);
+              submitTodayReport(+inputCount, reportDate);
             }
           }}
           todayReport={todayReport}

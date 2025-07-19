@@ -25,10 +25,9 @@ import {
   Coffee,
 } from "lucide-react";
 import axios from "axios";
-import { GroupedTriggerSelector } from "./Components/TriggersSection";
+import { GroupedSelector } from "./Components/GroupedSelector";
 import Card from "../../components/shared/Card";
 import { useNavigate } from "react-router-dom";
-
 const options = ["2", "3", "4", "5", "6"];
 
 const reasonsList = [
@@ -145,47 +144,40 @@ const groupedSupportMethods = [
     group: "Support from People",
     items: [
       {
-        id: "s1",
         value: "PP_SHARE_WITH_IMPORTANT_PEOPLE",
         label: "Share with important people",
       },
-      { id: "s2", value: "PP_FIND_QUIT_BUDDY", label: "Find a quit buddy" },
+      { value: "PP_FIND_QUIT_BUDDY", label: "Find a quit buddy" },
       {
-        id: "s3",
         value: "PP_ASK_SUCCESSFUL_PEOPLE",
         label: "Ask people who quit successfully",
       },
-      { id: "s4", value: "PP_JOIN_ONLINE_COMMUNITY", label: "Join an online community" },
-      { id: "s5", value: "PP_REACH_OUT_OTHER", label: "Reach out to others for support" },
+      { value: "PP_JOIN_ONLINE_COMMUNITY", label: "Join an online community" },
+      { value: "PP_REACH_OUT_OTHER", label: "Reach out to others for support" },
     ],
   },
   {
     group: "Support from Experts",
     items: [
       {
-        id: "s6",
         value: "EX_TALK_HEALTH_PROFESSIONAL",
         label: "Talk to a health professional",
       },
-      { id: "s7", value: "EX_INPERSON_COUNSELING", label: "In-person counseling" },
-      { id: "s8", value: "EX_CALL_QUITLINE", label: "Call a quitline" },
+      { value: "EX_INPERSON_COUNSELING", label: "In-person counseling" },
+      { value: "EX_CALL_QUITLINE", label: "Call a quitline" },
       {
-        id: "s9",
         value: "EX_SIGNUP_SMOKEFREE_TEXT",
         label: "Sign up for SmokeFree texts",
       },
       {
-        id: "s10",
         value: "EX_DOWNLOAD_SMOKEFREE_APP",
         label: "Download the SmokeFree app",
       },
       {
-        id: "s11",
         value: "EX_CHAT_ONLINE_COUNSELOR",
         label: "Chat with an online counselor",
       },
       {
-        id: "s12",
         value: "EX_CONNECT_OTHER_EXPERTS",
         label: "Connect with other experts",
       },
@@ -194,22 +186,20 @@ const groupedSupportMethods = [
   {
     group: "Distraction Methods",
     items: [
-      { id: "s13", value: "DI_DRINK_WATER", label: "Drink water" },
-      { id: "s14", value: "DI_EAT_CRUNCHY_SNACK", label: "Eat a crunchy snack" },
-      { id: "s15", value: "DI_DEEP_BREATHS", label: "Take deep breaths" },
-      { id: "s16", value: "DI_EXERCISE", label: "Exercise or move your body" },
+      { value: "DI_DRINK_WATER", label: "Drink water" },
+      { value: "DI_EAT_CRUNCHY_SNACK", label: "Eat a crunchy snack" },
+      { value: "DI_DEEP_BREATHS", label: "Take deep breaths" },
+      { value: "DI_EXERCISE", label: "Exercise or move your body" },
       {
-        id: "s17",
         value: "DI_PLAY_GAME_OR_LISTEN_MEDIA",
         label: "Play a game or listen to music",
       },
-      { id: "s18", value: "DI_TEXT_OR_CALL_SUPPORTER", label: "Text or call a supporter" },
+      { value: "DI_TEXT_OR_CALL_SUPPORTER", label: "Text or call a supporter" },
       {
-        id: "s19",
         value: "DI_GO_TO_NONSMOKING_PLACE",
         label: "Go to a non-smoking place",
       },
-      { id: "s20", value: "DI_FIND_OTHER_DISTRACT", label: "Find other distractions" },
+      { value: "DI_FIND_OTHER_DISTRACT", label: "Find other distractions" },
     ],
   },
 ];
@@ -225,8 +215,6 @@ export default function CreateQuitPlan() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [showError, setShowError] = useState(false);
   const navigate = useNavigate();
 
   const toggleSelect = (list: string[], setList: Function, value: string) => {
@@ -247,41 +235,32 @@ export default function CreateQuitPlan() {
       triggers,
       strategies,
     });
-    
-    // Validation
     if (!quitDate) {
       setError("Vui lòng chọn ngày bắt đầu cai thuốc!");
-      setShowError(true);
       return;
     }
     if (!duration) {
       setError("Vui lòng chọn thời lượng của kế hoạch!");
-      setShowError(true);
       return;
     }
     if (!dailyCigarettes || parseInt(dailyCigarettes) <= 0) {
       setError("Vui lòng nhập số điếu hút mỗi ngày!");
-      setShowError(true);
       return;
     }
     if (!cigaretteCost || parseInt(cigaretteCost) <= 0) {
       setError("Vui lòng nhập giá tiền một bao thuốc!");
-      setShowError(true);
       return;
     }
     if (reasons.length === 0) {
       setError("Vui lòng chọn ít nhất một lý do cai thuốc!");
-      setShowError(true);
       return;
     }
     if (triggers.length === 0) {
       setError("Vui lòng chọn ít nhất một yếu tố kích thích!");
-      setShowError(true);
       return;
     }
     if (strategies.length === 0) {
       setError("Vui lòng chọn ít nhất một phương pháp hỗ trợ!");
-      setShowError(true);
       return;
     }
 
@@ -301,33 +280,21 @@ export default function CreateQuitPlan() {
       };
       const token = localStorage.getItem("token");
 
-      if (!token) {
-        throw new Error("Authentication required");
-      }
-
       const response = await axios.post(
         "http://localhost:8082/api/plans",
         payload,
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
           },
         }
       );
 
       setSuccess("Kế hoạch của bạn đã được tạo thành công!");
-      setShowSuccess(true);
-      
-      // Navigate after a short delay to show success message
-      setTimeout(() => {
-        navigate("/quit-plan");
-      }, 2000);
+      navigate("/quit-plan");
     } catch (err: any) {
-      console.error("Error creating quit plan:", err);
-      const errorMessage = err?.response?.data || err?.message || "Đã xảy ra lỗi khi tạo kế hoạch.";
-      setError(errorMessage);
-      setShowError(true);
+      console.error(err);
+      setError("Đã xảy ra lỗi khi tạo kế hoạch.");
     } finally {
       setIsSubmitting(false);
     }
@@ -398,7 +365,6 @@ export default function CreateQuitPlan() {
             label="Average cigarettes per day"
             value={dailyCigarettes}
             onChange={(e) => setDailyCigarettes(e.target.value)}
-            inputProps={{ min: 1 }}
           />
         </Card>
 
@@ -410,6 +376,7 @@ export default function CreateQuitPlan() {
             onChange={(e) => setCigaretteCost(e.target.value)}
             inputProps={{ min: 1 }}
           />
+          \
           <Typography
             variant="body1"
             className="font-semibold mt-4 text-gray-600"
@@ -426,28 +393,20 @@ export default function CreateQuitPlan() {
           {reasonsList.map((r) => {
             const Icon = r.icon;
             return (
-              <div
+              <Card
                 key={r.id}
                 onClick={() => toggleSelect(reasons, setReasons, r.value)}
                 className="cursor-pointer"
               >
-                <Card
-                  className={`border rounded p-3 flex flex-col justify-center items-center gap-2 transition duration-150 ${
-                    reasons.includes(r.value)
-                      ? "bg-orange-100 border-orange-500"
-                      : "hover:border-orange-300"
-                  }`}
+                <Typography
+                  variant="h6"
+                  fontWeight={500}
+                  sx={{ color: "#c2410c" }}
                 >
-                  <Typography
-                    variant="h6"
-                    fontWeight={500}
-                    sx={{ color: "#c2410c" }}
-                  >
-                    {r.label}
-                  </Typography>
-                  <Icon className="text-[#c2410c] w-7 h-7" />
-                </Card>
-              </div>
+                  {r.label}
+                </Typography>
+                <Icon className="text-[#c2410c] w-7 h-7" />
+              </Card>
             );
           })}
         </div>
@@ -456,7 +415,8 @@ export default function CreateQuitPlan() {
       {/* Section 5 */}
       <div className="space-y-4">
         <Typography variant="h6">5. Identify Your Triggers</Typography>
-        <GroupedTriggerSelector
+
+        <GroupedSelector
           groupedItems={groupedTriggers}
           selected={triggers}
           onToggle={(val) => toggleSelect(triggers, setTriggers, val)}
@@ -468,7 +428,7 @@ export default function CreateQuitPlan() {
         <Typography variant="h6">
           6. How Will You Do It? (Support Methods)
         </Typography>
-        <GroupedTriggerSelector
+        <GroupedSelector
           groupedItems={groupedSupportMethods}
           selected={strategies}
           onToggle={(val) => toggleSelect(strategies, setStrategies, val)}
@@ -484,12 +444,12 @@ export default function CreateQuitPlan() {
           onClick={handleSubmit}
           disabled={isSubmitting}
         >
-          {isSubmitting ? "Creating Plan..." : "Create My Plan"}
+          Create My Plan
         </Button>
       </div>
 
       {/* Success Snackbar */}
-      <Snackbar
+      {/* <Snackbar
         open={showSuccess}
         autoHideDuration={3000}
         onClose={() => setShowSuccess(false)}
@@ -502,10 +462,10 @@ export default function CreateQuitPlan() {
         >
           {success}
         </Alert>
-      </Snackbar>
+      </Snackbar> */}
 
       {/* Error Snackbar */}
-      <Snackbar
+      {/* <Snackbar
         open={showError}
         autoHideDuration={5000}
         onClose={() => setShowError(false)}
@@ -518,7 +478,7 @@ export default function CreateQuitPlan() {
         >
           {error}
         </Alert>
-      </Snackbar>
+      </Snackbar> */}
     </main>
   );
 }

@@ -125,7 +125,6 @@ const triggerTips = {
     ],
   },
 };
-
 interface PlanData {
   startDate: string;
   numberOfCigarettes: number;
@@ -139,7 +138,6 @@ interface PlanData {
   tips: string[];
   taperingSchedule: TaperingScheduleItem[];
 }
-
 export interface TaperingScheduleItem {
   weekNumber: number;
   startDate: string; // ISO date string, e.g., "2025-07-14"

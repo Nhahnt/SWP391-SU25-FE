@@ -1,45 +1,50 @@
-import { Box, Typography, Checkbox, Divider } from "@mui/material";
-
-interface TriggerItem {
-  id: string;
+import { Checkbox, Typography } from "@mui/material";
+import Card from "../../../components/shared/Card";
+interface GroupItem {
   value: string;
   label: string;
 }
 
-interface TriggerGroup {
+interface Group<T extends GroupItem> {
   group: string;
-  items: TriggerItem[];
+  items: T[];
 }
 
-interface Props {
-  groupedItems: TriggerGroup[];
+interface GroupedSelectorProps<T extends GroupItem> {
+  groupedItems: Group<T>[];
   selected: string[];
   onToggle: (value: string) => void;
 }
 
-export function GroupedTriggerSelector({
+export function GroupedSelector<T extends GroupItem>({
   groupedItems,
   selected,
   onToggle,
-}: Props) {
+}: GroupedSelectorProps<T>) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4">
       {groupedItems.map((group) => (
-        <div key={group.group} className="space-y-2 border rounded-lg p-4">
-          <Typography variant="h6" className="text-orange-700 font-semibold">
+        <Card key={group.group} className="space-y-2 border rounded-lg p-4">
+          <Typography variant="h6" className="text-[#c2410c] font-semibold">
             {group.group}
           </Typography>
 
           <div className="space-y-2">
             {group.items.map((item) => (
               <div
-                key={item.id}
-                className="flex items-center border rounded px-3 py-2 cursor-pointer hover:border-orange-400 transition"
+                key={item.value}
+                className="flex items-center rounded px-3 py-2 cursor-pointer hover:border-orange-400 transition"
                 onClick={() => onToggle(item.value)}
               >
                 <Checkbox
                   checked={selected.includes(item.value)}
                   onChange={() => onToggle(item.value)}
+                  sx={{
+                    color: "grey.500",
+                    "&.Mui-checked": {
+                      color: "#c2410c",
+                    },
+                  }}
                 />
                 <Typography variant="body2" className="text-sm">
                   {item.label}
@@ -47,9 +52,7 @@ export function GroupedTriggerSelector({
               </div>
             ))}
           </div>
-
-          <Divider className="mt-4" />
-        </div>
+        </Card>
       ))}
     </div>
   );

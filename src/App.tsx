@@ -19,13 +19,13 @@ import Unauthorized from "./pages/Unauthorized/Unauthorized";
 import MoodTracker from "./components/MoodTracker";
 import QuitPlanDetail from "./pages/QuitPlan/QuitPlanDetail";
 import { ProgressTracking } from "./pages/ProgressTracking/ProgressTracking";
-import { Conversations } from "./pages/Conversations/Conversations";
 import CoachDashboard from "./pages/CoachDashboard/CoachDashboard";
 import MembersList from "./pages/Dashboard/Members/MembersList";
 import CoachesList from "./pages/Dashboard/Coaches/CoachesList";
 import StaffsList from "./pages/Dashboard/Staffs/StaffsList";
 import Feedback from "./pages/Dashboard/Feedback/FeedbacksList";
 import MemberDashboard from "./pages/MemberDashboard/MemberDashboard";
+import ChatScreen from "./pages/Conversations/ChatScreen";
 
 export default function App() {
   return (
@@ -92,7 +92,40 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/quit-plan"
+            element={
+              <ProtectedRoute allowedRoles={["member", ""]}>
+                <CreateQuitPlan />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/quit-plan/"
+            element={
+              <ProtectedRoute allowedRoles={["member", ""]}>
+                <QuitPlanDetail />
+              </ProtectedRoute>
+            }
+          />
 
+          <Route
+            path="/progress-tracking"
+            element={
+              <ProtectedRoute allowedRoles={["member", ""]}>
+                <ProgressTracking />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/conversations"
+            element={
+              <ProtectedRoute allowedRoles={["member", "coach"]}>
+                <ChatScreen />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/profile"
             element={
@@ -130,7 +163,7 @@ export default function App() {
             path="/conversations"
             element={
               <ProtectedRoute allowedRoles={["member", "coach"]}>
-                <Conversations />
+                <ChatScreen />
               </ProtectedRoute>
             }
           />

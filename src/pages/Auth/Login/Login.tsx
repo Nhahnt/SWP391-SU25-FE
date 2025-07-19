@@ -22,14 +22,14 @@ export default function Login() {
         }
       );
 
-      const { token, role, memberId } = response.data;
+      const { token, role, memberId, coachId } = response.data;
 
       // Lưu vào localStorage
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);
       localStorage.setItem("username", username);
-      localStorage.setItem("memberId", memberId);
-
+      if (memberId) localStorage.setItem("memberId", memberId.toString());
+      if (coachId) localStorage.setItem("coachId", coachId.toString());
       if (role === "ADMIN" || role === "STAFF") {
         navigate("/dashboard");
       } else {

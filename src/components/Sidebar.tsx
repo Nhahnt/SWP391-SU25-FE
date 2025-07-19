@@ -28,8 +28,7 @@ export default function DashboardSidebar() {
     } else {
       setIsUsersSubMenuOpen(false);
     }
-  }, [location.pathname]); 
-
+  }, [location.pathname]);
 
   return (
     <ProSidebar
@@ -63,23 +62,40 @@ export default function DashboardSidebar() {
           }),
         }}
       >
-        <MenuItem component={<Link to="/dashboard" />} active={isActive("/dashboard")}>Overview</MenuItem>
-        <SubMenu 
+        <MenuItem
+          component={<Link to="/dashboard" />}
+          active={isActive("/dashboard")}
+        >
+          Overview
+        </MenuItem>
+        <SubMenu
           label="Users"
           open={isUsersSubMenuOpen}
           onOpenChange={(open) => setIsUsersSubMenuOpen(open)}
         >
-          <MenuItem component={<Link to="/dashboard/members" />} active={isActive("/dashboard/members")}>
+          <MenuItem
+            component={<Link to="/dashboard/members" />}
+            active={isActive("/dashboard/members")}
+          >
             Members
           </MenuItem>
-          <MenuItem component={<Link to="/dashboard/coaches" />} active={isActive("/dashboard/coaches")}>
+          <MenuItem
+            component={<Link to="/dashboard/coaches" />}
+            active={isActive("/dashboard/coaches")}
+          >
             Coaches
           </MenuItem>
-          <MenuItem component={<Link to="/dashboard/staffs" />} active={isActive("/dashboard/staffs")}>
+          <MenuItem
+            component={<Link to="/dashboard/staffs" />}
+            active={isActive("/dashboard/staffs")}
+          >
             Staffs
           </MenuItem>
         </SubMenu>
-         <MenuItem component={<Link to="/dashboard/feedback" />} active={isActive("/dashboard/feedback")}>
+        <MenuItem
+          component={<Link to="/dashboard/feedback" />}
+          active={isActive("/dashboard/feedback")}
+        >
           Feedback
         </MenuItem> 
       </Menu>
