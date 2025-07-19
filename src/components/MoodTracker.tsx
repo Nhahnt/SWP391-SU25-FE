@@ -41,8 +41,8 @@ const suggestions: Record<string, Record<string, string>> = {
 
 const style = {
   position: "fixed" as const,
-  bottom: 32,
   right: 32,
+  bottom: 32,
   zIndex: 1300,
 };
 
@@ -110,12 +110,12 @@ export default function MoodTracker() {
     <Box sx={style}>
       <IconButton
         color="primary"
-        size="large"
+        size="medium"
         onClick={handleOpen}
-        sx={{ background: "#fff7ed", boxShadow: 3, border: "2px solid #c2410c" }}
+        sx={{ background: "#fff7ed", boxShadow: 3, border: "2px solid #c2410c", width: 32, height: 32, p: 0 }}
         aria-label="Open mood tracker"
       >
-        <span style={{ fontSize: 28, color: '#c2410c' }}>💬</span>
+        <span style={{ fontSize: 14, color: '#c2410c' }}>💬</span>
       </IconButton>
       <Modal
         open={open}

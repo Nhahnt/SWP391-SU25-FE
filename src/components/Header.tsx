@@ -4,20 +4,23 @@ import { Link, useNavigate } from "react-router-dom";
 
 export default function Header() {
   const navigate = useNavigate();
-
-  // 🔁 Replace with actual auth logic
   const [isLoggedIn, setIsLoggedIn] = useState(
     () => !!localStorage.getItem("token")
   );
+
   const [userRole, setUserRole] = useState(
     () => localStorage.getItem("role") || ""
   );
+
   const role = localStorage.getItem("role");
+  
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     localStorage.removeItem("username");
+    
     localStorage.removeItem("memberId");
+    localStorage.removeItem("coachId");
     setIsLoggedIn(false);
     setUserRole("");
 
@@ -42,13 +45,13 @@ export default function Header() {
 
   return (
     <AppBar
-      position="fixed"
+      position="relative"
       elevation={0}
       sx={{
         background: "#c2410c",
-        height: "70px",
-        zIndex: 100,
+        height: "10vh",
         justifyContent: "center",
+        display: "block",
       }}
     >
       <Toolbar className="max-w-6xl mx-auto px-4 w-full flex items-center justify-between">
@@ -69,19 +72,11 @@ export default function Header() {
 
         {/* Navigation */}
         <Box className="flex gap-4 items-center">
-          <Button
-            component={Link}
-            to="/"
-            sx={navButtonStyles}
-          >
+          <Button component={Link} to="/" sx={navButtonStyles}>
             Home
           </Button>
 
-          <Button
-            component={Link}
-            to="/blogs"
-            sx={navButtonStyles}
-          >
+          <Button component={Link} to="/blogs" sx={navButtonStyles}>
             Blogs
           </Button>
 
@@ -97,34 +92,18 @@ export default function Header() {
 
           {isLoggedIn ? (
             <>
-              {userRole === "ADMIN" || userRole === "STAFF" && (
+              {userRole === "ADMIN" && (
                 <Button component={Link} to="/dashboard" sx={navButtonStyles}>
                   Dashboard
                 </Button>
               )}
-
-              {userRole === "MEMBER" && (
-                <Button
-                  component={Link}
-                  to="/view-quit-plan"
-                  sx={navButtonStyles}
-                >
-                  View Quit Plan
-                </Button>
-              )}
-
               {userRole === "ADMIN" ||
                 userRole === "STAFF" ||
-                userRole === "COACH" ||
-                userRole === "MEMBER" && (
-                  <Button
-                    component={Link}
-                    to="/profile"
-                    sx={navButtonStyles}
-                  >
+                (userRole === "MEMBER" && (
+                  <Button component={Link} to="/profile" sx={navButtonStyles}>
                     Profile
                   </Button>
-                )}
+                ))}
               <Button
                 onClick={handleLogout}
                 sx={{

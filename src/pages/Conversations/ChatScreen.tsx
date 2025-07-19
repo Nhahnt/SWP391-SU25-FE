@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import Sidebar from "./components/Sidebar";
 import ChatBox from "./components/Chatbox";
 import { Client, StompSubscription } from "@stomp/stompjs";
@@ -12,21 +12,24 @@ const ChatScreen = () => {
   );
 
   const [stompClient, setStompClient] = useState<Client | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
   const currentSubRef = useRef<StompSubscription | null>(null);
-  const role = localStorage.getItem("role");
-  const coachId = localStorage.getItem("coachId");
 
-  // Khởi tạo STOMP client
+  const coachId = localStorage.getItem("coachId");
+  const role = localStorage.getItem("role");
+
+  // Initialize STOMP client
   useEffect(() => {
     const client = new Client({
       brokerURL: "ws://localhost:8082/ws",
       reconnectDelay: 5000,
       onConnect: () => {
+        setIsConnected(true);
         console.log("Connected to WebSocket");
       },
       onStompError: (frame) => {
-        console.error("Broker reported error: " + frame.headers["message"]);
-        console.error("Additional details: " + frame.body);
+        console.error("Broker error: " + frame.headers["message"]);
+        console.error("Details: " + frame.body);
       },
     });
 
@@ -38,27 +41,26 @@ const ChatScreen = () => {
     };
   }, []);
 
-  const handleSelectMember = (memberId: number) => {
-    setSelectedMemberId(memberId);
+  // Handle member selection
+  const handleSelectMember = useCallback(
+    (memberId: number) => {
+      setSelectedMemberId(memberId);
+      localStorage.setItem("memberId", memberId.toString());
 
-    if (!coachId || !stompClient || !stompClient.connected) return;
+      if (!coachId || !stompClient || !stompClient.connected) return;
 
-    currentSubRef.current?.unsubscribe();
+      // Unsubscribe previous
+      currentSubRef.current?.unsubscribe();
 
-    const topic = `/topic/chat.${memberId}.${coachId}`;
-    const subscription = stompClient.subscribe(topic, onMessageReceived);
-
-    currentSubRef.current = subscription;
-  };
-
-  const onMessageReceived = (message: any) => {
-    const body = JSON.parse(message.body);
-    console.log("Received message:", body);
-    // Xử lý hiển thị tin nhắn hoặc lưu vào state
-  };
+      // Subscribe to new topic
+      const topic = `/topic/chat.${memberId}.${coachId}`;
+      currentSubRef.current = stompClient.subscribe(topic, () => {});
+    },
+    [coachId, stompClient]
+  );
 
   return (
-    <div className="flex h-screen">
+    <div className="chat-screen-container">
       {(role === "coach" || role === "COACH") && (
         <Sidebar onSelectMember={handleSelectMember} />
       )}
@@ -66,11 +68,11 @@ const ChatScreen = () => {
         {selectedMemberId ? (
           <ChatBox
             memberId={selectedMemberId}
-            coachId={coachId!}
+            coachId={coachId ? parseInt(coachId, 10) : 0}
             stompClient={stompClient}
           />
         ) : (
-          <div className="h-full flex items-center justify-center text-gray-500">
+          <div className="chat-placeholder">
             Chọn một thành viên để bắt đầu chat
           </div>
         )}

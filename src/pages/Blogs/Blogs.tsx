@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+
 import {
   Box,
   CircularProgress,
@@ -23,13 +24,14 @@ export type Blog = {
   title: string;
   content: string;
   thumbnail: string;
+  image: string;
   userId: number | null;
   authorName: string | null;
   createdAt: string;
   updatedAt: string;
   category:
     | "QUIT_JOURNEY"
-    | "SUCCES_STORY"
+    | "SUCCESS_STORY"
     | "EXPERIENCE"
     | "MOTIVATION"
     | "CHALLENGE"
@@ -37,22 +39,27 @@ export type Blog = {
     | "__";
   featured: boolean;
   published: boolean;
+  likes: number;
+  liked: boolean
 };
 
 export default function Blogs() {
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [searchText, setSearchText] = useState("");
   const [expandedPostIds, setExpandedPostIds] = useState<number[]>([]);
-  const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loadingInitial, setLoadingInitial] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [likes, setLikes] = useState<Record<number, number>>({});
   const [dislikes, setDislikes] = useState<Record<number, number>>({});
-  const [userReactions, setUserReactions] = useState<
-    Record<number, "like" | "dislike" | null>
-  >({});
-  const [category, setCategory] = useState("__");
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const initialPage = parseInt(searchParams.get("page") || "0", 10);
+  const initialCategory = searchParams.get("category") || "__";
+
+  const [page, setPage] = useState(initialPage);
+  const [category, setCategory] = useState(initialCategory);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
@@ -64,34 +71,48 @@ export default function Blogs() {
   const fetchBlogs = async (
     currentPage: number,
     isLoadMore = false,
-    category: string = "__"
+    selectedCategory: string = "__"
   ) => {
     isLoadMore ? setLoadingMore(true) : setLoadingInitial(true);
 
     try {
+      // Xây dựng params API
+      const params: any = {
+        page: currentPage,
+        size: 10,
+      };
+
+      // Chỉ gửi category khi không phải default
+      if (selectedCategory && selectedCategory !== "__") {
+        params.category = selectedCategory;
+      }
+
       const res = await axios.get("http://localhost:8082/api/blogs/feed", {
         headers: { Authorization: `Bearer ${token}` },
-        params: {
-          page: currentPage,
-          size: 10,
-          category: category,
-        },
-        paramsSerializer: (params) => {
-          const query = new URLSearchParams();
-          for (const key in params) {
-            const value = params[key];
-            Array.isArray(value)
-              ? value.forEach((v) => query.append(key, v))
-              : query.append(key, value);
-          }
-          return query.toString();
-        },
+        params,
       });
 
-      const data = Array.isArray(res.data) ? res.data : res.data.content || [];
-      setBlogs((prev) => [...prev, ...data]);
+      // Xử lý response data
+      const newBlogs = Array.isArray(res.data)
+        ? res.data
+        : res.data.content || [];
 
-      if (data.length === 0 || data.length < 10) setHasMore(false);
+      // Update blogs state
+      if (isLoadMore) {
+        setBlogs((prev: Blog[]) => {
+          // Loại bỏ trùng lặp bằng ID
+          const existingIds = new Set(prev.map((blog: Blog) => blog.id));
+          const uniqueNewBlogs = newBlogs.filter(
+            (blog: Blog) => !existingIds.has(blog.id)
+          );
+          return [...prev, ...uniqueNewBlogs];
+        });
+      } else {
+        setBlogs(newBlogs);
+      }
+
+      // Cập nhật hasMore
+      setHasMore(newBlogs.length === 10);
     } catch (err) {
       console.error("Failed to load blogs:", err);
       setHasMore(false);
@@ -119,7 +140,12 @@ export default function Blogs() {
 
       if (nearBottom && hasMore && !loadingMore && !debounceRef.current) {
         debounceRef.current = setTimeout(() => {
-          setPage((prev) => prev + 1);
+          setPage((prev) => {
+          const nextPage = prev + 1;
+          setSearchParams({ page: nextPage.toString(), category }); // 👈 cập nhật URL
+          return nextPage;
+          });
+
           debounceRef.current = null;
         }, 300);
       }
@@ -141,7 +167,7 @@ export default function Blogs() {
   const formatCategory = (category: string | undefined): string => {
     const map: Record<string, string> = {
       QUIT_JOURNEY: "Quit Journey",
-      SUCCES_STORY: "Success Story",
+      SUCCESS_STORY: "Success Story",
       EXPERIENCE: "Experience",
       MOTIVATION: "Motivational",
       CHALLENGE: "Challenge",
@@ -150,26 +176,34 @@ export default function Blogs() {
     return category ? map[category] || "" : "";
   };
 
-  const handleBlogLikeToggle = async (
-    blog: Blog,
-    action: "like" | "unlike"
-  ) => {
-    try {
-      const res = await axios.post(
-        `http://localhost:8082/api/blogs/${blog.id}/${action}`,
-        blog,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      return res.data;
-    } catch (err) {
-      console.error(`Không thể ${action} blog`, err);
-      throw err;
-    }
-  };
+const handleToggleLike = async (blog: Blog) => {
+  try {
+    await axios.post(
+      `http://localhost:8082/api/blogs/${blog.id}/toggle-like`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    // Cập nhật lại blogs state: toggle like
+    setBlogs((prevBlogs) =>
+      prevBlogs.map((b) =>
+        b.id === blog.id
+          ? {
+              ...b,
+              liked: !b.liked,
+              likes: b.likes + (b.liked ? -1 : 1),
+            }
+          : b
+      )
+    );
+  } catch (err) {
+    console.error("Lỗi khi toggle like:", err);
+  }
+}
 
   const filteredBlogs = blogs.filter((blog) =>
     blog.title.toLowerCase().includes(searchText.toLowerCase())
@@ -192,11 +226,14 @@ export default function Blogs() {
               onChange={(e) => {
                 const val = e.target.value;
                 setCategory(val);
+                setPage(0);
+                setSearchParams({ page: "0", category: val }); 
+                fetchBlogs(0, false, val);
               }}
             >
               <MenuItem value="__">All Categories</MenuItem>
               <MenuItem value="QUIT_JOURNEY">Quit Journey</MenuItem>
-              <MenuItem value="SUCCES_STORY">Success Story</MenuItem>
+              <MenuItem value="SUCCESS_STORY">Success Story</MenuItem>
               <MenuItem value="EXPERIENCE">Experience</MenuItem>
               <MenuItem value="MOTIVATION">Motivational</MenuItem>
               <MenuItem value="CHALLENGE">Challenge</MenuItem>
@@ -246,7 +283,7 @@ export default function Blogs() {
               <Link to={`/blogs/${blog.id}`}>
                 <CardMedia
                   component="img"
-                  image={blog.thumbnail || "/no-image.png"}
+                  image={blog.image || "/no-image.png"}
                   alt={blog.title}
                   onError={(e) => {
                     const img = e.target as HTMLImageElement;
@@ -276,31 +313,14 @@ export default function Blogs() {
                 <Box className="flex items-center justify-between mt-2">
                   <div className="flex gap-2 items-center">
                     <Button
-                      size="small"
-                      variant={
-                        userReactions[blog.id] === "like"
-                          ? "contained"
-                          : "outlined"
-                      }
-                      sx={{ minWidth: 60 }}
-                      onClick={() => handleBlogLikeToggle(blog, "like")}
-                    >
-                      👍 {likes[blog.id] || 0}
-                    </Button>
-
-                    <Button
-                      size="small"
-                      variant={
-                        userReactions[blog.id] === "dislike"
-                          ? "contained"
-                          : "outlined"
-                      }
-                      sx={{ minWidth: 60 }}
-                      onClick={() => handleBlogLikeToggle(blog, "unlike")}
-                    >
-                      👎 {dislikes[blog.id] || 0}
-                    </Button>
-                  </div>
+                    size="small"
+                    variant={blog.liked ? "contained" : "outlined"}
+                    sx={{ minWidth: 60 }}
+                    onClick={() => handleToggleLike(blog)}
+                     >
+                   👍 {blog.likes}
+                   </Button>                   
+                   </div>
 
                   {blog.content.length > 200 && (
                     <Box sx={{ textAlign: "right" }}>

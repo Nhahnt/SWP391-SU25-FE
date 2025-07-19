@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Layout from "./Layout";
 import AuthLayout from "./AuthLayout";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -26,12 +26,18 @@ import StaffsList from "./pages/Dashboard/Staffs/StaffsList";
 import Feedback from "./pages/Dashboard/Feedback/FeedbacksList";
 import MemberDashboard from "./pages/MemberDashboard/MemberDashboard";
 import ChatScreen from "./pages/Conversations/ChatScreen";
+import UserFeedback from "./components/UserFeedback";
 
-export default function App() {
+function AppRoutesWithExtras() {
+  const location = useLocation();
+  const path = location.pathname;
+  const hideMoodTracker = path === "/login" || path === "/register" || path === "/conversations";
+  const hideUserFeedback = path === "/login" || path === "/register";
+
   return (
-    <BrowserRouter>
-      <MoodTracker />
-
+    <>
+      {!hideMoodTracker && <MoodTracker />}
+      {!hideUserFeedback && <UserFeedback />}
       <Routes>
         {/* Auth layout */}
         <Route element={<AuthLayout />}>
@@ -47,8 +53,8 @@ export default function App() {
           <Route path="/blogs" element={<Blogs />} />
           <Route path="/blogs/:id" element={<BlogDetail />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
-          <Route path="/quit-plan" element={<CreateQuitPlan />} />
-          <Route path="/view-quit-plan" element={<QuitPlanDetail />} />
+          {/* <Route path="/quit-plan" element={<CreateQuitPlan />} />
+          <Route path="/view-quit-plan" element={<QuitPlanDetail />} /> */}
           <Route path="/progress-tracking" element={<ProgressTracking />} />
 
           {/* Protected routes */}
@@ -101,7 +107,7 @@ export default function App() {
             }
           />
           <Route
-            path="/quit-plan/"
+            path="/view-quit-plan/"
             element={
               <ProtectedRoute allowedRoles={["member", ""]}>
                 <QuitPlanDetail />
@@ -171,6 +177,14 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppRoutesWithExtras />
     </BrowserRouter>
   );
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
   TextField,
@@ -8,8 +8,7 @@ import {
   FormControl,
   Typography,
   Button,
-  Alert,
-  Snackbar,
+  CardMedia,
 } from "@mui/material";
 import {
   HeartPulse,
@@ -204,6 +203,11 @@ const groupedSupportMethods = [
   },
 ];
 
+interface coach {
+  id: number;
+  name: string;
+  avatarUrl: string;
+}
 export default function CreateQuitPlan() {
   const [quitDate, setQuitDate] = useState("");
   const [duration, setDuration] = useState("");
@@ -215,7 +219,38 @@ export default function CreateQuitPlan() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmittedForm, setIsSubmittedForm] = useState(false);
+  const [coachs, setCoachs] = useState<coach[] | undefined>(undefined);
+  const [selectedCoach, setSelectedCoach] = useState<number | undefined>(
+    undefined
+  );
+  const [loadingCoach, setLoadingCoach] = useState(false);
   const navigate = useNavigate();
+  const token = localStorage.getItem("token");
+  const fetchCoach = async () => {
+    setLoadingCoach(true);
+
+    try {
+      const res = await fetch(
+        `http://localhost:8080/api/member/coach/available`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      if (!res.ok) {
+        if (res.status === 404) {
+          throw new Error("Bài viết không tồn tại.");
+        }
+        throw new Error("Đã xảy ra lỗi khi tải bài viết.");
+      }
+      const data = await res.json();
+      setCoachs(data);
+    } catch (error: any) {
+      console.error("Error fetching blog:", error);
+    } finally {
+      setLoadingCoach(false);
+    }
+  };
 
   const toggleSelect = (list: string[], setList: Function, value: string) => {
     if (list.includes(value)) {
@@ -281,7 +316,7 @@ export default function CreateQuitPlan() {
       const token = localStorage.getItem("token");
 
       const response = await axios.post(
-        "http://localhost:8082/api/plans",
+        "http://localhost:8080/api/plans",
         payload,
         {
           headers: {
@@ -291,7 +326,7 @@ export default function CreateQuitPlan() {
       );
 
       setSuccess("Kế hoạch của bạn đã được tạo thành công!");
-      navigate("/quit-plan");
+      setIsSubmittedForm(true);
     } catch (err: any) {
       console.error(err);
       setError("Đã xảy ra lỗi khi tạo kế hoạch.");
@@ -300,185 +335,275 @@ export default function CreateQuitPlan() {
     }
   };
 
+  const handleCoachAssign = async () => {
+    setError("");
+    setSuccess("");
+    if (selectedCoach) {
+      try {
+        const payload = {
+          startDate: quitDate,
+          durationWeeks: parseInt(duration),
+          numberOfCigarettes: parseInt(dailyCigarettes),
+          pricePerPack: parseInt(cigaretteCost),
+          reasons,
+          triggers,
+          supportMethods: strategies,
+        };
+        const token = localStorage.getItem("token");
+
+        const response = await axios.put(
+          `http://localhost:8080/api/member/coach/${selectedCoach}`,
+          payload,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        navigate("/quit-plan");
+      } catch (err: any) {
+        console.error(err);
+        setError("Đã xảy ra lỗi khi tạo kế hoạch.");
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+  };
+  useEffect(() => {
+    fetchCoach();
+  }, []);
   return (
     <main className="max-w-5xl mx-auto px-4 py-10 space-y-6">
-      <div>
-        <Typography
-          variant="h4"
-          fontWeight="bold"
-          gutterBottom
-          sx={{ color: "#c2410c" }}
-        >
-          Build Your Personalized Quit Plan
-        </Typography>
-        <Typography className="text-gray-600">
-          Fill out the sections below to create a quit plan tailored to your
-          needs. This will help you stay motivated and prepared!
-        </Typography>
-      </div>
-
-      {/* Section 1 */}
-      <div className="space-y-2">
-        <Typography variant="h6">1. Set Your Quit Date</Typography>
-        <Card>
-          <TextField
-            fullWidth
-            type="date"
-            value={quitDate}
-            onChange={(e) => setQuitDate(e.target.value)}
-            InputLabelProps={{ shrink: true }}
-            inputProps={{
-              min: new Date().toISOString().split("T")[0],
-            }}
-          />
-        </Card>
-      </div>
-
-      {/* Section 2 */}
-      <div className="space-y-2">
-        <Typography variant="h6">2. Duration of Quit Plan</Typography>
-        <Card>
-          <FormControl fullWidth>
-            <InputLabel>Choose Duration</InputLabel>
-            <Select
-              value={duration}
-              label="Choose Duration"
-              onChange={(e) => setDuration(e.target.value)}
-            >
-              {options.map((week) => (
-                <MenuItem key={week} value={week}>
-                  {week} weeks {week === "6" && "(preferred)"}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Card>
-      </div>
-
-      {/* Section 3 */}
-      <div className="space-y-4">
-        <Typography variant="h6">3. Smoking Status</Typography>
-        <Card>
-          <TextField
-            fullWidth
-            type="number"
-            label="Average cigarettes per day"
-            value={dailyCigarettes}
-            onChange={(e) => setDailyCigarettes(e.target.value)}
-          />
-        </Card>
-
-        <Card className="flex gap-4 justify-center">
-          <TextField
-            fullWidth
-            label="Cost of each pack"
-            value={cigaretteCost}
-            onChange={(e) => setCigaretteCost(e.target.value)}
-            inputProps={{ min: 1 }}
-          />
-          \
+      {isSubmittedForm ? (
+        <div className="flex flex-col gap-6 items-center">
           <Typography
-            variant="body1"
-            className="font-semibold mt-4 text-gray-600"
+            variant="h4"
+            className="text-center font-semibold"
+            sx={{ color: "#c2410c" }}
           >
-            VND
+            Select your coach
           </Typography>
-        </Card>
-      </div>
 
-      {/* Section 4 */}
-      <div className="space-y-4">
-        <Typography variant="h6">4. Why are you quitting?</Typography>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {reasonsList.map((r) => {
-            const Icon = r.icon;
-            return (
-              <Card
-                key={r.id}
-                onClick={() => toggleSelect(reasons, setReasons, r.value)}
-                className="cursor-pointer"
-              >
-                <Typography
-                  variant="h6"
-                  fontWeight={500}
-                  sx={{ color: "#c2410c" }}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-full max-w-7xl">
+            {coachs ? (
+              coachs.map((coach) => {
+                const isSelected = selectedCoach === coach.id;
+
+                return (
+                  <Card
+                    key={coach.id}
+                    onClick={() => setSelectedCoach(coach.id)}
+                    className={`cursor-pointer transition-transform hover:scale-[1.02] overflow-hidden rounded-xl ${
+                      isSelected
+                        ? "border-2 border-[#c2410c] shadow-lg"
+                        : "border border-gray-300 bg-white shadow-md"
+                    }`}
+                  >
+                    <Box p={2}>
+                      <Typography variant="h6" color="text.primary">
+                        {coach.name ?? "Coach Name"}
+                      </Typography>
+                    </Box>
+                    <CardMedia
+                      component="img"
+                      image={coach.avatarUrl || "/no-image.png"}
+                      alt="coach avatar"
+                      onError={(e) => {
+                        const img = e.target as HTMLImageElement;
+                        img.onerror = null;
+                        img.src = "/no-image.png";
+                      }}
+                      sx={{
+                        height: 320,
+                        width: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  </Card>
+                );
+              })
+            ) : (
+              <Typography>No Coach Available</Typography>
+            )}
+
+            {/* Chỉ hiện nút khi đã chọn coach */}
+            {selectedCoach && (
+              <div className="col-span-full flex justify-center">
+                <Button
+                  variant="contained"
+                  onClick={handleCoachAssign}
+                  sx={{
+                    bgcolor: "#c2410c",
+                    "&:hover": {
+                      bgcolor: "#a8390b",
+                    },
+                    color: "#fff",
+                    px: 3,
+                    py: 1.5,
+                    borderRadius: "8px",
+                    boxShadow: 3,
+                    textTransform: "none",
+                  }}
                 >
-                  {r.label}
-                </Typography>
-                <Icon className="text-[#c2410c] w-7 h-7" />
-              </Card>
-            );
-          })}
+                  Choose this coach
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div>
+          <div>
+            <Typography
+              variant="h4"
+              fontWeight="bold"
+              gutterBottom
+              sx={{ color: "#c2410c" }}
+            >
+              Build Your Personalized Quit Plan
+            </Typography>
+            <Typography className="text-gray-600">
+              Fill out the sections below to create a quit plan tailored to your
+              needs. This will help you stay motivated and prepared!
+            </Typography>
+          </div>
 
-      {/* Section 5 */}
-      <div className="space-y-4">
-        <Typography variant="h6">5. Identify Your Triggers</Typography>
+          {/* Section 1 */}
+          <div className="space-y-2">
+            <Typography variant="h6">1. Set Your Quit Date</Typography>
+            <Card>
+              <TextField
+                fullWidth
+                type="date"
+                value={quitDate}
+                onChange={(e) => setQuitDate(e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                inputProps={{
+                  min: new Date().toISOString().split("T")[0],
+                }}
+              />
+            </Card>
+          </div>
 
-        <GroupedSelector
-          groupedItems={groupedTriggers}
-          selected={triggers}
-          onToggle={(val) => toggleSelect(triggers, setTriggers, val)}
-        />
-      </div>
+          {/* Section 2 */}
+          <div className="space-y-2">
+            <Typography variant="h6">2. Duration of Quit Plan</Typography>
+            <Card>
+              <FormControl fullWidth>
+                <InputLabel>Choose Duration</InputLabel>
+                <Select
+                  value={duration}
+                  label="Choose Duration"
+                  onChange={(e) => setDuration(e.target.value)}
+                >
+                  {options.map((week) => (
+                    <MenuItem key={week} value={week}>
+                      {week} weeks {week === "6" && "(preferred)"}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Card>
+          </div>
 
-      {/* Section 6 */}
-      <div className="space-y-4">
-        <Typography variant="h6">
-          6. How Will You Do It? (Support Methods)
-        </Typography>
-        <GroupedSelector
-          groupedItems={groupedSupportMethods}
-          selected={strategies}
-          onToggle={(val) => toggleSelect(strategies, setStrategies, val)}
-        />
-      </div>
+          {/* Section 3 */}
+          <div className="space-y-4">
+            <Typography variant="h6">3. Smoking Status</Typography>
+            <Card>
+              <TextField
+                fullWidth
+                type="number"
+                label="Average cigarettes per day"
+                value={dailyCigarettes}
+                onChange={(e) => setDailyCigarettes(e.target.value)}
+              />
+            </Card>
 
-      <div className="flex justify-end">
-        <Button
-          variant="contained"
-          color="primary"
-          size="large"
-          sx={{ backgroundColor: "#c2410c" }}
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-        >
-          Create My Plan
-        </Button>
-      </div>
+            <Card className="flex gap-4 justify-center">
+              <TextField
+                fullWidth
+                label="Cost of each pack"
+                value={cigaretteCost}
+                onChange={(e) => setCigaretteCost(e.target.value)}
+              />
+              \
+              <Typography
+                variant="body1"
+                className="font-semibold mt-4 text-gray-600"
+              >
+                VND
+              </Typography>
+            </Card>
+          </div>
 
-      {/* Success Snackbar */}
-      {/* <Snackbar
-        open={showSuccess}
-        autoHideDuration={3000}
-        onClose={() => setShowSuccess(false)}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <Alert 
-          onClose={() => setShowSuccess(false)} 
-          severity="success"
-          sx={{ width: '100%' }}
-        >
-          {success}
-        </Alert>
-      </Snackbar> */}
+          {/* Section 4 */}
+          <div className="space-y-4">
+            <Typography variant="h6">4. Why are you quitting?</Typography>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {reasonsList.map((r) => {
+                const Icon = r.icon;
+                return (
+                  <Card
+                    key={r.id}
+                    onClick={() => toggleSelect(reasons, setReasons, r.value)}
+                    className={`border rounded p-3 cursor-pointer flex flex-col justify-centes items-center gap-2 transition duration-150 ${
+                      reasons.includes(r.value)
+                        ? "bg-orange-100 border-orange-500"
+                        : "hover:border-orange-300"
+                    }`}
+                  >
+                    <Typography
+                      variant="h6"
+                      fontWeight={500}
+                      sx={{ color: "#c2410c" }}
+                    >
+                      {r.label}
+                    </Typography>
+                    <Icon className="text-[#c2410c] w-7 h-7" />
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
 
-      {/* Error Snackbar */}
-      {/* <Snackbar
-        open={showError}
-        autoHideDuration={5000}
-        onClose={() => setShowError(false)}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <Alert 
-          onClose={() => setShowError(false)} 
-          severity="error"
-          sx={{ width: '100%' }}
-        >
-          {error}
-        </Alert>
-      </Snackbar> */}
+          {/* Section 5 */}
+          <div className="space-y-4">
+            <Typography variant="h6">5. Identify Your Triggers</Typography>
+
+            <GroupedSelector
+              groupedItems={groupedTriggers}
+              selected={triggers}
+              onToggle={(val) => toggleSelect(triggers, setTriggers, val)}
+            />
+          </div>
+
+          {/* Section 6 */}
+          <div className="space-y-4">
+            <Typography variant="h6">
+              6. How Will You Do It? (Support Methods)
+            </Typography>
+            <GroupedSelector
+              groupedItems={groupedSupportMethods}
+              selected={strategies}
+              onToggle={(val) => toggleSelect(strategies, setStrategies, val)}
+            />
+          </div>
+
+          <div className="flex justify-end">
+            <Button
+              variant="contained"
+              color="primary"
+              size="large"
+              sx={{ backgroundColor: "#c2410c" }}
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+            >
+              Create My Plan
+            </Button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
