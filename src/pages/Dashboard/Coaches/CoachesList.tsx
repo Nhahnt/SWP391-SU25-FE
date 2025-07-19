@@ -38,6 +38,7 @@ function Popup({ isOpen, title, onClose, children, style }: { isOpen: boolean; t
 
 export default function CoachesList() {
   const [coaches, setCoaches] = useState<Coach[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [coachToDelete, setCoachToDelete] = useState<Coach | null>(null);
 
@@ -49,6 +50,7 @@ export default function CoachesList() {
   }, []);
 
   const fetchCoaches = async () => {
+    setLoading(true);
     try {
       const token = localStorage.getItem("token");
       const res = await axios.get(
@@ -62,6 +64,8 @@ export default function CoachesList() {
       setCoaches(res.data);
     } catch (err) {
       console.error("Failed to fetch coaches: ", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -139,36 +143,54 @@ export default function CoachesList() {
           </button>
         </div>
         <div className="table-wrapper">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>No.</th>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Full Name</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {coaches.map((coach, index) => (
-                <tr key={coach.user_id}>
-                  <td>{index + 1}</td>
-                  <td>{coach.userName}</td>
-                  <td>{coach.email}</td>
-                  <td>{coach.full_name}</td>
-                  <td>
-                    <button className="action-button edit-button">Edit</button>
-                    <button
-                      className="action-button delete-button"
-                      onClick={() => handleDelete(coach)}
-                    >
-                      Delete
-                    </button>
-                  </td>
+          {loading ? (
+            <div className="loading-container">
+              <div className="loading-spinner"></div>
+              <p>Loading coaches...</p>
+            </div>
+          ) : (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th>Full Name</th>
+                  <th>Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {coaches.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="empty-message">
+                      <div className="empty-state">
+                        <p>No coaches found</p>
+                        <p className="empty-subtitle">There are currently no coaches in the system.</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  coaches.map((coach, index) => (
+                    <tr key={coach.user_id}>
+                      <td>{index + 1}</td>
+                      <td>{coach.userName}</td>
+                      <td>{coach.email}</td>
+                      <td>{coach.full_name}</td>
+                      <td>
+                        <button className="action-button edit-button">Edit</button>
+                        <button
+                          className="action-button delete-button"
+                          onClick={() => handleDelete(coach)}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
 
         {/* Delete Confirmation Popup */}

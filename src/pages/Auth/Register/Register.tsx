@@ -1,4 +1,12 @@
-import { Box, Button, TextField, Typography, Paper } from "@mui/material";
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  Paper,
+  Select,
+  MenuItem,
+} from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useState } from "react";
@@ -11,6 +19,7 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [fullName, setFullName] = useState("");
+  const [gender, setGender] = useState("");
   const role = "MEMBER"; // Role is always "MEMBER"
 
   const handleRegister = async () => {
@@ -20,17 +29,22 @@ export default function Register() {
       !password ||
       !confirmPassword ||
       !phoneNumber ||
-      !fullName
+      !fullName ||
+      !gender
     ) {
-      alert("Vui lòng điền đầy đủ thông tin!");
+      alert("Please fill in all required information!");
       return;
     }
     if (password.length < 8) {
-      alert("Mật khẩu phải có ít nhất 8 ký tự!");
+      alert("Password must be at least 8 characters long!");
       return;
     }
-    if(password !== confirmPassword) {
-      alert("Mật khẩu không khớp!");
+    if (password !== confirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
+    if (!gender || gender === "") {
+      alert("Please select a gender!");
       return;
     }
 
@@ -42,11 +56,13 @@ export default function Register() {
         phoneNumber,
         fullName,
         role,
+        gender,
       });
-      alert("Đăng ký thành công! Xin hãy đăng nhập.");
+      alert("Registration successful! Please login.");
       navigate("/login");
-    } catch (error) {
-      alert("Đăng ký thất bại!");
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || "Registration failed!";
+      alert(errorMessage);
       console.error(error);
     }
   };
@@ -102,9 +118,23 @@ export default function Register() {
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
         />
+        <Select
+          fullWidth
+          value={gender}
+          onChange={(e) => setGender(e.target.value)}
+          displayEmpty
+          inputProps={{ "aria-label": "Gender" }}
+          sx={{ mt: 2, mb: 1 }}
+        >
+          <MenuItem value="" disabled>
+            <em>Select gender</em>
+          </MenuItem>
+          <MenuItem value="MALE">Male</MenuItem>
+          <MenuItem value="FEMALE">Female</MenuItem>
+        </Select>
         <TextField
           fullWidth
-          label="Mật khẩu mới"
+          label="Password"
           type="password"
           variant="outlined"
           margin="normal"
@@ -113,7 +143,7 @@ export default function Register() {
         />
         <TextField
           fullWidth
-          label="Xác nhận mật khẩu"
+          label="Confirm Password"
           type="password"
           variant="outlined"
           margin="normal"
@@ -133,7 +163,7 @@ export default function Register() {
           }}
           onClick={handleRegister}
         >
-          Đăng kí
+          Register
         </Button>
 
         {/* Login Link */}
@@ -152,7 +182,7 @@ export default function Register() {
               },
             }}
           >
-            Đã có tài khoản? Đăng nhập
+            Already have an account? Login
           </Typography>
         </Box>
       </form>

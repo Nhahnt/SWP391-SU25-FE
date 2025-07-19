@@ -43,7 +43,7 @@ export default function Login() {
     } catch (err: any) {
       let message = "Đăng nhập thất bại";
       if (err.response) {
-        // Server responded with a status code outside 2xx
+        // Server responded with a status code outside 2xx - ported error messages from backend
         if (err.response.data && typeof err.response.data === "string") {
           message = err.response.data;
         } else if (err.response.data && err.response.data.message) {

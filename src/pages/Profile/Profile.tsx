@@ -38,7 +38,6 @@ function TabPanel(props: any) {
 const API_BASE = "http://localhost:8082/api";
 const token = localStorage.getItem("token");
 const usernameStr = localStorage.getItem("username");
-const memberId = localStorage.getItem("memberId");
 
 export default function UserProfile() {
   const [user, setUser] = useState<any>(null);

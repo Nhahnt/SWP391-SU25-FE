@@ -38,6 +38,7 @@ function Popup({ isOpen, title, onClose, children, style }: { isOpen: boolean; t
 
 export default function StaffsList() {
   const [staffs, setStaffs] = useState<Staff[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [staffToDelete, setStaffToDelete] = useState<Staff | null>(null);
 
@@ -49,6 +50,7 @@ export default function StaffsList() {
   }, []);
 
   const fetchStaffs = async () => {
+    setLoading(true);
     try {
       const token = localStorage.getItem("token");
       const res = await axios.get(
@@ -62,6 +64,8 @@ export default function StaffsList() {
       setStaffs(res.data);
     } catch (err) {
       console.error("Failed to fetch staffs: ", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -139,36 +143,54 @@ export default function StaffsList() {
           </button>
         </div>
         <div className="table-wrapper">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>No.</th>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Full Name</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {staffs.map((staff, index) => (
-                <tr key={staff.user_id}>
-                  <td>{index + 1}</td>
-                  <td>{staff.userName}</td>
-                  <td>{staff.email}</td>
-                  <td>{staff.full_name}</td>
-                  <td>
-                    <button className="action-button edit-button">Edit</button>
-                    <button
-                      className="action-button delete-button"
-                      onClick={() => handleDelete(staff)}
-                    >
-                      Delete
-                    </button>
-                  </td>
+          {loading ? (
+            <div className="loading-container">
+              <div className="loading-spinner"></div>
+              <p>Loading staff...</p>
+            </div>
+          ) : (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th>Full Name</th>
+                  <th>Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {staffs.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="empty-message">
+                      <div className="empty-state">
+                        <p>No staff found</p>
+                        <p className="empty-subtitle">There are currently no staff in the system.</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  staffs.map((staff, index) => (
+                    <tr key={staff.user_id}>
+                      <td>{index + 1}</td>
+                      <td>{staff.userName}</td>
+                      <td>{staff.email}</td>
+                      <td>{staff.full_name}</td>
+                      <td>
+                        <button className="action-button edit-button">Edit</button>
+                        <button
+                          className="action-button delete-button"
+                          onClick={() => handleDelete(staff)}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
 
         {/* Delete Confirmation Popup */}

@@ -38,6 +38,7 @@ function Popup({ isOpen, title, onClose, children, style }: { isOpen: boolean; t
 
 export default function MembersList() {
   const [members, setMembers] = useState<Member[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
 
@@ -49,6 +50,7 @@ export default function MembersList() {
   }, []);
 
   const fetchMembers = async () => {
+    setLoading(true);
     try {
       const token = localStorage.getItem("token");
       const res = await axios.get(
@@ -62,6 +64,8 @@ export default function MembersList() {
       setMembers(res.data);
     } catch (err) {
       console.error("Failed to fetch members: ", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -139,36 +143,54 @@ export default function MembersList() {
           </button>
         </div>
         <div className="table-wrapper">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>No.</th>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Full Name</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {members.map((member, index) => (
-                <tr key={member.user_id}>
-                  <td>{index + 1}</td>
-                  <td>{member.userName}</td>
-                  <td>{member.email}</td>
-                  <td>{member.full_name}</td>
-                  <td>
-                    <button className="action-button edit-button">Edit</button>
-                    <button
-                      className="action-button delete-button"
-                      onClick={() => handleDelete(member)}
-                    >
-                      Delete
-                    </button>
-                  </td>
+          {loading ? (
+            <div className="loading-container">
+              <div className="loading-spinner"></div>
+              <p>Loading members...</p>
+            </div>
+          ) : (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>No.</th>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th>Full Name</th>
+                  <th>Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {members.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="empty-message">
+                      <div className="empty-state">
+                        <p>No members found</p>
+                        <p className="empty-subtitle">There are currently no members in the system.</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  members.map((member, index) => (
+                    <tr key={member.user_id}>
+                      <td>{index + 1}</td>
+                      <td>{member.userName}</td>
+                      <td>{member.email}</td>
+                      <td>{member.full_name}</td>
+                      <td>
+                        <button className="action-button edit-button">Edit</button>
+                        <button
+                          className="action-button delete-button"
+                          onClick={() => handleDelete(member)}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
 
         {/* Delete Confirmation Popup */}

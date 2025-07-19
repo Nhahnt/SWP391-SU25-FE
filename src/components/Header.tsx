@@ -106,7 +106,7 @@ export default function Header() {
               {userRole === "ADMIN" ||
                 userRole === "STAFF" ||
                 userRole === "COACH" ||
-                (userRole === "MEMBER" && (
+                userRole === "MEMBER" && (
                   <Button
                     component={Link}
                     to="/profile"
@@ -114,7 +114,7 @@ export default function Header() {
                   >
                     Profile
                   </Button>
-                ))}
+                )}
               <Button
                 onClick={handleLogout}
                 sx={{

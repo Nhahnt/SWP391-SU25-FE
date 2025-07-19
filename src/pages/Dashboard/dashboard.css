@@ -150,6 +150,7 @@
 .dashboard-container {
   display: flex;
   min-height: 100vh;
+  margin-top: 70px; /* Account for fixed header height */
 }
 
 .db-sidebar {
@@ -158,14 +159,19 @@
   background: #fff7ed;
   border-right: 2px solid #f3f3f3;
   box-shadow: 2px 0 8px rgba(0,0,0,0.04);
-  position: relative;
+  position: fixed;
+  top: 70px; /* Position below header */
+  left: 0;
+  height: calc(100vh - 70px);
   z-index: 10;
+  overflow-y: auto;
 }
 
 .db-content {
   flex: 1;
   padding: 32px 24px;
   background: #fff;
-  min-height: 100vh;
+  min-height: calc(100vh - 70px);
   overflow-x: auto;
+  margin-left: 220px; /* Account for fixed sidebar width */
 }

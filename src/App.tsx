@@ -24,7 +24,7 @@ import CoachDashboard from "./pages/CoachDashboard/CoachDashboard";
 import MembersList from "./pages/Dashboard/Members/MembersList";
 import CoachesList from "./pages/Dashboard/Coaches/CoachesList";
 import StaffsList from "./pages/Dashboard/Staffs/StaffsList";
-import Feedback from "./pages/Dashboard/Feedback/Feedback";
+import Feedback from "./pages/Dashboard/Feedback/FeedbacksList";
 import MemberDashboard from "./pages/MemberDashboard/MemberDashboard";
 
 export default function App() {

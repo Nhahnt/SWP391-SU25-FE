@@ -17,6 +17,7 @@ export default function DashboardSidebar() {
       "/dashboard/members",
       "/dashboard/coaches",
       "/dashboard/staffs",
+      "/dashboard/feedback",
     ];
     return userPaths.some((path) => location.pathname === path);
   };
@@ -35,7 +36,7 @@ export default function DashboardSidebar() {
       rootStyles={{
         width: 220,
         minWidth: 220,
-        height: "100vh",
+        height: "calc(100vh - 70px)",
         background: "#fff7ed",
         boxShadow: "2px 0 8px rgba(0,0,0,0.04)",
         borderRight: "2px solid #f3f3f3",
@@ -78,9 +79,9 @@ export default function DashboardSidebar() {
             Staffs
           </MenuItem>
         </SubMenu>
-        {/* <MenuItem component={<Link to="/dashboard/feedback" />} active={isActive("/dashboard/feedback")}>
+         <MenuItem component={<Link to="/dashboard/feedback" />} active={isActive("/dashboard/feedback")}>
           Feedback
-        </MenuItem> */}
+        </MenuItem> 
       </Menu>
     </ProSidebar>
   );
