@@ -212,7 +212,9 @@ export default function CreateQuitPlan() {
   const [quitDate, setQuitDate] = useState("");
   const [duration, setDuration] = useState("");
   const [dailyCigarettes, setDailyCigarettes] = useState("");
+  // const [cigaretteType, setCigaretteType] = useState("");
   const [cigaretteCost, setCigaretteCost] = useState("");
+  // const [currency, setCurrency] = useState("VND");
   const [reasons, setReasons] = useState<string[]>([]);
   const [triggers, setTriggers] = useState<string[]>([]);
   const [strategies, setStrategies] = useState<string[]>([]);
@@ -232,7 +234,7 @@ export default function CreateQuitPlan() {
 
     try {
       const res = await fetch(
-        `http://localhost:8080/api/member/coach/available`,
+        `http://localhost:8082/api/member/coach/available`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -316,7 +318,7 @@ export default function CreateQuitPlan() {
       const token = localStorage.getItem("token");
 
       const response = await axios.post(
-        "http://localhost:8080/api/plans",
+        "http://localhost:8082/api/plans",
         payload,
         {
           headers: {
@@ -352,7 +354,7 @@ export default function CreateQuitPlan() {
         const token = localStorage.getItem("token");
 
         const response = await axios.put(
-          `http://localhost:8080/api/member/coach/${selectedCoach}`,
+          `http://localhost:8082/api/member/coach/${selectedCoach}`,
           payload,
           {
             headers: {

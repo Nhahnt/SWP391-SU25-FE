@@ -60,11 +60,11 @@ const ChatScreen = () => {
   );
 
   return (
-    <div className="chat-screen-container">
+    <div className="flex min-h-[80vh] bg-gray-50 rounded-lg shadow p-4 gap-4 max-w-7xl mx-auto mt-6">
       {(role === "coach" || role === "COACH") && (
-        <Sidebar onSelectMember={handleSelectMember} />
+        <Sidebar onSelectMember={handleSelectMember} selectedMemberId={selectedMemberId} />
       )}
-      <div className="flex-1">
+      <div className="flex-1 min-w-0 flex items-center justify-center">
         {selectedMemberId ? (
           <ChatBox
             memberId={selectedMemberId}
@@ -72,7 +72,7 @@ const ChatScreen = () => {
             stompClient={stompClient}
           />
         ) : (
-          <div className="chat-placeholder">
+          <div className="text-gray-400 text-lg font-medium text-center">
             Chọn một thành viên để bắt đầu chat
           </div>
         )}

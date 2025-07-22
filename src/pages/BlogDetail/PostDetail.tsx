@@ -237,147 +237,152 @@ export default function BlogDetail() {
   }
 
   return (
-    <Container maxWidth="md" className="mt-10">
-      <Typography
-        variant="h4"
-        className="font-bold text-3xl md:text-4xl text-gray-900 mb-3"
-      >
-        {blog.title}
-      </Typography>
-
-      <div className="flex items-center gap-4 text-sm text-gray-500 mb-6">
-        <span>{blog.category}</span>
-        <span>•</span>
-        <span>
-          {new Date(blog.createdAt).toLocaleDateString("vi-VN", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          })}
-        </span>
-        {blog.authorName && (
-          <>
-            <span>•</span>
-            <span>{blog.authorName}</span>
-          </>
-        )}
-      </div>
-
-      <CardMedia
-        component="img"
-        image={blog.image || "/no-image.png"}
-        alt={blog.title}
-        onError={(e) => {
-          const img = e.target as HTMLImageElement;
-          img.onerror = null;
-          img.src = "/no-image.png";
-        }}
-        sx={{
-          height: 360,
-          width: "100%",
-          objectFit: "cover",
-          marginTop: 2,
-        }}
-      />
-
-      <Typography
-        variant="body1"
-        className="leading-relaxed text-gray-800 mb-10 whitespace-pre-line"
-      >
-        {blog.content}
-      </Typography>
-
-      <Divider className="mb-6" />
-
-      <Typography variant="h6" className="font-semibold text-xl mb-4">
-        Bình luận
-      </Typography>
-
-      {getAuthToken() ? (
-        <div className="mb-6">
-          <TextField
-            fullWidth
-            multiline
-            minRows={3}
-            maxRows={5}
-            placeholder="Viết bình luận..."
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            disabled={submittingComment}
-          />
-          <div className="flex justify-end mt-2">
-            <Button
-              variant="contained"
-              onClick={handleCommentSubmit}
-              disabled={!commentText.trim() || submittingComment}
+    <Container maxWidth="xl" className="mt-10" sx={{ maxWidth: { xs: '100%', xl: 1400 } }}>
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Blog Content Left (2/3) */}
+        <div className="w-full lg:w-2/3 min-w-0">
+          <Box className="bg-white rounded-2xl shadow-lg p-8 mb-6 border border-gray-100">
+            <Typography
+              variant="h4"
+              className="font-bold text-3xl md:text-4xl text-gray-900 mb-3"
             >
-              {submittingComment ? (
-                <CircularProgress size={20} color="inherit" />
-              ) : (
-                "Gửi"
-              )}
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <Box className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-800">
-          <Typography variant="body2">
-            Vui lòng <span className="font-semibold">đăng nhập</span> để gửi
-            bình luận.
-          </Typography>
-        </Box>
-      )}
-
-      <Box className="max-h-[200px] overflow-y-auto mb-6 pr-2">
-        {comments.length === 0 && !loadingComments && !hasMore && (
-          <div className="py-4 text-center text-sm text-gray-500">
-            Chưa có bình luận nào.
-          </div>
-        )}
-        {comments.map((comment) => (
-          <div
-            key={comment.id}
-            className="p-4 bg-gray-100 rounded-lg shadow-sm mb-4 border border-gray-200"
-          >
-            <div className="flex items-center gap-3 mb-2">
-              <Typography className="text-base font-bold text-gray-800">
-                {comment.userFullName || "Ẩn danh"}
-              </Typography>
-              <Typography className="text-xs text-gray-500">
-                {new Date(comment.createdAt).toLocaleString("vi-VN", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  day: "numeric",
-                  month: "numeric",
+              {blog.title}
+            </Typography>
+            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-6">
+              <span className="px-2 py-1 bg-blue-50 rounded text-blue-700 font-medium border border-blue-100">{blog.category}</span>
+              <span>•</span>
+              <span>
+                {new Date(blog.createdAt).toLocaleDateString("vi-VN", {
+                  day: "2-digit",
+                  month: "2-digit",
                   year: "numeric",
                 })}
-              </Typography>
+              </span>
+              {blog.authorName && (
+                <>
+                  <span>•</span>
+                  <span className="font-semibold">{blog.authorName}</span>
+                </>
+              )}
             </div>
-            <Typography className="text-gray-700 leading-normal">
-              {comment.content}
+            <CardMedia
+              component="img"
+              image={blog.image || "/no-image.png"}
+              alt={blog.title}
+              onError={(e) => {
+                const img = e.target as HTMLImageElement;
+                img.onerror = null;
+                img.src = "/no-image.png";
+              }}
+              sx={{
+                height: 360,
+                width: "100%",
+                objectFit: "cover",
+                marginTop: 2,
+                borderRadius: 12,
+              }}
+            />
+            <Typography
+              variant="body1"
+              className="leading-relaxed text-gray-800 mt-8 mb-2 whitespace-pre-line text-lg"
+            >
+              {blog.content}
             </Typography>
-          </div>
-        ))}
-
-        {hasMore && (
-          <div
-            ref={loaderRef}
-            className="py-4 text-center text-sm text-gray-400 flex justify-center items-center gap-2"
-          >
-            {loadingComments && <CircularProgress size={20} />}
-            <span>
-              {loadingComments
-                ? "Đang tải thêm bình luận..."
-                : "Cuộn xuống để tải thêm bình luận"}
-            </span>
-          </div>
-        )}
-        {!hasMore && comments.length > 0 && (
-          <div className="py-4 text-center text-sm text-gray-400">
-            Không còn bình luận nào nữa.
-          </div>
-        )}
-      </Box>
+          </Box>
+        </div>
+        {/* Comments Right (1/3) */}
+        <div className="w-full lg:w-1/3 flex-shrink-0">
+          <Box className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100 sticky top-24">
+            <Typography variant="h6" className="font-semibold text-xl mb-4">
+              Bình luận
+            </Typography>
+            {getAuthToken() ? (
+              <div className="mb-6">
+                <TextField
+                  fullWidth
+                  multiline
+                  minRows={3}
+                  maxRows={5}
+                  placeholder="Viết bình luận..."
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  disabled={submittingComment}
+                  className="bg-gray-50 rounded-lg"
+                />
+                <div className="flex justify-end mt-2">
+                  <Button
+                    variant="contained"
+                    onClick={handleCommentSubmit}
+                    disabled={!commentText.trim() || submittingComment}
+                    sx={{ borderRadius: 2, fontWeight: 600 }}
+                  >
+                    {submittingComment ? (
+                      <CircularProgress size={20} color="inherit" />
+                    ) : (
+                      "Gửi"
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Box className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-800">
+                <Typography variant="body2">
+                  Vui lòng <span className="font-semibold">đăng nhập</span> để gửi bình luận.
+                </Typography>
+              </Box>
+            )}
+            <Box className="max-h-[400px] overflow-y-auto mb-2 pr-2">
+              {comments.length === 0 && !loadingComments && !hasMore && (
+                <div className="py-4 text-center text-sm text-gray-500">
+                  Chưa có bình luận nào.
+                </div>
+              )}
+              {comments.map((comment) => (
+                <div
+                  key={comment.id}
+                  className="p-4 bg-gray-50 rounded-lg shadow-sm mb-4 border border-gray-200"
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <Typography className="text-base font-bold text-gray-800">
+                      {comment.userFullName || "Ẩn danh"}
+                    </Typography>
+                    <Typography className="text-xs text-gray-500">
+                      {new Date(comment.createdAt).toLocaleString("vi-VN", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        day: "numeric",
+                        month: "numeric",
+                        year: "numeric",
+                      })}
+                    </Typography>
+                  </div>
+                  <Typography className="text-gray-700 leading-normal">
+                    {comment.content}
+                  </Typography>
+                </div>
+              ))}
+              {hasMore && (
+                <div
+                  ref={loaderRef}
+                  className="py-4 text-center text-sm text-gray-400 flex justify-center items-center gap-2"
+                >
+                  {loadingComments && <CircularProgress size={20} />}
+                  <span>
+                    {loadingComments
+                      ? "Đang tải thêm bình luận..."
+                      : "Cuộn xuống để tải thêm bình luận"}
+                  </span>
+                </div>
+              )}
+              {!hasMore && comments.length > 0 && (
+                <div className="py-4 text-center text-sm text-gray-400">
+                  Không còn bình luận nào nữa.
+                </div>
+              )}
+            </Box>
+          </Box>
+        </div>
+      </div>
     </Container>
   );
 }

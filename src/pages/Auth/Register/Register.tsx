@@ -6,6 +6,7 @@ import {
   Paper,
   Select,
   MenuItem,
+  CircularProgress,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -20,6 +21,7 @@ export default function Register() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [fullName, setFullName] = useState("");
   const [gender, setGender] = useState("");
+  const [loading, setLoading] = useState(false);
   const role = "MEMBER"; // Role is always "MEMBER"
 
   const handleRegister = async () => {
@@ -48,6 +50,7 @@ export default function Register() {
       return;
     }
 
+    setLoading(true);
     try {
       await axios.post("http://localhost:8082/api/register", {
         userName: username,
@@ -64,6 +67,8 @@ export default function Register() {
       const errorMessage = error.response?.data?.message || "Registration failed!";
       alert(errorMessage);
       console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -84,6 +89,13 @@ export default function Register() {
         Register
       </Typography>
 
+      {/* Loading Spinner */}
+      {loading && (
+        <Box className="flex justify-center my-2">
+          <CircularProgress size={32} />
+        </Box>
+      )}
+
       {/* Form */}
       <form onSubmit={(e) => e.preventDefault()}>
         <TextField
@@ -93,6 +105,7 @@ export default function Register() {
           margin="normal"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
+          disabled={loading}
         />
         <TextField
           fullWidth
@@ -101,6 +114,7 @@ export default function Register() {
           margin="normal"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          disabled={loading}
         />
         <TextField
           fullWidth
@@ -109,6 +123,7 @@ export default function Register() {
           margin="normal"
           value={phoneNumber}
           onChange={(e) => setPhoneNumber(e.target.value)}
+          disabled={loading}
         />
         <TextField
           fullWidth
@@ -117,6 +132,7 @@ export default function Register() {
           margin="normal"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
+          disabled={loading}
         />
         <Select
           fullWidth
@@ -125,6 +141,7 @@ export default function Register() {
           displayEmpty
           inputProps={{ "aria-label": "Gender" }}
           sx={{ mt: 2, mb: 1 }}
+          disabled={loading}
         >
           <MenuItem value="" disabled>
             <em>Select gender</em>
@@ -140,6 +157,7 @@ export default function Register() {
           margin="normal"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          disabled={loading}
         />
         <TextField
           fullWidth
@@ -149,6 +167,7 @@ export default function Register() {
           margin="normal"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
+          disabled={loading}
         />
         {/* Hidden role field */}
         <input type="hidden" value={role} readOnly />
@@ -162,8 +181,9 @@ export default function Register() {
             "&:hover": { bgcolor: "#9a3412" },
           }}
           onClick={handleRegister}
+          disabled={loading}
         >
-          Register
+          {loading ? <CircularProgress size={22} color="inherit" /> : "Register"}
         </Button>
 
         {/* Login Link */}

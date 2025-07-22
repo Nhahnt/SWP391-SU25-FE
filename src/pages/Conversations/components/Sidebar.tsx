@@ -9,9 +9,10 @@
 
   interface SidebarProps {
     onSelectMember: (memberId: number) => void;
+    selectedMemberId?: number | null;
   }
 
-  const Sidebar = ({ onSelectMember }: SidebarProps) => {
+  const Sidebar = ({ onSelectMember, selectedMemberId }: SidebarProps) => {
     const [members, setMembers] = useState<Member[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
@@ -47,19 +48,25 @@
     if (error) return <div>{error}</div>;
 
     return (
-      <aside className="w-64 bg-gray-100 p-4 border-r">
-        <h3 className="text-lg font-semibold mb-2">Thành viên</h3>
+      <aside className="w-64 bg-white rounded-lg shadow border border-gray-200 p-4 flex flex-col h-fit">
+        <h3 className="text-lg font-semibold mb-4 text-blue-700">Thành viên</h3>
         <ul className="space-y-2">
-          {members.map((member, idx) => (
-            <li key={idx}>
-              <button
-                onClick={() => onSelectMember(member.memberId)}
-                className="w-full text-left hover:bg-gray-200 p-2 rounded"
-              >
-                {member.fullName || member.userName}
-              </button>
-            </li>
-          ))}
+          {members.map((member, idx) => {
+            const isActive = selectedMemberId === member.memberId;
+            return (
+              <li key={idx}>
+                <button
+                  onClick={() => onSelectMember(member.memberId)}
+                  className={`w-full text-left p-2 rounded transition font-medium
+                    ${isActive ? "bg-blue-100 text-blue-700" : "hover:bg-blue-50 hover:text-blue-700"}
+                  `}
+                  aria-current={isActive ? "true" : undefined}
+                >
+                  {member.fullName || member.userName}
+                </button>
+              </li>
+            );
+          })}
         </ul>
       </aside>
     );

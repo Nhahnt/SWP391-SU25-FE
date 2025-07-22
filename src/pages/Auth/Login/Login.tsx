@@ -1,4 +1,4 @@
-import { Box, Button, TextField, Typography, Paper } from "@mui/material";
+import { Box, Button, TextField, Typography, Paper, CircularProgress } from "@mui/material";
 import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -8,8 +8,10 @@ export default function Login() {
   const [username, setuserName] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
+    setLoading(true);
     try {
       const response = await axios.post(
         "http://localhost:8082/api/login",
@@ -43,7 +45,6 @@ export default function Login() {
     } catch (err: any) {
       let message = "Đăng nhập thất bại";
       if (err.response) {
-        // Server responded with a status code outside 2xx - ported error messages from backend
         if (err.response.data && typeof err.response.data === "string") {
           message = err.response.data;
         } else if (err.response.data && err.response.data.message) {
@@ -52,7 +53,6 @@ export default function Login() {
           message = `Lỗi: ${err.response.status}`;
         }
       } else if (err.request) {
-        // No response received
         message = "Không thể kết nối đến máy chủ.";
       } else if (err.message) {
         message = err.message;
@@ -60,6 +60,8 @@ export default function Login() {
       setErrorMsg(message);
       alert(message);
       console.error(message, err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -87,6 +89,13 @@ export default function Login() {
         Please sign in to continue
       </Typography>
 
+      {/* Loading Spinner */}
+      {loading && (
+        <Box className="flex justify-center my-2">
+          <CircularProgress size={32} />
+        </Box>
+      )}
+
       {/* Form */}
       <form onSubmit={(e) => e.preventDefault()}>
         {errorMsg && (
@@ -101,6 +110,7 @@ export default function Login() {
           margin="normal"
           value={username}
           onChange={(e) => setuserName(e.target.value)}
+          disabled={loading}
         />
         <TextField
           fullWidth
@@ -110,6 +120,7 @@ export default function Login() {
           margin="normal"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          disabled={loading}
         />
         {/* Forgot Password Link */}
         <Box className="text-right mt-1">
@@ -140,8 +151,9 @@ export default function Login() {
             "&:hover": { bgcolor: "#9a3412" },
           }}
           onClick={handleLogin}
+          disabled={loading}
         >
-          Đăng nhập
+          {loading ? <CircularProgress size={22} color="inherit" /> : "Đăng nhập"}
         </Button>
 
         {/* Register Link */}

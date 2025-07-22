@@ -13,6 +13,8 @@ import {
   InputLabel,
   MenuItem,
   Select,
+  ToggleButton,
+  ToggleButtonGroup,
 } from "@mui/material";
 import SearchBar from "../../components/shared/SearchBar";
 import AppBreadcrumbs from "../../components/shared/BreadCrumbs";
@@ -52,6 +54,8 @@ export default function Blogs() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [likes, setLikes] = useState<Record<number, number>>({});
   const [dislikes, setDislikes] = useState<Record<number, number>>({});
+  const [sortType, setSortType] = useState<'date' | 'likes'>("date");
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>("desc");
 
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -209,147 +213,189 @@ const handleToggleLike = async (blog: Blog) => {
     blog.title.toLowerCase().includes(searchText.toLowerCase())
   );
 
+  // Sort blogs by createdAt or likes
+  const sortedBlogs = [...filteredBlogs].sort((a, b) => {
+    if (sortType === "date") {
+      return sortOrder === "desc"
+        ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    } else {
+      return sortOrder === "desc"
+        ? b.likes - a.likes
+        : a.likes - b.likes;
+    }
+  });
+
   return (
-    <div className="w-full flex flex-col items-center space-y-4 h-[80vh]">
-      <div className="w-full flex justify-between items-center p-4 sticky top-0 z-10 bg-white shadow-sm">
-        <AppBreadcrumbs />
-        <SearchBar
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-        />
-        <Box sx={{ minWidth: 180 }}>
-          <FormControl fullWidth size="small">
-            <InputLabel>Category</InputLabel>
-            <Select
-              value={category}
-              label="Category"
-              onChange={(e) => {
-                const val = e.target.value;
-                setCategory(val);
-                setPage(0);
-                setSearchParams({ page: "0", category: val }); 
-                fetchBlogs(0, false, val);
-              }}
-            >
-              <MenuItem value="__">All Categories</MenuItem>
-              <MenuItem value="QUIT_JOURNEY">Quit Journey</MenuItem>
-              <MenuItem value="SUCCESS_STORY">Success Story</MenuItem>
-              <MenuItem value="EXPERIENCE">Experience</MenuItem>
-              <MenuItem value="MOTIVATION">Motivational</MenuItem>
-              <MenuItem value="CHALLENGE">Challenge</MenuItem>
-              <MenuItem value="LIFE_STORY">Life Story</MenuItem>
-            </Select>
-          </FormControl>
-        </Box>
-        {isStaff && (
+    <div className="min-h-screen w-full bg-gradient-to-br from-gray-50 to-blue-50 flex flex-col items-center">
+      {/* Sticky Top Bar */}
+      <div className="w-full flex flex-col md:flex-row md:justify-between md:items-center gap-4 p-6 sticky top-0 z-20 bg-white/90 backdrop-blur shadow-md border-b border-gray-100">
+        <div className="flex-1 flex items-center gap-4">
+          <AppBreadcrumbs />
+          <SearchBar
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            className="ml-2"
+          />
+        </div>
+        <div className="flex items-center gap-3">
+          <Box sx={{ minWidth: 180 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Category</InputLabel>
+              <Select
+                value={category}
+                label="Category"
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setCategory(val);
+                  setPage(0);
+                  setSearchParams({ page: "0", category: val }); 
+                  fetchBlogs(0, false, val);
+                }}
+              >
+                <MenuItem value="__">All Categories</MenuItem>
+                <MenuItem value="QUIT_JOURNEY">Quit Journey</MenuItem>
+                <MenuItem value="SUCCESS_STORY">Success Story</MenuItem>
+                <MenuItem value="EXPERIENCE">Experience</MenuItem>
+                <MenuItem value="MOTIVATION">Motivational</MenuItem>
+                <MenuItem value="CHALLENGE">Challenge</MenuItem>
+                <MenuItem value="LIFE_STORY">Life Story</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+          {/* Sort Button Group */}
+          <ToggleButtonGroup
+            value={`${sortType}-${sortOrder}`}
+            exclusive
+            onChange={(_, value) => {
+              if (!value) return;
+              const [type, order] = value.split("-");
+              setSortType(type as 'date' | 'likes');
+              setSortOrder(order as 'desc' | 'asc');
+            }}
+            size="small"
+            sx={{ ml: 1, background: '#f3f4f6', borderRadius: 2 }}
+          >
+            <ToggleButton value="date-desc" sx={{ fontWeight: 500 }}>
+              Newest
+            </ToggleButton>
+            <ToggleButton value="date-asc" sx={{ fontWeight: 500 }}>
+              Oldest
+            </ToggleButton>
+            <ToggleButton value="likes-desc" sx={{ fontWeight: 500 }}>
+              Most Liked
+            </ToggleButton>
+            <ToggleButton value="likes-asc" sx={{ fontWeight: 500 }}>
+              Least Liked
+            </ToggleButton>
+          </ToggleButtonGroup>
           <Button
             variant="contained"
-            sx={{ backgroundColor: "#c2410c" }}
+            sx={{ backgroundColor: "#2563eb", ml: 2, borderRadius: 2, boxShadow: 2, textTransform: 'none', fontWeight: 600 }}
             onClick={() => navigate("/create-blog")}
           >
-            Create Blog
+            + Add Blog
           </Button>
-        )}
+        </div>
       </div>
 
+      {/* Blog Cards Grid */}
       <div
         ref={containerRef}
-        className="w-full md:w-[60%] flex flex-col gap-6 px-4 pb-4 overflow-y-auto flex-1"
-        style={{ maxHeight: "calc(100vh - 40px)" }}
+        className="w-full max-w-7xl px-4 py-8 flex-1 overflow-y-auto"
+        style={{ maxHeight: "calc(100vh - 80px)" }}
       >
         {loadingInitial ? (
-          <div className="w-full flex justify-center py-10">
+          <div className="w-full flex justify-center py-20">
             <CircularProgress />
           </div>
-        ) : filteredBlogs.length === 0 ? (
-          <p className="text-center text-gray-500">Cannot find any blogs.</p>
+        ) : sortedBlogs.length === 0 ? (
+          <p className="text-center text-gray-500 text-lg mt-16">Cannot find any blogs.</p>
         ) : (
-          filteredBlogs.map((blog) => (
-            <Card
-              key={blog.id}
-              className="shadow-sm rounded-xl transition-all duration-200 bg-white min-h-[70vh]"
-            >
-              <div className="flex items-center gap-3 px-4 pt-4">
-                <div>
-                  <p className="font-medium">
-                    {blog.authorName || "Anonymous"}{" "}
-                    {"> " + formatCategory(blog.category)}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    {new Date(blog.createdAt).toLocaleDateString("vi-VN")}
-                  </p>
-                </div>
-              </div>
-              <Link to={`/blogs/${blog.id}`}>
-                <CardMedia
-                  component="img"
-                  image={blog.image || "/no-image.png"}
-                  alt={blog.title}
-                  onError={(e) => {
-                    const img = e.target as HTMLImageElement;
-                    img.onerror = null;
-                    img.src = "/no-image.png";
-                  }}
-                  sx={{
-                    height: 360,
-                    width: "100%",
-                    objectFit: "cover",
-                    marginTop: 2,
-                  }}
-                />
-              </Link>
-
-              <CardContent sx={{ px: 2, pb: 1 }}>
-                {/* Content */}
-                <Typography variant="body1" className="mb-2">
-                  {expandedPostIds.includes(blog.id)
-                    ? blog.content
-                    : blog.content.length > 200
-                    ? `${blog.content.slice(0, 200)}...`
-                    : blog.content}
-                </Typography>
-
-                {/* Reaction buttons */}
-                <Box className="flex items-center justify-between mt-2">
-                  <div className="flex gap-2 items-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {sortedBlogs.map((blog) => (
+              <Card
+                key={blog.id}
+                className="transition-all duration-200 bg-white rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-1 hover:scale-[1.02] flex flex-col min-h-[480px] border border-gray-100"
+                sx={{ width: '100%', maxWidth: 420, margin: '0 auto', display: 'flex', flexDirection: 'column', height: '100%' }}
+              >
+                <Link to={`/blogs/${blog.id}`} className="block">
+                  <CardMedia
+                    component="img"
+                    image={blog.image || "/no-image.png"}
+                    alt={blog.title}
+                    onError={(e) => {
+                      const img = e.target as HTMLImageElement;
+                      img.onerror = null;
+                      img.src = "/no-image.png";
+                    }}
+                    sx={{ height: 220, width: "100%", objectFit: "cover", borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
+                  />
+                </Link>
+                <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', px: 3, pb: 2 }}>
+                  {/* Author, Category, Date */}
+                  <div className="flex items-center gap-3 mb-2 mt-1">
+                    <div className="flex flex-col">
+                      <span className="font-semibold text-gray-800 text-base">
+                        {blog.authorName || "Anonymous"}
+                      </span>
+                      <span className="text-xs text-blue-600 font-medium">
+                        {formatCategory(blog.category)}
+                      </span>
+                    </div>
+                    <span className="ml-auto text-xs text-gray-400">
+                      {new Date(blog.createdAt).toLocaleDateString("vi-VN")}
+                    </span>
+                  </div>
+                  {/* Title */}
+                  <Typography variant="h6" className="font-bold text-lg mb-2 text-gray-900 line-clamp-2">
+                    {blog.title}
+                  </Typography>
+                  {/* Content */}
+                  <Typography variant="body2" className="mb-3 text-gray-700 line-clamp-4">
+                    {expandedPostIds.includes(blog.id)
+                      ? blog.content
+                      : blog.content.length > 200
+                      ? `${blog.content.slice(0, 200)}...`
+                      : blog.content}
+                  </Typography>
+                  {/* Actions */}
+                  <Box className="flex items-center justify-between mt-auto pt-2">
                     <Button
-                    size="small"
-                    variant={blog.liked ? "contained" : "outlined"}
-                    sx={{ minWidth: 60 }}
-                    onClick={() => handleToggleLike(blog)}
-                     >
-                   👍 {blog.likes}
-                   </Button>                   
-                   </div>
-
-                  {blog.content.length > 200 && (
-                    <Box sx={{ textAlign: "right" }}>
+                      size="small"
+                      variant={blog.liked ? "contained" : "outlined"}
+                      sx={{ minWidth: 60, borderRadius: 2, fontWeight: 600, boxShadow: blog.liked ? 2 : 0, backgroundColor: blog.liked ? '#2563eb' : undefined, color: blog.liked ? 'white' : '#2563eb', borderColor: '#2563eb', '&:hover': { backgroundColor: '#1d4ed8', color: 'white' } }}
+                      onClick={() => handleToggleLike(blog)}
+                    >
+                      👍 {blog.likes}
+                    </Button>
+                    {blog.content.length > 200 && (
                       <Button
                         size="small"
-                        sx={{ color: "#c2410c" }}
+                        sx={{ color: "#c2410c", fontWeight: 500, textTransform: 'none' }}
                         onClick={() => toggleExpanded(blog.id)}
                       >
                         {expandedPostIds.includes(blog.id)
-                          ? "Thu gọn"
-                          : "Xem thêm"}
+                          ? "Show less"
+                          : "Read more"}
                       </Button>
-                    </Box>
-                  )}
-                </Box>
-              </CardContent>
-            </Card>
-          ))
+                    )}
+                  </Box>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
 
         {loadingMore && (
-          <div className="w-full flex justify-center py-4">
+          <div className="w-full flex justify-center py-8">
             <CircularProgress size={28} />
           </div>
         )}
 
         {!hasMore && !loadingInitial && (
-          <p className="text-center text-gray-400 text-sm py-4">
-            Đã hiển thị tất cả bài viết.
+          <p className="text-center text-gray-400 text-sm py-8">
+            You have reached the end of all blogs.
           </p>
         )}
       </div>
