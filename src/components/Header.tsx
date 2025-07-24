@@ -92,18 +92,19 @@ export default function Header() {
 
           {isLoggedIn ? (
             <>
-              {userRole === "ADMIN" && (
+              {(userRole === "ADMIN" || userRole === "STAFF") && (
                 <Button component={Link} to="/dashboard" sx={navButtonStyles}>
                   Dashboard
                 </Button>
               )}
-              {userRole === "ADMIN" ||
+              {(userRole === "ADMIN" ||
                 userRole === "STAFF" ||
-                (userRole === "MEMBER" && (
+                userRole === "COACH" ||
+                userRole === "MEMBER") && (
                   <Button component={Link} to="/profile" sx={navButtonStyles}>
                     Profile
                   </Button>
-                ))}
+                )}
               <Button
                 onClick={handleLogout}
                 sx={{

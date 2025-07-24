@@ -88,6 +88,8 @@ const toggleButtonSx = {
   },
 };
 
+const userRole = localStorage.getItem("role");
+
 export default function MoodTracker() {
   const [open, setOpen] = useState(false);
   const [busyness, setBusyness] = useState<string | null>(null);
@@ -105,6 +107,8 @@ export default function MoodTracker() {
 
   const showSuggestion = busyness && mood;
   const suggestion = showSuggestion ? suggestions[busyness][mood] : "";
+
+  if (userRole && userRole !== "MEMBER") return null;
 
   return (
     <Box sx={style}>

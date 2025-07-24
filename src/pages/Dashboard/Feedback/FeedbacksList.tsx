@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import DashboardSidebar from "../../../components/Sidebar";
 import "./FeedbacksList.css";
+import axios from "axios";
+
+const API_BASE = "http://localhost:8082/api";
 
 interface FeedbackItem {
   id: number;
@@ -15,14 +18,14 @@ export default function Feedback() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate loading feedback data
     const loadFeedback = async () => {
       setLoading(true);
       try {
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        // For now, we'll use empty array since there's no actual API
-        setFeedback([]);
+        const token = localStorage.getItem("token");
+        const res = await axios.get(`${API_BASE}/rating`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setFeedback(res.data); 
       } catch (error) {
         console.error("Failed to load feedback:", error);
       } finally {

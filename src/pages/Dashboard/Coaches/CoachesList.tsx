@@ -36,6 +36,8 @@ function Popup({ isOpen, title, onClose, children, style }: { isOpen: boolean; t
   );
 }
 
+const API_BASE = "http://localhost:8082/api";
+
 export default function CoachesList() {
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,7 +56,7 @@ export default function CoachesList() {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.get(
-        "http://localhost:8082/api/admin/accounts/coaches",
+        `${API_BASE}/admin/accounts/coaches`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -79,7 +81,7 @@ export default function CoachesList() {
     try {
       const token = localStorage.getItem("token");
       await axios.delete(
-        `http://localhost:8082/api/admin/account/${coachToDelete.user_id}`,
+        `${API_BASE}/admin/account/${coachToDelete.user_id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -102,7 +104,7 @@ export default function CoachesList() {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        "http://localhost:8082/api/admin/create-account",
+        `${API_BASE}/admin/create-account`,
         {
           userName: newCoach.userName,
           email: newCoach.email,

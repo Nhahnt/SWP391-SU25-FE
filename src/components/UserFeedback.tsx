@@ -43,6 +43,8 @@ const modalStyle = {
 
 const API_BASE = "http://localhost:8082/api";
 
+const userRole = localStorage.getItem("role");
+
 export default function UserFeedback() {
   const [open, setOpen] = useState(false);
   const [rating, setRating] = useState<number | null>(null);
@@ -93,11 +95,11 @@ export default function UserFeedback() {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        `${API_BASE}/feedback/coach`,
+        `${API_BASE}/rating`,
         {
-          coachId,
           stars: rating,
           comment,
+          // coachId: ... // If needed, but your backend gets coach from member
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -112,16 +114,25 @@ export default function UserFeedback() {
     }
   };
 
+  if (userRole && userRole !== "MEMBER") return null;
+
   return (
     <Box sx={style}>
       <IconButton
         color="primary"
         size="medium"
         onClick={handleOpen}
-        sx={{ background: "#fff7ed", boxShadow: 3, border: "2px solid #c2410c", width: 32, height: 32, p: 0 }}
+        sx={{
+          background: "#fff7ed",
+          boxShadow: 3,
+          border: "2px solid #c2410c",
+          width: 32,
+          height: 32,
+          p: 0,
+        }}
         aria-label="Open feedback form"
       >
-        <span style={{ fontSize: 14, color: '#c2410c' }}>⭐</span>
+        <span style={{ fontSize: 14, color: "#c2410c" }}>⭐</span>
       </IconButton>
       <Modal
         open={open}
@@ -132,9 +143,20 @@ export default function UserFeedback() {
       >
         <Fade in={open}>
           <Box sx={modalStyle}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-              <Typography variant="h6" fontWeight="bold" color="#c2410c">Rate Your Coach</Typography>
-              <IconButton size="small" onClick={handleClose} sx={{ color: '#c2410c' }}>
+            <Box
+              display="flex"
+              justifyContent="space-between"
+              alignItems="center"
+              mb={2}
+            >
+              <Typography variant="h6" fontWeight="bold" color="#c2410c">
+                Rate Your Coach
+              </Typography>
+              <IconButton
+                size="small"
+                onClick={handleClose}
+                sx={{ color: "#c2410c" }}
+              >
                 <span style={{ fontSize: 20 }}>✖️</span>
               </IconButton>
             </Box>
@@ -144,7 +166,7 @@ export default function UserFeedback() {
                 labelId="coach-select-label"
                 value={coachId}
                 label="Select Coach"
-                onChange={e => setCoachId(e.target.value)}
+                onChange={(e) => setCoachId(e.target.value)}
                 disabled={coachLoading}
               >
                 {coachLoading ? (
@@ -152,19 +174,34 @@ export default function UserFeedback() {
                     <CircularProgress size={20} sx={{ mr: 1 }} /> Loading...
                   </MenuItem>
                 ) : coachError ? (
-                  <MenuItem value="" disabled>{coachError}</MenuItem>
+                  <MenuItem value="" disabled>
+                    {coachError}
+                  </MenuItem>
                 ) : coaches.length === 0 ? (
-                  <MenuItem value="" disabled>No coaches found</MenuItem>
+                  <MenuItem value="" disabled>
+                    No coaches found
+                  </MenuItem>
                 ) : (
                   coaches.map((coach: any) => (
-                    <MenuItem key={coach.userId || coach.user_id} value={coach.userId || coach.user_id}>
-                      {coach.fullName || coach.full_name || coach.userName || coach.user_name}
+                    <MenuItem
+                      key={coach.userId || coach.user_id}
+                      value={coach.userId || coach.user_id}
+                    >
+                      {coach.fullName ||
+                        coach.full_name ||
+                        coach.userName ||
+                        coach.user_name}
                     </MenuItem>
                   ))
                 )}
               </Select>
             </FormControl>
-            <Typography variant="subtitle1" fontWeight={600} color="#c2410c" mb={1}>
+            <Typography
+              variant="subtitle1"
+              fontWeight={600}
+              color="#c2410c"
+              mb={1}
+            >
               How would you rate your coach?
             </Typography>
             <Rating
@@ -179,13 +216,15 @@ export default function UserFeedback() {
               multiline
               minRows={3}
               value={comment}
-              onChange={e => setComment(e.target.value)}
+              onChange={(e) => setComment(e.target.value)}
               variant="outlined"
               fullWidth
               sx={{ mb: 2, background: "#fff" }}
             />
             {error && (
-              <Typography color="#e53935" fontSize={14} mb={1}>{error}</Typography>
+              <Typography color="#e53935" fontSize={14} mb={1}>
+                {error}
+              </Typography>
             )}
             {success && (
               <Typography color="#388e3c" fontSize={15} mb={1} fontWeight={600}>
@@ -194,12 +233,23 @@ export default function UserFeedback() {
             )}
             <Button
               variant="contained"
-              sx={{ bgcolor: "#c2410c", '&:hover': { bgcolor: "#a0300a" }, color: "white", fontWeight: 600, borderRadius: 2, mt: 1 }}
+              sx={{
+                bgcolor: "#c2410c",
+                "&:hover": { bgcolor: "#a0300a" },
+                color: "white",
+                fontWeight: 600,
+                borderRadius: 2,
+                mt: 1,
+              }}
               onClick={handleSubmit}
               disabled={loading || !rating || !coachId}
               fullWidth
             >
-              {loading ? <CircularProgress size={24} sx={{ color: "#fff" }} /> : "Submit Feedback"}
+              {loading ? (
+                <CircularProgress size={24} sx={{ color: "#fff" }} />
+              ) : (
+                "Submit Feedback"
+              )}
             </Button>
           </Box>
         </Fade>

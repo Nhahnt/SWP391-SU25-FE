@@ -19,6 +19,12 @@ import axios from "axios";
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CancelIcon from '@mui/icons-material/Cancel';
+import Cropper from "react-easy-crop";
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Slider from '@mui/material/Slider';
 
 function TabPanel(props: any) {
   const { children, value, index, ...other } = props;
@@ -51,6 +57,12 @@ export default function UserProfile() {
   const [editData, setEditData] = useState<any>({});
   const [editLoading, setEditLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [showCropper, setShowCropper] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
   const fetchAvatar = async () => {
     try {
@@ -111,14 +123,29 @@ export default function UserProfile() {
     }
   };
 
-  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
+    setSelectedImage(file);
+    setShowCropper(true);
+  };
+
+  const handleCropComplete = (croppedArea: any, croppedAreaPixels: any) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  };
+
+  const handleCroppedAvatarUpload = async () => {
+    if (!selectedImage || !croppedAreaPixels) return;
     setUploading(true);
     setUploadMsg("");
     try {
+      const { getCroppedImg } = await import("./cropImage");
+      const croppedBlob = await getCroppedImg(
+        URL.createObjectURL(selectedImage),
+        croppedAreaPixels
+      );
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", croppedBlob, "avatar.jpg");
       await axios.post(
         `${API_BASE}/avatar/upload`,
         formData,
@@ -132,6 +159,8 @@ export default function UserProfile() {
       );
       setUploadMsg("Avatar uploaded successfully!");
       await fetchAvatar();
+      setShowCropper(false);
+      setSelectedImage(null);
     } catch (err: any) {
       setUploadMsg("Failed to upload avatar");
     } finally {
@@ -304,6 +333,39 @@ export default function UserProfile() {
                 style={{ display: "none" }}
                 onChange={handleAvatarChange}
               />
+              <Dialog open={showCropper} onClose={() => { setShowCropper(false); setSelectedImage(null); }} maxWidth="sm" fullWidth>
+                <DialogTitle>Crop your avatar</DialogTitle>
+                <DialogContent>
+                  <div style={{ position: 'relative', width: '100%', height: 300 }}>
+                    {selectedImage && (
+                      <Cropper
+                        image={URL.createObjectURL(selectedImage)}
+                        crop={crop}
+                        zoom={zoom}
+                        aspect={1}
+                        cropShape="round"
+                        showGrid={false}
+                        onCropChange={setCrop}
+                        onZoomChange={setZoom}
+                        onCropComplete={handleCropComplete}
+                      />
+                    )}
+                  </div>
+                  <Slider
+                    value={zoom}
+                    min={1}
+                    max={3}
+                    step={0.1}
+                    onChange={(_, value) => setZoom(value as number)}
+                    aria-labelledby="Zoom"
+                    sx={{ mt: 2 }}
+                  />
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={() => { setShowCropper(false); setSelectedImage(null); }} color="secondary">Cancel</Button>
+                  <Button onClick={handleCroppedAvatarUpload} color="primary" disabled={uploading}>Save</Button>
+                </DialogActions>
+              </Dialog>
               {uploadMsg && (
                 <span
                   className={`mt-2 text-sm ${

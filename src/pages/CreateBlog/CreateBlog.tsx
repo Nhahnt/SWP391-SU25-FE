@@ -16,6 +16,9 @@ import {
   IconButton,
 } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
+import Cropper from 'react-easy-crop';
+import DialogActions from '@mui/material/DialogActions';
+import Slider from '@mui/material/Slider';
 
 export default function CreateBlogForm() {
   const [title, setTitle] = useState("");
@@ -25,6 +28,12 @@ export default function CreateBlogForm() {
   const [published, setPublished] = useState(true);
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [showCropper, setShowCropper] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
 
   const categories = [
     "QUIT_JOURNEY",
@@ -74,6 +83,34 @@ export default function CreateBlogForm() {
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    setSelectedImage(e.target.files[0]);
+    setShowCropper(true);
+  };
+
+  const handleCropComplete = (croppedArea: any, croppedAreaPixels: any) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  };
+
+  const handleCropSave = async () => {
+    if (!selectedImage || !croppedAreaPixels) return;
+    const { getCroppedImg } = await import('./cropImage');
+    const croppedBlob = await getCroppedImg(
+      URL.createObjectURL(selectedImage),
+      croppedAreaPixels
+    );
+    setFile(new File([croppedBlob], 'blog-image.jpg', { type: 'image/jpeg' }));
+    setCroppedImageUrl(URL.createObjectURL(croppedBlob));
+    setShowCropper(false);
+    setSelectedImage(null);
+  };
+
+  const handleCropCancel = () => {
+    setShowCropper(false);
+    setSelectedImage(null);
+  };
+
   return (
     <Box className="w-full bg-gradient-to-br from-orange-50 to-blue-50 flex justify-center py-2 md:py-4">
       <Container maxWidth="md" className="">
@@ -117,18 +154,51 @@ export default function CreateBlogForm() {
                   type="file"
                   accept="image/*"
                   hidden
-                  onChange={e => setFile(e.target.files?.[0] || null)}
+                  onChange={handleFileChange}
                 />
               </Button>
-              {file && (
+              {croppedImageUrl && (
                 <Box className="w-full md:w-1/2 flex items-center justify-center border border-gray-200 rounded-lg bg-gray-50 p-2">
                   <img
-                    src={URL.createObjectURL(file)}
+                    src={croppedImageUrl}
                     alt="Preview"
                     className="object-cover max-h-[180px] rounded shadow"
                   />
                 </Box>
               )}
+              <Dialog open={showCropper} onClose={handleCropCancel} maxWidth="sm" fullWidth>
+                <DialogTitle>Crop Blog Image</DialogTitle>
+                <DialogContent>
+                  <div style={{ position: 'relative', width: '100%', height: 300 }}>
+                    {selectedImage && (
+                      <Cropper
+                        image={URL.createObjectURL(selectedImage)}
+                        crop={crop}
+                        zoom={zoom}
+                        aspect={16/9}
+                        cropShape="rect"
+                        showGrid={true}
+                        onCropChange={setCrop}
+                        onZoomChange={setZoom}
+                        onCropComplete={handleCropComplete}
+                      />
+                    )}
+                  </div>
+                  <Slider
+                    value={zoom}
+                    min={1}
+                    max={3}
+                    step={0.1}
+                    onChange={(_, value) => setZoom(value as number)}
+                    aria-labelledby="Zoom"
+                    sx={{ mt: 2 }}
+                  />
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={handleCropCancel} color="secondary">Cancel</Button>
+                  <Button onClick={handleCropSave} color="primary">Save</Button>
+                </DialogActions>
+              </Dialog>
             </Box>
 
             <FormControl fullWidth>
@@ -190,10 +260,10 @@ export default function CreateBlogForm() {
                 <span>•</span>
                 <span>{published ? 'Published' : 'Draft'}</span>
               </Box>
-              {file && (
+              {croppedImageUrl && (
                 <Box className="w-full flex items-center justify-center mb-4">
                   <img
-                    src={URL.createObjectURL(file)}
+                    src={croppedImageUrl}
                     alt="Preview"
                     className="object-cover max-h-[260px] rounded shadow"
                   />

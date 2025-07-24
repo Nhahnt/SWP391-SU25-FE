@@ -36,6 +36,8 @@ function Popup({ isOpen, title, onClose, children, style }: { isOpen: boolean; t
   );
 }
 
+const API_BASE = "http://localhost:8082/api";
+
 export default function MembersList() {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,7 +56,7 @@ export default function MembersList() {
     try {
       const token = localStorage.getItem("token");
       const res = await axios.get(
-        "http://localhost:8082/api/admin/accounts/members",
+        `${API_BASE}/admin/accounts/members`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -79,7 +81,7 @@ export default function MembersList() {
     try {
       const token = localStorage.getItem("token");
       await axios.delete(
-        `http://localhost:8082/api/admin/account/${memberToDelete.user_id}`,
+        `${API_BASE}/admin/account/${memberToDelete.user_id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -102,7 +104,7 @@ export default function MembersList() {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        "http://localhost:8082/api/admin/create-account",
+        `${API_BASE}/admin/create-account`,
         {
           userName: newMember.userName,
           email: newMember.email,
