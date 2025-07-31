@@ -15,6 +15,7 @@ import {
   Select,
   ToggleButton,
   ToggleButtonGroup,
+  Avatar,
 } from "@mui/material";
 import SearchBar from "../../components/shared/SearchBar";
 import AppBreadcrumbs from "../../components/shared/BreadCrumbs";
@@ -28,7 +29,8 @@ export type Blog = {
   thumbnail: string;
   image: string;
   userId: number | null;
-  authorName: string | null;
+  userName: string | null;
+  avatarUrl: string | null;
   createdAt: string;
   updatedAt: string;
   category:
@@ -83,7 +85,8 @@ export default function Blogs() {
       // Xây dựng params API
       const params: any = {
         page: currentPage,
-        size: 10,
+        size: 6, // Show 6 blogs at a time
+        published: true, // Only show published blogs
       };
 
       // Chỉ gửi category khi không phải default
@@ -97,9 +100,8 @@ export default function Blogs() {
       });
 
       // Xử lý response data
-      const newBlogs = Array.isArray(res.data)
-        ? res.data
-        : res.data.content || [];
+      const responseData = res.data;
+      const newBlogs = responseData.content || [];
 
       // Update blogs state
       if (isLoadMore) {
@@ -115,8 +117,8 @@ export default function Blogs() {
         setBlogs(newBlogs);
       }
 
-      // Cập nhật hasMore
-      setHasMore(newBlogs.length === 10);
+      // Cập nhật hasMore dựa trên response
+      setHasMore(responseData.hasNext || newBlogs.length === 6);
     } catch (err) {
       console.error("Failed to load blogs:", err);
       setHasMore(false);
@@ -178,6 +180,16 @@ export default function Blogs() {
       LIFE_STORY: "Life Story",
     };
     return category ? map[category] || "" : "";
+  };
+
+  const getAuthorDisplayName = (blog: Blog): string => {
+    return blog.userName || "Anonymous";
+  };
+
+  const getAuthorInitials = (blog: Blog): string => {
+    const name = getAuthorDisplayName(blog);
+    if (!name || name === "Anonymous") return "A";
+    return name.split(' ').map(word => word.charAt(0)).join('').toUpperCase().slice(0, 2);
   };
 
 const handleToggleLike = async (blog: Blog) => {
@@ -335,14 +347,26 @@ const handleToggleLike = async (blog: Blog) => {
                 <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', px: 3, pb: 2 }}>
                   {/* Author, Category, Date */}
                   <div className="flex items-center gap-3 mb-2 mt-1">
-                    <div className="flex flex-col">
-                      <span className="font-semibold text-gray-800 text-base">
-                        {blog.authorName || "Anonymous"}
-                      </span>
-                      <span className="text-xs text-blue-600 font-medium">
-                        {formatCategory(blog.category)}
+                    <div className="flex items-center gap-2">
+                      <Avatar 
+                        src={blog.avatarUrl || undefined}
+                        sx={{ 
+                          width: 24, 
+                          height: 24, 
+                          fontSize: '0.75rem',
+                          bgcolor: '#2563eb',
+                          color: 'white'
+                        }}
+                      >
+                        {getAuthorInitials(blog)}
+                      </Avatar>
+                      <span className="font-semibold text-gray-800 text-sm">
+                        {getAuthorDisplayName(blog)}
                       </span>
                     </div>
+                    <span className="text-xs text-blue-600 font-medium">
+                      {formatCategory(blog.category)}
+                    </span>
                     <span className="ml-auto text-xs text-gray-400">
                       {new Date(blog.createdAt).toLocaleDateString("vi-VN")}
                     </span>

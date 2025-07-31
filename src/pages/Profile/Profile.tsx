@@ -139,7 +139,7 @@ export default function UserProfile() {
     setUploading(true);
     setUploadMsg("");
     try {
-      const { getCroppedImg } = await import("./cropImage");
+      const { getCroppedImg } = await import ("./cropImage");
       const croppedBlob = await getCroppedImg(
         URL.createObjectURL(selectedImage),
         croppedAreaPixels

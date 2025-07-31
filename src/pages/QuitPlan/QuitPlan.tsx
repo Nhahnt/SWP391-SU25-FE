@@ -247,6 +247,7 @@ export default function CreateQuitPlan() {
       }
       const data = await res.json();
       setCoachs(data);
+
     } catch (error: any) {
       console.error("Error fetching blog:", error);
     } finally {
@@ -363,7 +364,11 @@ export default function CreateQuitPlan() {
           }
         );
 
-        navigate("/quit-plan");
+        console.log("Coach assigned successfully:", response.data);
+
+        setSuccess("Bạn đã chọn coach thành công!");
+
+        navigate("/view-quit-plan");
       } catch (err: any) {
         console.error(err);
         setError("Đã xảy ra lỗi khi tạo kế hoạch.");

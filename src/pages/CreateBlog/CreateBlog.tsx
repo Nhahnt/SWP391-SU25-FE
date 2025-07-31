@@ -36,13 +36,25 @@ export default function CreateBlogForm() {
   const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
 
   const categories = [
-    "QUIT_JOURNEY",
-    "SUCCESS_STORY",
-    "EXPERIENCE",
-    "MOTIVATION",
-    "CHALLENGE",
-    "LIFE_STORY",
+    { value: "QUIT_JOURNEY", label: "Quit Journey" },
+    { value: "SUCCESS_STORY", label: "Success Story" },
+    { value: "EXPERIENCE", label: "Experience" },
+    { value: "MOTIVATION", label: "Motivational" },
+    { value: "CHALLENGE", label: "Challenge" },
+    { value: "LIFE_STORY", label: "Life Story" },
   ];
+
+  const formatCategory = (category: string): string => {
+    const map: Record<string, string> = {
+      QUIT_JOURNEY: "Quit Journey",
+      SUCCESS_STORY: "Success Story",
+      EXPERIENCE: "Experience",
+      MOTIVATION: "Motivational",
+      CHALLENGE: "Challenge",
+      LIFE_STORY: "Life Story",
+    };
+    return map[category] || category;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -210,8 +222,8 @@ export default function CreateBlogForm() {
                 sx={{ borderRadius: 2 }}
               >
                 {categories.map((cat) => (
-                  <MenuItem key={cat} value={cat}>
-                    {cat.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  <MenuItem key={cat.value} value={cat.value}>
+                    {cat.label}
                   </MenuItem>
                 ))}
               </Select>
@@ -255,7 +267,7 @@ export default function CreateBlogForm() {
               </Typography>
               <Box className="flex items-center gap-3 mb-4 text-sm text-gray-500">
                 <span className="px-2 py-1 bg-blue-50 rounded text-blue-700 font-medium border border-blue-100">
-                  {category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  {formatCategory(category)}
                 </span>
                 <span>•</span>
                 <span>{published ? 'Published' : 'Draft'}</span>

@@ -24,7 +24,7 @@
         setLoading(true);
         try {
           const res = await axios.get(
-            `http://localhost:8082/api/coaches/${coachId}/members`,
+            `http://localhost:8082/api/coach/${coachId}/members`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,

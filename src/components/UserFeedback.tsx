@@ -11,10 +11,6 @@ import {
   TextField,
   Rating,
   CircularProgress,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
 } from "@mui/material";
 
 const style = {
@@ -52,46 +48,68 @@ export default function UserFeedback() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
-  const [coachId, setCoachId] = useState<string>("");
-  const [coaches, setCoaches] = useState<any[]>([]);
+  const [assignedCoach, setAssignedCoach] = useState<any>(null);
   const [coachLoading, setCoachLoading] = useState(false);
   const [coachError, setCoachError] = useState("");
 
   const handleOpen = () => {
     setOpen(true);
-    fetchCoaches();
+    fetchAssignedCoach();
   };
+  
   const handleClose = () => {
     setOpen(false);
     setRating(null);
     setComment("");
     setSuccess(false);
     setError("");
-    setCoachId("");
+    setAssignedCoach(null);
     setCoachError("");
   };
 
-  const fetchCoaches = async () => {
+  const fetchAssignedCoach = async () => {
     setCoachLoading(true);
     setCoachError("");
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get(`${API_BASE}/admin/accounts/coaches`, {
+      const memberId = localStorage.getItem("memberId");
+      
+      if (!memberId) {
+        setCoachError("Member ID not found. Please log in again.");
+        return;
+      }
+
+      const res = await axios.get(`${API_BASE}/member/${memberId}/coach`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setCoaches(res.data);
+      
+      if (res.data && res.data.id) {
+        setAssignedCoach(res.data);
+      } else {
+        setCoachError("No coach assigned to you yet.");
+      }
     } catch (e: any) {
-      setCoachError("Failed to load coaches.");
-      setCoaches([]);
+      console.error("Error fetching assigned coach:", e);
+      if (e.response?.status === 404) {
+        setCoachError("No coach assigned to you yet.");
+      } else {
+        setCoachError("Failed to load assigned coach.");
+      }
     } finally {
       setCoachLoading(false);
     }
   };
 
   const handleSubmit = async () => {
+    if (!rating) {
+      setError("Please select a rating.");
+      return;
+    }
+
     setLoading(true);
     setError("");
     setSuccess(false);
+
     try {
       const token = localStorage.getItem("token");
       await axios.post(
@@ -99,15 +117,14 @@ export default function UserFeedback() {
         {
           stars: rating,
           comment,
-          // coachId: ... // If needed, but your backend gets coach from member
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setSuccess(true);
       setRating(null);
       setComment("");
-      setCoachId("");
     } catch (e: any) {
+      console.error("Error submitting rating:", e);
       setError(e?.response?.data?.message || "Failed to submit feedback.");
     } finally {
       setLoading(false);
@@ -160,97 +177,92 @@ export default function UserFeedback() {
                 <span style={{ fontSize: 20 }}>✖️</span>
               </IconButton>
             </Box>
-            <FormControl fullWidth sx={{ mb: 2 }}>
-              <InputLabel id="coach-select-label">Select Coach</InputLabel>
-              <Select
-                labelId="coach-select-label"
-                value={coachId}
-                label="Select Coach"
-                onChange={(e) => setCoachId(e.target.value)}
-                disabled={coachLoading}
-              >
-                {coachLoading ? (
-                  <MenuItem value="" disabled>
-                    <CircularProgress size={20} sx={{ mr: 1 }} /> Loading...
-                  </MenuItem>
-                ) : coachError ? (
-                  <MenuItem value="" disabled>
-                    {coachError}
-                  </MenuItem>
-                ) : coaches.length === 0 ? (
-                  <MenuItem value="" disabled>
-                    No coaches found
-                  </MenuItem>
-                ) : (
-                  coaches.map((coach: any) => (
-                    <MenuItem
-                      key={coach.userId || coach.user_id}
-                      value={coach.userId || coach.user_id}
-                    >
-                      {coach.fullName ||
-                        coach.full_name ||
-                        coach.userName ||
-                        coach.user_name}
-                    </MenuItem>
-                  ))
+            
+            {coachLoading ? (
+              <Box display="flex" justifyContent="center" alignItems="center" py={3}>
+                <CircularProgress size={24} />
+                <Typography sx={{ ml: 1 }}>Loading coach information...</Typography>
+              </Box>
+            ) : coachError ? (
+              <Box sx={{ p: 2, bgcolor: "#ffebee", borderRadius: 1, mb: 2 }}>
+                <Typography color="error" fontSize={14}>
+                  {coachError}
+                </Typography>
+              </Box>
+            ) : assignedCoach ? (
+              <>
+                <Box sx={{ p: 2, bgcolor: "#e8f5e8", borderRadius: 1, mb: 2 }}>
+                  <Typography variant="subtitle2" fontWeight={600} color="#2e7d32">
+                    Your Assigned Coach:
+                  </Typography>
+                  <Typography variant="body2" color="#2e7d32">
+                    {assignedCoach.name || assignedCoach.fullName || "Coach"}
+                  </Typography>
+                </Box>
+                
+                <Typography
+                  variant="subtitle1"
+                  fontWeight={600}
+                  color="#c2410c"
+                  mb={1}
+                >
+                  How would you rate your coach?
+                </Typography>
+                <Rating
+                  name="coach-rating"
+                  value={rating}
+                  onChange={(_, value) => setRating(value)}
+                  size="large"
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  label="Leave a comment (optional)"
+                  multiline
+                  minRows={3}
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  variant="outlined"
+                  fullWidth
+                  sx={{ mb: 2, background: "#fff" }}
+                />
+                {error && (
+                  <Typography color="#e53935" fontSize={14} mb={1}>
+                    {error}
+                  </Typography>
                 )}
-              </Select>
-            </FormControl>
-            <Typography
-              variant="subtitle1"
-              fontWeight={600}
-              color="#c2410c"
-              mb={1}
-            >
-              How would you rate your coach?
-            </Typography>
-            <Rating
-              name="coach-rating"
-              value={rating}
-              onChange={(_, value) => setRating(value)}
-              size="large"
-              sx={{ mb: 2 }}
-            />
-            <TextField
-              label="Leave a comment (optional)"
-              multiline
-              minRows={3}
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              variant="outlined"
-              fullWidth
-              sx={{ mb: 2, background: "#fff" }}
-            />
-            {error && (
-              <Typography color="#e53935" fontSize={14} mb={1}>
-                {error}
-              </Typography>
+                {success && (
+                  <Typography color="#388e3c" fontSize={15} mb={1} fontWeight={600}>
+                    Thank you for your feedback!
+                  </Typography>
+                )}
+                <Button
+                  variant="contained"
+                  sx={{
+                    bgcolor: "#c2410c",
+                    "&:hover": { bgcolor: "#a0300a" },
+                    color: "white",
+                    fontWeight: 600,
+                    borderRadius: 2,
+                    mt: 1,
+                  }}
+                  onClick={handleSubmit}
+                  disabled={loading || !rating}
+                  fullWidth
+                >
+                  {loading ? (
+                    <CircularProgress size={24} sx={{ color: "#fff" }} />
+                  ) : (
+                    "Submit Feedback"
+                  )}
+                </Button>
+              </>
+            ) : (
+              <Box sx={{ p: 2, bgcolor: "#fff3cd", borderRadius: 1 }}>
+                <Typography color="#856404" fontSize={14}>
+                  No coach information available.
+                </Typography>
+              </Box>
             )}
-            {success && (
-              <Typography color="#388e3c" fontSize={15} mb={1} fontWeight={600}>
-                Thank you for your feedback!
-              </Typography>
-            )}
-            <Button
-              variant="contained"
-              sx={{
-                bgcolor: "#c2410c",
-                "&:hover": { bgcolor: "#a0300a" },
-                color: "white",
-                fontWeight: 600,
-                borderRadius: 2,
-                mt: 1,
-              }}
-              onClick={handleSubmit}
-              disabled={loading || !rating || !coachId}
-              fullWidth
-            >
-              {loading ? (
-                <CircularProgress size={24} sx={{ color: "#fff" }} />
-              ) : (
-                "Submit Feedback"
-              )}
-            </Button>
           </Box>
         </Fade>
       </Modal>

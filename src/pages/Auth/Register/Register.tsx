@@ -7,6 +7,7 @@ import {
   Select,
   MenuItem,
   CircularProgress,
+  FormHelperText,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -24,29 +25,75 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const role = "MEMBER"; // Role is always "MEMBER"
 
-  const handleRegister = async () => {
-    if (
-      !username ||
-      !email ||
-      !password ||
-      !confirmPassword ||
-      !phoneNumber ||
-      !fullName ||
-      !gender
-    ) {
-      alert("Please fill in all required information!");
-      return;
+  // Field-specific error states
+  const [usernameError, setUsernameError] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
+  const [phoneNumberError, setPhoneNumberError] = useState("");
+  const [fullNameError, setFullNameError] = useState("");
+  const [genderError, setGenderError] = useState("");
+
+  const validateFields = () => {
+    let isValid = true;
+    
+    setUsernameError("");
+    setEmailError("");
+    setPasswordError("");
+    setConfirmPasswordError("");
+    setPhoneNumberError("");
+    setFullNameError("");
+    setGenderError("");
+
+    if (!username.trim()) {
+      setUsernameError("Username is required");
+      isValid = false;
     }
-    if (password.length < 8) {
-      alert("Password must be at least 8 characters long!");
-      return;
+
+    if (!email.trim()) {
+      setEmailError("Email is required");
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      setEmailError("Please enter a valid email address");
+      isValid = false;
     }
-    if (password !== confirmPassword) {
-      alert("Passwords do not match!");
-      return;
+
+    if (!phoneNumber.trim()) {
+      setPhoneNumberError("Phone number is required");
+      isValid = false;
     }
+
+    if (!fullName.trim()) {
+      setFullNameError("Full name is required");
+      isValid = false;
+    }
+
     if (!gender || gender === "") {
-      alert("Please select a gender!");
+      setGenderError("Please select a gender");
+      isValid = false;
+    }
+
+    if (!password.trim()) {
+      setPasswordError("Password is required");
+      isValid = false;
+    } else if (password.length < 8) {
+      setPasswordError("Password must be at least 8 characters long");
+      isValid = false;
+    }
+
+    if (!confirmPassword.trim()) {
+      setConfirmPasswordError("Please confirm your password");
+      isValid = false;
+    } else if (password !== confirmPassword) {
+      setConfirmPasswordError("Passwords do not match");
+      isValid = false;
+    }
+
+    return isValid;
+  };
+
+  const handleRegister = async () => {
+    if (!validateFields()) {
       return;
     }
 
@@ -104,8 +151,13 @@ export default function Register() {
           variant="outlined"
           margin="normal"
           value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          onChange={(e) => {
+            setUsername(e.target.value);
+            if (usernameError) setUsernameError("");
+          }}
           disabled={loading}
+          error={!!usernameError}
+          helperText={usernameError}
         />
         <TextField
           fullWidth
@@ -113,8 +165,13 @@ export default function Register() {
           variant="outlined"
           margin="normal"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            if (emailError) setEmailError("");
+          }}
           disabled={loading}
+          error={!!emailError}
+          helperText={emailError}
         />
         <TextField
           fullWidth
@@ -122,8 +179,13 @@ export default function Register() {
           variant="outlined"
           margin="normal"
           value={phoneNumber}
-          onChange={(e) => setPhoneNumber(e.target.value)}
+          onChange={(e) => {
+            setPhoneNumber(e.target.value);
+            if (phoneNumberError) setPhoneNumberError("");
+          }}
           disabled={loading}
+          error={!!phoneNumberError}
+          helperText={phoneNumberError}
         />
         <TextField
           fullWidth
@@ -131,17 +193,26 @@ export default function Register() {
           variant="outlined"
           margin="normal"
           value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
+          onChange={(e) => {
+            setFullName(e.target.value);
+            if (fullNameError) setFullNameError("");
+          }}
           disabled={loading}
+          error={!!fullNameError}
+          helperText={fullNameError}
         />
         <Select
           fullWidth
           value={gender}
-          onChange={(e) => setGender(e.target.value)}
+          onChange={(e) => {
+            setGender(e.target.value);
+            if (genderError) setGenderError("");
+          }}
           displayEmpty
           inputProps={{ "aria-label": "Gender" }}
           sx={{ mt: 2, mb: 1 }}
           disabled={loading}
+          error={!!genderError}
         >
           <MenuItem value="" disabled>
             <em>Select gender</em>
@@ -149,6 +220,11 @@ export default function Register() {
           <MenuItem value="MALE">Male</MenuItem>
           <MenuItem value="FEMALE">Female</MenuItem>
         </Select>
+        {genderError && (
+          <FormHelperText error sx={{ mt: 0 }}>
+            {genderError}
+          </FormHelperText>
+        )}
         <TextField
           fullWidth
           label="Password"
@@ -156,8 +232,16 @@ export default function Register() {
           variant="outlined"
           margin="normal"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            if (passwordError) setPasswordError("");
+            if (confirmPassword && e.target.value === confirmPassword) {
+              setConfirmPasswordError("");
+            }
+          }}
           disabled={loading}
+          error={!!passwordError}
+          helperText={passwordError}
         />
         <TextField
           fullWidth
@@ -166,8 +250,13 @@ export default function Register() {
           variant="outlined"
           margin="normal"
           value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
+          onChange={(e) => {
+            setConfirmPassword(e.target.value);
+            if (confirmPasswordError) setConfirmPasswordError("");
+          }}
           disabled={loading}
+          error={!!confirmPasswordError}
+          helperText={confirmPasswordError}
         />
         {/* Hidden role field */}
         <input type="hidden" value={role} readOnly />

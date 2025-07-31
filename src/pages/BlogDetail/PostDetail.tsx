@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState, useCallback } from "react";
 import {
   Container,
@@ -9,7 +9,16 @@ import {
   TextField,
   Button,
   CircularProgress,
+  Avatar,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import DeleteIcon from "@mui/icons-material/Delete";
+import axios from "axios"; // Added axios import
 
 type Blog = {
   id: number;
@@ -18,7 +27,8 @@ type Blog = {
   thumbnail: string;
   image: string;
   userId: number | null;
-  authorName: string | null;
+  userName: string | null;
+  avatarUrl: string | null;
   createdAt: string;
   updatedAt: string;
   category:
@@ -42,6 +52,7 @@ type Comment = {
 
 export default function BlogDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [blog, setBlog] = useState<Blog | null>(null);
   const [loadingBlog, setLoadingBlog] = useState(true);
   const [errorBlog, setErrorBlog] = useState<string | null>(null);
@@ -54,7 +65,43 @@ export default function BlogDetail() {
   const loaderRef = useRef<HTMLDivElement>(null);
   const [submittingComment, setSubmittingComment] = useState(false);
 
+  const [userName, setUserName] = useState<string | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  // Delete confirmation dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   const getAuthToken = () => localStorage.getItem("token");
+  const userRole = localStorage.getItem("role");
+  const isStaff = userRole === "staff" || userRole === "STAFF" || userRole === "Staff";
+
+  // Debug: Log the role to console
+  console.log("Current user role:", userRole);
+  console.log("Is staff:", isStaff);
+  console.log("All localStorage items:", Object.keys(localStorage).map(key => `${key}: ${localStorage.getItem(key)}`));
+
+  const getAuthorDisplayName = (blog: Blog, userName: string | null): string => {
+    return userName || "Anonymous";
+  };
+
+  const getAuthorInitials = (blog: Blog): string => {
+    const name = getAuthorDisplayName(blog, userName);
+    if (!name || name === "Anonymous") return "A";
+    return name.split(' ').map(word => word.charAt(0)).join('').toUpperCase().slice(0, 2);
+  };
+
+  const formatCategory = (category: string | undefined): string => {
+    const map: Record<string, string> = {
+      QUIT_JOURNEY: "Quit Journey",
+      SUCCESS_STORY: "Success Story",
+      EXPERIENCE: "Experience",
+      MOTIVATION: "Motivational",
+      CHALLENGE: "Challenge",
+      LIFE_STORY: "Life Story",
+    };
+    return category ? map[category] || "" : "";
+  };
 
   const fetchBlog = async () => {
     setLoadingBlog(true);
@@ -72,6 +119,12 @@ export default function BlogDetail() {
         throw new Error("Đã xảy ra lỗi khi tải bài viết.");
       }
       const data = await res.json();
+      
+      // Debug: Log the blog data
+      console.log("Blog Detail API Response:", data);
+      setUserName(data.userName || null);
+      setAvatarUrl(data.avatarUrl || null);
+      
       setBlog(data);
     } catch (error: any) {
       console.error("Error fetching blog:", error);
@@ -143,6 +196,105 @@ export default function BlogDetail() {
       alert(`Lỗi khi gửi bình luận: ${error.message}`);
     } finally {
       setSubmittingComment(false);
+    }
+  };
+
+  const handleBackToList = () => {
+    navigate("/blogs");
+  };
+
+  const handleSoftDelete = async () => {
+    if (!isStaff) {
+      alert("Chỉ có Staff mới có quyền xóa bài viết.");
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const token = getAuthToken();
+      
+      // Debug: Log the token and request details
+      console.log("Token:", token ? "Present" : "Missing");
+      console.log("Blog ID:", id);
+      console.log("User Role:", userRole);
+      console.log("Is Staff:", isStaff);
+      
+      // Temporary: Check if backend endpoint exists
+      try {
+        console.log("Making request to:", `http://localhost:8082/api/blogs/${id}/soft-delete`);
+        console.log("Request headers:", { Authorization: `Bearer ${token}` });
+        console.log("User role:", userRole);
+        console.log("Is staff:", isStaff);
+        
+        // First, test if the backend is reachable
+        try {
+          const testResponse = await axios.get(`http://localhost:8082/api/blogs/${id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          console.log("Backend is reachable, blog exists:", testResponse.data);
+        } catch (testError) {
+          console.error("Backend connectivity test failed:", testError);
+        }
+        
+        const res = await axios.patch(
+          `http://localhost:8082/api/blogs/${id}/soft-delete`,
+          {}, // Empty body for PATCH
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            timeout: 10000, // 10 second timeout
+          }
+        );
+
+        console.log("Soft delete response:", res);
+        alert("Bài viết đã được xóa thành công.");
+        navigate("/blogs");
+      } catch (networkError: any) {
+        console.error("Network error details:", {
+          code: networkError.code,
+          message: networkError.message,
+          response: networkError.response,
+          request: networkError.request,
+          status: networkError.response?.status,
+          statusText: networkError.response?.statusText,
+          data: networkError.response?.data
+        });
+        
+        if (networkError.code === "ERR_NETWORK") {
+          alert("Network Error: Không thể kết nối đến backend. Vui lòng kiểm tra:\n1. Backend có đang chạy không?\n2. Port 8082 có đúng không?\n3. CORS có được cấu hình đúng không?");
+          console.log("Network error - backend might be down or CORS issue");
+        } else if (networkError.response?.status === 403) {
+          alert("Lỗi 403: Không có quyền xóa bài viết. Vui lòng kiểm tra lại quyền truy cập.");
+        } else if (networkError.response?.status === 401) {
+          alert("Lỗi 401: Token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.");
+        } else {
+          alert(`Lỗi ${networkError.response?.status || 'Unknown'}: ${networkError.response?.data?.message || networkError.message}`);
+        }
+      }
+    } catch (error: any) {
+      console.error("Error deleting blog:", error);
+      
+      // Better error handling
+      if (error.response) {
+        console.error("Response status:", error.response.status);
+        console.error("Response data:", error.response.data);
+        
+        if (error.response.status === 403) {
+          alert("Lỗi 403: Không có quyền xóa bài viết. Vui lòng kiểm tra lại quyền truy cập.");
+        } else if (error.response.status === 401) {
+          alert("Lỗi 401: Token không hợp lệ hoặc đã hết hạn. Vui lòng đăng nhập lại.");
+        } else {
+          alert(`Lỗi ${error.response.status}: ${error.response.data?.message || 'Không thể xóa bài viết'}`);
+        }
+      } else if (error.request) {
+        alert("Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.");
+      } else {
+        alert(`Lỗi: ${error.message}`);
+      }
+    } finally {
+      setDeleting(false);
+      setDeleteDialogOpen(false);
     }
   };
 
@@ -238,6 +390,44 @@ export default function BlogDetail() {
 
   return (
     <Container maxWidth="xl" className="mt-10" sx={{ maxWidth: { xs: '100%', xl: 1400 } }}>
+      {/* Back Button and Delete Button */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Button
+          variant="outlined"
+          startIcon={<ArrowBackIcon />}
+          onClick={handleBackToList}
+          sx={{ 
+            color: '#2563eb', 
+            borderColor: '#2563eb',
+            '&:hover': { 
+              borderColor: '#1d4ed8', 
+              backgroundColor: 'rgba(37, 99, 235, 0.04)' 
+            }
+          }}
+        >
+          Quay lại danh sách
+        </Button>
+        
+        {isStaff && (
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<DeleteIcon />}
+            onClick={() => setDeleteDialogOpen(true)}
+            sx={{ 
+              borderColor: '#dc2626',
+              color: '#dc2626',
+              '&:hover': { 
+                borderColor: '#b91c1c', 
+                backgroundColor: 'rgba(220, 38, 38, 0.04)' 
+              }
+            }}
+          >
+            Xóa bài viết
+          </Button>
+        )}
+      </Box>
+
       <div className="flex flex-col lg:flex-row gap-8">
         {/* Blog Content Left (2/3) */}
         <div className="w-full lg:w-2/3 min-w-0">
@@ -249,7 +439,9 @@ export default function BlogDetail() {
               {blog.title}
             </Typography>
             <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-6">
-              <span className="px-2 py-1 bg-blue-50 rounded text-blue-700 font-medium border border-blue-100">{blog.category}</span>
+              <span className="px-2 py-1 bg-blue-50 rounded text-blue-700 font-medium border border-blue-100">
+                {formatCategory(blog.category)}
+              </span>
               <span>•</span>
               <span>
                 {new Date(blog.createdAt).toLocaleDateString("vi-VN", {
@@ -258,10 +450,24 @@ export default function BlogDetail() {
                   year: "numeric",
                 })}
               </span>
-              {blog.authorName && (
+              {getAuthorDisplayName(blog, userName) && (
                 <>
                   <span>•</span>
-                  <span className="font-semibold">{blog.authorName}</span>
+                  <div className="flex items-center gap-2">
+                    <Avatar 
+                      src={blog.avatarUrl || undefined}
+                      sx={{ 
+                        width: 20, 
+                        height: 20, 
+                        fontSize: '0.7rem',
+                        bgcolor: '#2563eb',
+                        color: 'white'
+                      }}
+                    >
+                      {getAuthorInitials(blog)}
+                    </Avatar>
+                    <span className="font-semibold">{getAuthorDisplayName(blog, userName)}</span>
+                  </div>
                 </>
               )}
             </div>
@@ -383,6 +589,45 @@ export default function BlogDetail() {
           </Box>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Typography variant="h6" color="error">
+            Xác nhận xóa bài viết
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ mt: 1 }}>
+            Bạn có chắc chắn muốn xóa bài viết "{blog?.title}" không?
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Bài viết sẽ được ẩn khỏi danh sách công khai nhưng vẫn được lưu trong hệ thống.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button 
+            onClick={() => setDeleteDialogOpen(false)}
+            disabled={deleting}
+          >
+            Hủy
+          </Button>
+          <Button 
+            onClick={handleSoftDelete}
+            color="error"
+            variant="contained"
+            disabled={deleting}
+            startIcon={deleting ? <CircularProgress size={16} /> : <DeleteIcon />}
+          >
+            {deleting ? "Đang xóa..." : "Xóa"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }

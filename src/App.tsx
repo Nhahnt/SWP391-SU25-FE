@@ -19,7 +19,6 @@ import Unauthorized from "./pages/Unauthorized/Unauthorized";
 import MoodTracker from "./components/MoodTracker";
 import QuitPlanDetail from "./pages/QuitPlan/QuitPlanDetail";
 import { ProgressTracking } from "./pages/ProgressTracking/ProgressTracking";
-import CoachDashboard from "./pages/CoachDashboard/CoachDashboard";
 import MembersList from "./pages/Dashboard/Members/MembersList";
 import CoachesList from "./pages/Dashboard/Coaches/CoachesList";
 import StaffsList from "./pages/Dashboard/Staffs/StaffsList";
@@ -27,6 +26,7 @@ import Feedback from "./pages/Dashboard/Feedback/FeedbacksList";
 import MemberDashboard from "./pages/MemberDashboard/MemberDashboard";
 import ChatScreen from "./pages/Conversations/ChatScreen";
 import UserFeedback from "./components/UserFeedback";
+import CoachTracking from "./pages/ProgressTracking/CoachTracking";
 
 function AppRoutesWithExtras() {
   const location = useLocation();
@@ -135,7 +135,7 @@ function AppRoutesWithExtras() {
           <Route
             path="/profile"
             element={
-              <ProtectedRoute allowedRoles={["admin", "staff", "member"]}>
+              <ProtectedRoute allowedRoles={["admin", "staff", "member", "coach"]}>
                 <UserProfile />
               </ProtectedRoute>
             }
@@ -150,10 +150,10 @@ function AppRoutesWithExtras() {
             }
           />
           <Route
-            path="/coach-dashboard"
+            path="/coach-tracking"
             element={
               <ProtectedRoute allowedRoles={["coach"]}>
-                <CoachDashboard />
+                <CoachTracking />
               </ProtectedRoute>
             }
           />

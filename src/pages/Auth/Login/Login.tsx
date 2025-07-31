@@ -5,12 +5,44 @@ import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [username, setuserName] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  
+  // Field-specific error states
+  const [usernameError, setUsernameError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  const validateFields = () => {
+    let isValid = true;
+    
+    // Clear previous errors
+    setUsernameError("");
+    setPasswordError("");
+    setErrorMsg("");
+
+    // Validate username
+    if (!username.trim()) {
+      setUsernameError("Username is required");
+      isValid = false;
+    }
+
+    // Validate password
+    if (!password.trim()) {
+      setPasswordError("Password is required");
+      isValid = false;
+    }
+
+    return isValid;
+  };
 
   const handleLogin = async () => {
+    // Validate fields first
+    if (!validateFields()) {
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await axios.post(
@@ -38,7 +70,6 @@ export default function Login() {
         navigate("/");
       }
 
-      // Cấu hình token mặc định cho axios
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
       axios.defaults.withCredentials = true;
       setErrorMsg("");
@@ -105,12 +136,17 @@ export default function Login() {
         )}
         <TextField
           fullWidth
-          label="userName"
+          label="Username"
           variant="outlined"
           margin="normal"
           value={username}
-          onChange={(e) => setuserName(e.target.value)}
+          onChange={(e) => {
+            setUsername(e.target.value);
+            if (usernameError) setUsernameError("");
+          }}
           disabled={loading}
+          error={!!usernameError}
+          helperText={usernameError}
         />
         <TextField
           fullWidth
@@ -119,8 +155,13 @@ export default function Login() {
           variant="outlined"
           margin="normal"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            if (passwordError) setPasswordError("");
+          }}
           disabled={loading}
+          error={!!passwordError}
+          helperText={passwordError}
         />
         {/* Forgot Password Link */}
         <Box className="text-right mt-1">

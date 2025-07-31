@@ -2,6 +2,9 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import Sidebar from "./components/Sidebar";
 import ChatBox from "./components/Chatbox";
 import { Client, StompSubscription } from "@stomp/stompjs";
+import { Button, Box } from "@mui/material";
+import { Link } from "react-router-dom";
+import AssessmentIcon from '@mui/icons-material/Assessment';
 
 const ChatScreen = () => {
   const [selectedMemberId, setSelectedMemberId] = useState<number | null>(
@@ -64,20 +67,21 @@ const ChatScreen = () => {
       {(role === "coach" || role === "COACH") && (
         <Sidebar onSelectMember={handleSelectMember} selectedMemberId={selectedMemberId} />
       )}
-      <div className="flex-1 min-w-0 flex items-center justify-center">
-        {selectedMemberId ? (
-          <ChatBox
-            memberId={selectedMemberId}
-            coachId={coachId ? parseInt(coachId, 10) : 0}
-            stompClient={stompClient}
-          />
-        ) : (
-          <div className="text-gray-400 text-lg font-medium text-center">
-            Chọn một thành viên để bắt đầu chat
-          </div>
-        )}
+        
+        <div className="flex-1 flex items-center justify-center">
+          {selectedMemberId ? (
+            <ChatBox
+              memberId={selectedMemberId}
+              coachId={coachId ? parseInt(coachId, 10) : 0}
+              stompClient={stompClient}
+            />
+          ) : (
+            <div className="text-gray-400 text-lg font-medium text-center">
+              Chọn một thành viên để bắt đầu chat
+            </div>
+          )}
+        </div>
       </div>
-    </div>
   );
 };
 
