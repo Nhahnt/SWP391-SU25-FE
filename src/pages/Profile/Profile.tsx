@@ -42,8 +42,6 @@ function TabPanel(props: any) {
 }
 
 const API_BASE = "http://localhost:8082/api";
-const token = localStorage.getItem("token");
-const usernameStr = localStorage.getItem("username");
 
 export default function UserProfile() {
   const [user, setUser] = useState<any>(null);
@@ -65,6 +63,8 @@ export default function UserProfile() {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
   const fetchAvatar = async () => {
+    const token = localStorage.getItem("token");
+
     try {
       const res = await axios.get(
         `${API_BASE}/avatar/current`,
@@ -86,14 +86,17 @@ export default function UserProfile() {
   };
 
   const fetchProfile = async () => {
+    const currentToken = localStorage.getItem("token");
+    const currentUsername = localStorage.getItem("username");
+
     setLoading(true);
     setError("");
     try {
       const response = await axios.get(
-        `${API_BASE}/account/${usernameStr}/profile`,
+        `${API_BASE}/account/${currentUsername}/profile`,
         {
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${currentToken}`,
           },
           withCredentials: true,
         }
@@ -138,6 +141,7 @@ export default function UserProfile() {
     if (!selectedImage || !croppedAreaPixels) return;
     setUploading(true);
     setUploadMsg("");
+    const token = localStorage.getItem("token");
     try {
       const { getCroppedImg } = await import ("./cropImage");
       const croppedBlob = await getCroppedImg(
@@ -190,6 +194,9 @@ export default function UserProfile() {
   };
 
   const handleEditSave = async () => {
+    const token = localStorage.getItem("token");
+    const usernameStr = localStorage.getItem("username");
+
     setEditLoading(true);
     try {
       await axios.put(
@@ -401,7 +408,7 @@ export default function UserProfile() {
               }}
             >
               <Tab label="Personal Info" />
-              <Tab label="My Blogs" />
+              {/* <Tab label="My Blogs" /> */}
             </Tabs>
           </Box>
           <TabPanel value={tabValue} index={0}>

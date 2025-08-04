@@ -7,6 +7,7 @@ interface ProgressBarCardProps {
 
 function getProgressPercentage(plan: any, progressWeeks: any[]) {
   if (!plan || !progressWeeks.length || !plan.taperingSchedule?.length) return 0;
+  
   return Math.round((progressWeeks.length / plan.taperingSchedule.length) * 100);
 }
 

@@ -82,7 +82,6 @@ export default function Blogs() {
     isLoadMore ? setLoadingMore(true) : setLoadingInitial(true);
 
     try {
-      // Xây dựng params API
       const params: any = {
         page: currentPage,
         size: 6, // Show 6 blogs at a time

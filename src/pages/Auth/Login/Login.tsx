@@ -1,4 +1,14 @@
-import { Box, Button, TextField, Typography, Paper, CircularProgress } from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  Paper,
+  CircularProgress,
+  InputAdornment,
+  IconButton,
+} from "@mui/material";
 import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -9,14 +19,15 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
-  
+  const [showPassword, setShowPassword] = useState(false);
+
   // Field-specific error states
   const [usernameError, setUsernameError] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
   const validateFields = () => {
     let isValid = true;
-    
+
     // Clear previous errors
     setUsernameError("");
     setPasswordError("");
@@ -35,6 +46,10 @@ export default function Login() {
     }
 
     return isValid;
+  };
+
+  const handleShowPassword = () => {
+    setShowPassword((prev) => !prev);
   };
 
   const handleLogin = async () => {
@@ -56,14 +71,17 @@ export default function Login() {
         }
       );
 
-      const { token, role, memberId, coachId } = response.data;
+      const { token, role, memberId, coachId, userId, isVip } = response.data;
 
       // Lưu vào localStorage
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);
       localStorage.setItem("username", username);
+      localStorage.setItem("userID", userId);
+      localStorage.setItem("isVip", isVip);
       if (memberId) localStorage.setItem("memberId", memberId.toString());
       if (coachId) localStorage.setItem("coachId", coachId.toString());
+
       if (role === "ADMIN" || role === "STAFF") {
         navigate("/dashboard");
       } else {
@@ -151,7 +169,7 @@ export default function Login() {
         <TextField
           fullWidth
           label="Password"
-          type="password"
+          type={showPassword ? "text" : "password"}
           variant="outlined"
           margin="normal"
           value={password}
@@ -162,6 +180,19 @@ export default function Login() {
           disabled={loading}
           error={!!passwordError}
           helperText={passwordError}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label="toggle password visibility"
+                  onClick={handleShowPassword}
+                  edge="end"
+                >
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
         />
         {/* Forgot Password Link */}
         <Box className="text-right mt-1">
@@ -194,7 +225,11 @@ export default function Login() {
           onClick={handleLogin}
           disabled={loading}
         >
-          {loading ? <CircularProgress size={22} color="inherit" /> : "Đăng nhập"}
+          {loading ? (
+            <CircularProgress size={22} color="inherit" />
+          ) : (
+            "Đăng nhập"
+          )}
         </Button>
 
         {/* Register Link */}

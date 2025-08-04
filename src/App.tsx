@@ -27,11 +27,17 @@ import MemberDashboard from "./pages/MemberDashboard/MemberDashboard";
 import ChatScreen from "./pages/Conversations/ChatScreen";
 import UserFeedback from "./components/UserFeedback";
 import CoachTracking from "./pages/ProgressTracking/CoachTracking";
+import SmokeQuiz from "./components/SmokeQuiz";
+import Payment from "./pages/Payment/Payment";
+import Return from "./pages/Payment/Return";
+import Ranking from "./pages/Ranking/Ranking";
+import SuggestedPlan from "./pages/QuitPlan/SuggestedPlan";
 
 function AppRoutesWithExtras() {
   const location = useLocation();
   const path = location.pathname;
-  const hideMoodTracker = path === "/login" || path === "/register" || path === "/conversations";
+  const hideMoodTracker =
+    path === "/login" || path === "/register" || path === "/conversations";
   const hideUserFeedback = path === "/login" || path === "/register";
 
   return (
@@ -53,9 +59,7 @@ function AppRoutesWithExtras() {
           <Route path="/blogs" element={<Blogs />} />
           <Route path="/blogs/:id" element={<BlogDetail />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
-          {/* <Route path="/quit-plan" element={<CreateQuitPlan />} />
-          <Route path="/view-quit-plan" element={<QuitPlanDetail />} /> */}
-          <Route path="/progress-tracking" element={<ProgressTracking />} />
+          <Route path="/ranking" element={<Ranking />} />
 
           {/* Protected routes */}
           <Route
@@ -99,17 +103,25 @@ function AppRoutesWithExtras() {
             }
           />
           <Route
-            path="/quit-plan"
+            path="/quit-plan/customize"
             element={
-              <ProtectedRoute allowedRoles={["member", ""]}>
+              <ProtectedRoute allowedRoles={["member"]}>
                 <CreateQuitPlan />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/quit-plan/suggested"
+            element={
+              <ProtectedRoute allowedRoles={["member"]}>
+                <SuggestedPlan />
               </ProtectedRoute>
             }
           />
           <Route
             path="/view-quit-plan/"
             element={
-              <ProtectedRoute allowedRoles={["member", ""]}>
+              <ProtectedRoute allowedRoles={["member"]}>
                 <QuitPlanDetail />
               </ProtectedRoute>
             }
@@ -118,8 +130,35 @@ function AppRoutesWithExtras() {
           <Route
             path="/progress-tracking"
             element={
-              <ProtectedRoute allowedRoles={["member", ""]}>
+              <ProtectedRoute allowedRoles={["member"]}>
                 <ProgressTracking />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/quiz"
+            element={
+              <ProtectedRoute allowedRoles={["member", ""]}>
+                <SmokeQuiz />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/payment"
+            element={
+              <ProtectedRoute allowedRoles={["member"]}>
+                <Payment />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/vnpay/return"
+            element={
+              <ProtectedRoute allowedRoles={["member"]}>
+                <Return />
               </ProtectedRoute>
             }
           />
@@ -135,7 +174,9 @@ function AppRoutesWithExtras() {
           <Route
             path="/profile"
             element={
-              <ProtectedRoute allowedRoles={["admin", "staff", "member", "coach"]}>
+              <ProtectedRoute
+                allowedRoles={["admin", "staff", "member", "coach"]}
+              >
                 <UserProfile />
               </ProtectedRoute>
             }
@@ -144,7 +185,9 @@ function AppRoutesWithExtras() {
           <Route
             path="/create-blog"
             element={
-              <ProtectedRoute allowedRoles={["admin", "staff", "member"]}>
+              <ProtectedRoute
+                allowedRoles={["admin", "staff", "member", "coach"]}
+              >
                 <CreateBlogForm />
               </ProtectedRoute>
             }

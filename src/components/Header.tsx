@@ -21,6 +21,8 @@ export default function Header() {
     
     localStorage.removeItem("memberId");
     localStorage.removeItem("coachId");
+    localStorage.removeItem("userID");
+    localStorage.removeItem("isVip");
     setIsLoggedIn(false);
     setUserRole("");
 
@@ -86,9 +88,12 @@ export default function Header() {
             </Button>
           )}
 
-          <Button component={Link} to="/quit-plan" sx={navButtonStyles}>
+          {(role === "MEMBER" ) && (
+            <Button component={Link} to="/view-quit-plan" sx={navButtonStyles}>
             Quit Plan
           </Button>
+        )}
+          
 
           {isLoggedIn ? (
             <>

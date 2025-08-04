@@ -8,10 +8,15 @@ import {
   MenuItem,
   CircularProgress,
   FormHelperText,
+  InputAdornment,
+  IconButton,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useState } from "react";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -23,6 +28,14 @@ export default function Register() {
   const [fullName, setFullName] = useState("");
   const [gender, setGender] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // State for the Snackbar
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
+
   const role = "MEMBER"; // Role is always "MEMBER"
 
   // Field-specific error states
@@ -36,7 +49,7 @@ export default function Register() {
 
   const validateFields = () => {
     let isValid = true;
-    
+
     setUsernameError("");
     setEmailError("");
     setPasswordError("");
@@ -99,6 +112,7 @@ export default function Register() {
 
     setLoading(true);
     try {
+      // Step 1: Attempt to register the new user
       await axios.post("http://localhost:8082/api/register", {
         userName: username,
         email,
@@ -108,15 +122,63 @@ export default function Register() {
         role,
         gender,
       });
-      alert("Registration successful! Please login.");
-      navigate("/login");
+
+      // Show success message
+      setSnackbarSeverity("success");
+      setSnackbarMessage("Registration successful! Logging you in...");
+      setOpenSnackbar(true);
+      console.log("Successful registration.");
+
+      // Step 2: Automatically log in the newly registered user
+      const loginResponse = await axios.post(
+        "http://localhost:8082/api/login",
+        { userName: username, password },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
+
+      const { token, role: userRole, memberId, userId, coachId } = loginResponse.data;
+      localStorage.setItem("token", token);
+      localStorage.setItem("role", userRole);
+      localStorage.setItem("userID", userId);
+      localStorage.setItem("username", username);
+      if (memberId) localStorage.setItem("memberId", memberId.toString());
+      if (coachId) localStorage.setItem("coachId", coachId.toString());
+      
+      
+      // Step 3: Navigate to the quiz page
+      navigate("/quiz");
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || "Registration failed!";
-      alert(errorMessage);
+      const errorMessage =
+        error.response?.data?.message || "Registration failed!";
+      
+      // Show error message
+      setSnackbarSeverity("error");
+      setSnackbarMessage(errorMessage);
+      setOpenSnackbar(true);
       console.error(error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleShowPassword = () => {
+    setShowPassword((prev) => !prev);
+  };
+
+  const handleShowConfirmPassword = () => {
+    setShowConfirmPassword((prev) => !prev);
+  };
+
+  const handleCloseSnackbar = (event?: React.SyntheticEvent | Event, reason?: string) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setOpenSnackbar(false);
   };
 
   return (
@@ -135,13 +197,6 @@ export default function Register() {
       >
         Register
       </Typography>
-
-      {/* Loading Spinner */}
-      {loading && (
-        <Box className="flex justify-center my-2">
-          <CircularProgress size={32} />
-        </Box>
-      )}
 
       {/* Form */}
       <form onSubmit={(e) => e.preventDefault()}>
@@ -228,7 +283,7 @@ export default function Register() {
         <TextField
           fullWidth
           label="Password"
-          type="password"
+          type={showPassword ? "text" : "password"}
           variant="outlined"
           margin="normal"
           value={password}
@@ -242,11 +297,24 @@ export default function Register() {
           disabled={loading}
           error={!!passwordError}
           helperText={passwordError}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label="toggle password visibility"
+                  onClick={handleShowPassword}
+                  edge="end"
+                >
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
         />
         <TextField
           fullWidth
           label="Confirm Password"
-          type="password"
+          type={showConfirmPassword ? "text" : "password"}
           variant="outlined"
           margin="normal"
           value={confirmPassword}
@@ -257,6 +325,19 @@ export default function Register() {
           disabled={loading}
           error={!!confirmPasswordError}
           helperText={confirmPasswordError}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label="toggle password visibility"
+                  onClick={handleShowConfirmPassword}
+                  edge="end"
+                >
+                  {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
         />
         {/* Hidden role field */}
         <input type="hidden" value={role} readOnly />
@@ -272,7 +353,11 @@ export default function Register() {
           onClick={handleRegister}
           disabled={loading}
         >
-          {loading ? <CircularProgress size={22} color="inherit" /> : "Register"}
+          {loading ? (
+            <CircularProgress size={22} color="inherit" />
+          ) : (
+            "Register"
+          )}
         </Button>
 
         {/* Login Link */}
@@ -295,6 +380,21 @@ export default function Register() {
           </Typography>
         </Box>
       </form>
+
+      {/* Snackbar for showing success/error messages */}
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbarSeverity}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Paper>
   );
 }

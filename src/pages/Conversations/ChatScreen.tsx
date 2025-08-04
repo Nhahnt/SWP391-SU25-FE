@@ -68,18 +68,43 @@ const ChatScreen = () => {
         <Sidebar onSelectMember={handleSelectMember} selectedMemberId={selectedMemberId} />
       )}
         
-        <div className="flex-1 flex items-center justify-center">
-          {selectedMemberId ? (
-            <ChatBox
-              memberId={selectedMemberId}
-              coachId={coachId ? parseInt(coachId, 10) : 0}
-              stompClient={stompClient}
-            />
-          ) : (
-            <div className="text-gray-400 text-lg font-medium text-center">
-              Chọn một thành viên để bắt đầu chat
+        <div className="flex-1 flex flex-col">
+          {/* Coach Navigation Button */}
+          {(role === "coach" || role === "COACH") && (
+            <div className="mb-4 flex justify-end">
+              <Link to="/coach-tracking">
+                <Button
+                  variant="contained"
+                  startIcon={<AssessmentIcon />}
+                  sx={{
+                    backgroundColor: '#1976d2',
+                    '&:hover': {
+                      backgroundColor: '#1565c0',
+                    },
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontWeight: 600,
+                  }}
+                >
+                  Track Progress
+                </Button>
+              </Link>
             </div>
           )}
+          
+          <div className="flex-1 flex items-center justify-center">
+            {selectedMemberId ? (
+              <ChatBox
+                memberId={selectedMemberId}
+                coachId={coachId ? parseInt(coachId, 10) : 0}
+                stompClient={stompClient}
+              />
+            ) : (
+              <div className="text-gray-400 text-lg font-medium text-center">
+                Chọn một thành viên để bắt đầu chat
+              </div>
+            )}
+          </div>
         </div>
       </div>
   );

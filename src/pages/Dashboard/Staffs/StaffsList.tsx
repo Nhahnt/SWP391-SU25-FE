@@ -7,7 +7,7 @@ interface Staff {
   user_id: number;
   userName: string;
   email: string;
-  full_name: string;
+  fullName: string;
 }
 
 function Popup({ isOpen, title, onClose, children, style }: { isOpen: boolean; title?: string; onClose: () => void; children: React.ReactNode; style?: React.CSSProperties }) {
@@ -43,7 +43,7 @@ export default function StaffsList() {
   const [staffToDelete, setStaffToDelete] = useState<Staff | null>(null);
 
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newStaff, setNewStaff] = useState({ userName: "", email: "", full_name: "", phoneNumber: "", password: "" });
+  const [newStaff, setNewStaff] = useState({ userName: "", email: "", fullName: "", phoneNumber: "", password: "" });
 
   useEffect(() => {
     fetchStaffs();
@@ -106,7 +106,7 @@ export default function StaffsList() {
         {
           userName: newStaff.userName,
           email: newStaff.email,
-          fullName: newStaff.full_name,
+          fullName: newStaff.fullName,
           phoneNumber: newStaff.phoneNumber,
           password: newStaff.password ? newStaff.password : "DefaultPassword123",
           role: "STAFF",
@@ -118,7 +118,7 @@ export default function StaffsList() {
         }
       );
       setShowAddModal(false);
-      setNewStaff({ userName: "", email: "", full_name: "", phoneNumber: "", password: "" });
+      setNewStaff({ userName: "", email: "", fullName: "", phoneNumber: "", password: "" });
       fetchStaffs();
     } catch (err) {
       console.error("Failed to add staff: ", err);
@@ -175,7 +175,7 @@ export default function StaffsList() {
                       <td>{index + 1}</td>
                       <td>{staff.userName}</td>
                       <td>{staff.email}</td>
-                      <td>{staff.full_name}</td>
+                      <td>{staff.fullName}</td>
                       <td>
                         <button className="action-button edit-button">Edit</button>
                         <button
@@ -232,8 +232,8 @@ export default function StaffsList() {
               className="add-popup-input"
               type="text"
               placeholder="Full Name"
-              value={newStaff.full_name}
-              onChange={e => setNewStaff({ ...newStaff, full_name: e.target.value })}
+              value={newStaff.fullName}
+              onChange={e => setNewStaff({ ...newStaff, fullName: e.target.value })}
             />
             <input
               className="add-popup-input"

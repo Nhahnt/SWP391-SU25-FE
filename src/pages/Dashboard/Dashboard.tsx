@@ -3,9 +3,9 @@ import "./dashboard.css";
 import DashboardSidebar from "../../components/Sidebar";
 import axios from "axios";
 
-import UserGrowthChart from "./models/UserGrowthChart";
-import RoleDistributionPieChart from "./models/RoleDistributionChart";
-import QuitPlanPieChart from "./models/QuitPlanPieChart";
+// import UserGrowthChart from "./models/UserGrowthChart";
+import RoleDistributionPieChart from "./components/RoleDistributionChart";
+// import QuitPlanPieChart from "./models/QuitPlanPieChart";
 
 export default function Dashboard() {
   return (
@@ -19,9 +19,9 @@ export default function Dashboard() {
           <h2>Dashboard Overview</h2>
 
           {/* Top Row - Full Width */}
-          <div style={{ marginBottom: 32 }}>
+          {/* <div style={{ marginBottom: 32 }}>
             <UserGrowthChart />
-          </div>
+          </div> */}
 
           {/* Bottom Row - Two Equal Charts */}
           <div
@@ -31,7 +31,7 @@ export default function Dashboard() {
               gap: 32,
             }}
           >
-            <QuitPlanPieChart />
+            {/* <QuitPlanPieChart /> */}
             <RoleDistributionPieChart />
           </div>
         </div>

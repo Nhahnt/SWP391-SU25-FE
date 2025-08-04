@@ -68,18 +68,12 @@ export default function BlogDetail() {
   const [userName, setUserName] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
-  // Delete confirmation dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const getAuthToken = () => localStorage.getItem("token");
+  const token = localStorage.getItem("token");
   const userRole = localStorage.getItem("role");
   const isStaff = userRole === "staff" || userRole === "STAFF" || userRole === "Staff";
-
-  // Debug: Log the role to console
-  console.log("Current user role:", userRole);
-  console.log("Is staff:", isStaff);
-  console.log("All localStorage items:", Object.keys(localStorage).map(key => `${key}: ${localStorage.getItem(key)}`));
 
   const getAuthorDisplayName = (blog: Blog, userName: string | null): string => {
     return userName || "Anonymous";
@@ -106,7 +100,6 @@ export default function BlogDetail() {
   const fetchBlog = async () => {
     setLoadingBlog(true);
     setErrorBlog(null);
-    const token = getAuthToken();
 
     try {
       const res = await fetch(`http://localhost:8082/api/blogs/${id}`, {
@@ -134,12 +127,9 @@ export default function BlogDetail() {
     }
   };
 
-  // Hàm này chỉ thực hiện việc fetch dữ liệu bình luận cho một trang cụ thể.
-  // Nó không quản lý trạng thái loadingComments hay hasMore bên trong nó để tránh loop.
-  // Các trạng thái này sẽ được quản lý ở nơi gọi hàm này.
+  // fetch comments
   const loadCommentsPage = useCallback(
     async (pageNumber: number) => {
-      const token = getAuthToken();
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
       try {
@@ -163,7 +153,6 @@ export default function BlogDetail() {
   const handleCommentSubmit = async () => {
     if (!commentText.trim()) return;
 
-    const token = getAuthToken();
     if (!token) {
       alert("Bạn cần đăng nhập để gửi bình luận.");
       return;
@@ -211,22 +200,8 @@ export default function BlogDetail() {
 
     setDeleting(true);
     try {
-      const token = getAuthToken();
-      
-      // Debug: Log the token and request details
-      console.log("Token:", token ? "Present" : "Missing");
-      console.log("Blog ID:", id);
-      console.log("User Role:", userRole);
-      console.log("Is Staff:", isStaff);
-      
-      // Temporary: Check if backend endpoint exists
       try {
-        console.log("Making request to:", `http://localhost:8082/api/blogs/${id}/soft-delete`);
-        console.log("Request headers:", { Authorization: `Bearer ${token}` });
-        console.log("User role:", userRole);
-        console.log("Is staff:", isStaff);
         
-        // First, test if the backend is reachable
         try {
           const testResponse = await axios.get(`http://localhost:8082/api/blogs/${id}`, {
             headers: { Authorization: `Bearer ${token}` }
@@ -243,13 +218,13 @@ export default function BlogDetail() {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-            timeout: 10000, // 10 second timeout
           }
         );
 
         console.log("Soft delete response:", res);
         alert("Bài viết đã được xóa thành công.");
         navigate("/blogs");
+
       } catch (networkError: any) {
         console.error("Network error details:", {
           code: networkError.code,
@@ -318,28 +293,25 @@ export default function BlogDetail() {
       };
       fetchInitialComments();
     }
-  }, [id, loadCommentsPage]); // loadCommentsPage là dependency
+  }, [id, loadCommentsPage]);
 
-  // Effect để xử lý việc tải thêm bình luận khi cuộn (IntersectionObserver)
   useEffect(() => {
-    // Nếu đang tải, không còn dữ liệu hoặc chưa có loaderRef thì không làm gì
     if (loadingComments || !hasMore || !loaderRef.current) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !loadingComments) {
-          if (!getAuthToken()) {
+          if (!token)  {
             console.warn("Không có token, không tải thêm bình luận.");
             return;
           }
-          // Khi loaderRef xuất hiện, tải trang tiếp theo (page hiện tại)
           const fetchNextComments = async () => {
             setLoadingComments(true);
             const data = await loadCommentsPage(page);
             if (data) {
               setComments((prev) => [...prev, ...data.content]);
               setHasMore(!data.last);
-              setPage(data.number + 1); // Cập nhật trang cho lần tải tiếp theo
+              setPage(data.number + 1); 
             }
             setLoadingComments(false);
           };
@@ -355,9 +327,8 @@ export default function BlogDetail() {
     return () => {
       if (target) observer.unobserve(target);
     };
-  }, [page, hasMore, loadingComments, loadCommentsPage]); // Dependencies cho observer
+  }, [page, hasMore, loadingComments, loadCommentsPage]);
 
-  // Hiển thị trạng thái loading ban đầu cho blog
   if (loadingBlog) {
     return (
       <Container maxWidth="md" className="flex justify-center py-20">
@@ -502,7 +473,7 @@ export default function BlogDetail() {
             <Typography variant="h6" className="font-semibold text-xl mb-4">
               Bình luận
             </Typography>
-            {getAuthToken() ? (
+            { token ? (
               <div className="mb-6">
                 <TextField
                   fullWidth
@@ -598,7 +569,7 @@ export default function BlogDetail() {
         fullWidth
       >
         <DialogTitle>
-          <Typography variant="h6" color="error">
+          <Typography variant="body1" color="error">
             Xác nhận xóa bài viết
           </Typography>
         </DialogTitle>

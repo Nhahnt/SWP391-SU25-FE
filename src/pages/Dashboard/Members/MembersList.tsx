@@ -1,39 +1,27 @@
 import { useEffect, useState } from "react";
+import {
+  Typography,
+  TextField,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from "@mui/material";
 import DashboardSidebar from "../../../components/Sidebar";
 import axios from "axios";
 import "./MembersList.css";
+import PopupDialog from "../components/PopUpDialog";
 
 interface Member {
-  user_id: number;
+  userId: string;
   userName: string;
   email: string;
-  full_name: string;
-}
-
-function Popup({ isOpen, title, onClose, children, style }: { isOpen: boolean; title?: string; onClose: () => void; children: React.ReactNode; style?: React.CSSProperties }) {
-  if (!isOpen) return null;
-  return (
-    <div className="popup-overlay" onClick={onClose}>
-      <div className="popup-content" style={style} onClick={e => e.stopPropagation()}>
-        {title && <h3 style={{ marginTop: 0 }}>{title}</h3>}
-        {children}
-        <button
-          style={{
-            position: "absolute",
-            top: 8,
-            right: 12,
-            background: "none",
-            border: "none",
-            fontSize: 20,
-            cursor: "pointer",
-          }}
-          onClick={onClose}
-        >
-          ×
-        </button>
-      </div>
-    </div>
-  );
+  fullName: string;
+  phoneNumber: string;
+  isVip: string;
+  gender: string;
+  status: string;
 }
 
 const API_BASE = "http://localhost:8082/api";
@@ -45,7 +33,14 @@ export default function MembersList() {
   const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
 
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newMember, setNewMember] = useState({ userName: "", email: "", full_name: "", phoneNumber: "", password: "" });
+  const [newMember, setNewMember] = useState({
+    userName: "",
+    email: "",
+    fullName: "",
+    phoneNumber: "",
+    password: "",
+    gender: "",
+  });
 
   useEffect(() => {
     fetchMembers();
@@ -55,14 +50,11 @@ export default function MembersList() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get(
-        `${API_BASE}/admin/accounts/members`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await axios.get(`${API_BASE}/admin/accounts/members`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setMembers(res.data);
     } catch (err) {
       console.error("Failed to fetch members: ", err);
@@ -80,14 +72,11 @@ export default function MembersList() {
     if (!memberToDelete) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(
-        `${API_BASE}/admin/account/${memberToDelete.user_id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await axios.delete(`${API_BASE}/admin/account/${memberToDelete.userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setShowDeleteModal(false);
       setMemberToDelete(null);
       fetchMembers();
@@ -108,9 +97,12 @@ export default function MembersList() {
         {
           userName: newMember.userName,
           email: newMember.email,
-          fullName: newMember.full_name,
+          fullName: newMember.fullName,
           phoneNumber: newMember.phoneNumber,
-          password: newMember.password ? newMember.password : "DefaultPassword123",
+          password: newMember.password
+            ? newMember.password
+            : "DefaultPassword123",
+          gender: newMember.gender,
           role: "MEMBER",
         },
         {
@@ -120,7 +112,14 @@ export default function MembersList() {
         }
       );
       setShowAddModal(false);
-      setNewMember({ userName: "", email: "", full_name: "", phoneNumber: "", password: "" });
+      setNewMember({
+        userName: "",
+        email: "",
+        fullName: "",
+        phoneNumber: "",
+        password: "",
+        gender: "MALE",
+      });
       fetchMembers();
     } catch (err) {
       console.error("Failed to add member: ", err);
@@ -138,7 +137,7 @@ export default function MembersList() {
           <div className="bg-[red]">Member Management</div>
           <button
             className="button primary-button add-btn"
-            style={{ backgroundColor: '#007bff', color: '#fff' }}
+            style={{ backgroundColor: "#007bff", color: "#fff" }}
             onClick={handleAdd}
           >
             Add Member
@@ -158,6 +157,8 @@ export default function MembersList() {
                   <th>Username</th>
                   <th>Email</th>
                   <th>Full Name</th>
+                  <th>Phone Number</th>
+                  <th>Gender</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -167,25 +168,49 @@ export default function MembersList() {
                     <td colSpan={5} className="empty-message">
                       <div className="empty-state">
                         <p>No members found</p>
-                        <p className="empty-subtitle">There are currently no members in the system.</p>
+                        <p className="empty-subtitle">
+                          There are currently no members in the system.
+                        </p>
                       </div>
                     </td>
                   </tr>
                 ) : (
                   members.map((member, index) => (
-                    <tr key={member.user_id}>
+                    <tr
+                      key={member.userId}
+                      style={{
+                        backgroundColor:
+                          member.status === "DEACTIVATED"
+                            ? "#ffe6e6"
+                            : undefined,
+                        color:
+                          member.status === "DEACTIVATED"
+                            ? "#8b0000"
+                            : undefined,
+                      }}
+                    >
                       <td>{index + 1}</td>
                       <td>{member.userName}</td>
                       <td>{member.email}</td>
-                      <td>{member.full_name}</td>
+                      <td>{member.fullName}</td>
+                      <td>{member.phoneNumber}</td>
+                      <td>{member.gender}</td>
                       <td>
-                        <button className="action-button edit-button">Edit</button>
-                        <button
-                          className="action-button delete-button"
-                          onClick={() => handleDelete(member)}
-                        >
-                          Delete
-                        </button>
+                        {member.status === "DEACTIVATED" ? (
+                          <strong>DEACTIVATED</strong>
+                        ) : (
+                          <>
+                            <button className="action-button edit-button">
+                              Edit
+                            </button>
+                            <button
+                              className="action-button delete-button"
+                              onClick={() => handleDelete(member)}
+                            >
+                              Delete
+                            </button>
+                          </>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -196,67 +221,119 @@ export default function MembersList() {
         </div>
 
         {/* Delete Confirmation Popup */}
-        <Popup
+        <PopupDialog
           isOpen={showDeleteModal}
           title="Confirm Deletion"
           onClose={() => setShowDeleteModal(false)}
         >
-          <p>Are you sure you want to delete <b>{memberToDelete?.userName}</b>?</p>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16 }}>
-            <button className="delete-btn" onClick={confirmDelete}>Yes, Delete</button>
-            <button className="cancel-btn" onClick={() => setShowDeleteModal(false)}>Cancel</button>
+          <Typography>
+            Are you sure you want to delete{" "}
+            <strong>{memberToDelete?.userName}</strong>?
+          </Typography>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              marginTop: 16,
+              gap: 8,
+            }}
+          >
+            <Button variant="contained" color="error" onClick={confirmDelete}>
+              Yes, Delete
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => setShowDeleteModal(false)}
+            >
+              Cancel
+            </Button>
           </div>
-        </Popup>
+        </PopupDialog>
 
         {/* Add Member Popup */}
-        <Popup
+        <PopupDialog
           isOpen={showAddModal}
           title="Add Member"
           onClose={() => setShowAddModal(false)}
-          style={{ minWidth: 420, maxWidth: 500 }}
         >
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <input
-              className="add-popup-input"
-              type="text"
-              placeholder="Username"
+            <TextField
+              label="Username"
+              variant="outlined"
+              fullWidth
               value={newMember.userName}
-              onChange={e => setNewMember({ ...newMember, userName: e.target.value })}
+              onChange={(e) =>
+                setNewMember({ ...newMember, userName: e.target.value })
+              }
             />
-            <input
-              className="add-popup-input"
+            <TextField
+              label="Email"
               type="email"
-              placeholder="Email"
+              variant="outlined"
+              fullWidth
               value={newMember.email}
-              onChange={e => setNewMember({ ...newMember, email: e.target.value })}
+              onChange={(e) =>
+                setNewMember({ ...newMember, email: e.target.value })
+              }
             />
-            <input
-              className="add-popup-input"
-              type="text"
-              placeholder="Full Name"
-              value={newMember.full_name}
-              onChange={e => setNewMember({ ...newMember, full_name: e.target.value })}
+            <TextField
+              label="Full Name"
+              variant="outlined"
+              fullWidth
+              value={newMember.fullName}
+              onChange={(e) =>
+                setNewMember({ ...newMember, fullName: e.target.value })
+              }
             />
-            <input
-              className="add-popup-input"
-              type="text"
-              placeholder="Phone Number"
+            <TextField
+              label="Phone Number"
+              variant="outlined"
+              fullWidth
               value={newMember.phoneNumber}
-              onChange={e => setNewMember({ ...newMember, phoneNumber: e.target.value })}
+              onChange={(e) =>
+                setNewMember({ ...newMember, phoneNumber: e.target.value })
+              }
             />
-            <input
-              className="add-popup-input"
+            <TextField
+              label="Password (leave empty for DefaultPassword123)"
               type="password"
-              placeholder="Password (leave empty for DefaultPassword123)"
+              variant="outlined"
+              fullWidth
               value={newMember.password}
-              onChange={e => setNewMember({ ...newMember, password: e.target.value })}
+              onChange={(e) =>
+                setNewMember({ ...newMember, password: e.target.value })
+              }
             />
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
-              <button className="add-btn-modal" onClick={confirmAdd}>Add</button>
-              <button className="cancel-btn" onClick={() => setShowAddModal(false)}>Cancel</button>
+            <FormControl fullWidth>
+              <InputLabel>Gender</InputLabel>
+              <Select
+                value={newMember.gender}
+                label="Gender"
+                onChange={(e) =>
+                  setNewMember({
+                    ...newMember,
+                    gender: e.target.value as "MALE" | "FEMALE",
+                  })
+                }
+              >
+                <MenuItem value="" disabled><em>Select Gender</em></MenuItem>
+                <MenuItem value="MALE">Male</MenuItem>
+                <MenuItem value="FEMALE">Female</MenuItem>
+              </Select>
+            </FormControl>
+
+            <div
+              style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}
+            >
+              <Button variant="contained" onClick={confirmAdd}>
+                Add
+              </Button>
+              <Button variant="outlined" onClick={() => setShowAddModal(false)}>
+                Cancel
+              </Button>
             </div>
           </div>
-        </Popup>
+        </PopupDialog>
       </div>
     </div>
   );

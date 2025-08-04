@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
-import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import axios from "axios";
-import { Box, CircularProgress } from "@mui/material";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042"];
 const API_BASE = "http://localhost:8082/api";
@@ -33,9 +39,18 @@ export default function RoleDistributionPieChart() {
     ])
       .then(([membersRes, coachesRes, staffRes]) => {
         setRoleData([
-          { name: "Members", value: Array.isArray(membersRes.data) ? membersRes.data.length : 0 },
-          { name: "Coaches", value: Array.isArray(coachesRes.data) ? coachesRes.data.length : 0 },
-          { name: "Staff", value: Array.isArray(staffRes.data) ? staffRes.data.length : 0 },
+          {
+            name: "Members",
+            value: Array.isArray(membersRes.data) ? membersRes.data.length : 0,
+          },
+          {
+            name: "Coaches",
+            value: Array.isArray(coachesRes.data) ? coachesRes.data.length : 0,
+          },
+          {
+            name: "Staff",
+            value: Array.isArray(staffRes.data) ? staffRes.data.length : 0,
+          },
           { name: "Admins", value: 1 },
         ]);
       })
@@ -46,15 +61,44 @@ export default function RoleDistributionPieChart() {
   }, []);
 
   return (
-    <div style={{ background: "#fff", padding: 24, borderRadius: 8, boxShadow: "0 2px 8px #eee", minHeight: 300 }}>
+    <div
+      style={{
+        background: "#fff",
+        padding: 24,
+        borderRadius: 8,
+        boxShadow: "0 2px 8px #eee",
+        minHeight: 300,
+      }}
+    >
       <h4>User Roles</h4>
       {loading ? (
-        <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" height={220}>
-          <CircularProgress sx={{ color: "#c2410c", mb: 2 }} />
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            height: 220,
+          }}
+        >
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              border: "4px solid #f3f3f3",
+              borderTop: "4px solid #c2410c",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+              marginBottom: 16,
+            }}
+          />
+          <style>{`@keyframes spin {0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}`}</style>
           <span style={{ color: "#888" }}>Loading...</span>
-        </Box>
+        </div>
       ) : error ? (
-        <div style={{ color: "#e53935", textAlign: "center", padding: 24 }}>{error}</div>
+        <div style={{ color: "#e53935", textAlign: "center", padding: 24 }}>
+          {error}
+        </div>
       ) : (
         <ResponsiveContainer width="100%" height={220}>
           <PieChart>
@@ -68,7 +112,10 @@ export default function RoleDistributionPieChart() {
               label
             >
               {roleData.map((entry, index) => (
-                <Cell key={`cell-role-${index}`} fill={COLORS[index % COLORS.length]} />
+                <Cell
+                  key={`cell-role-${index}`}
+                  fill={COLORS[index % COLORS.length]}
+                />
               ))}
             </Pie>
             <Legend />

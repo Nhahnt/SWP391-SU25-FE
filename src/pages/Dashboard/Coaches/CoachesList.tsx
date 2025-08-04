@@ -7,7 +7,7 @@ interface Coach {
   user_id: number;
   userName: string;
   email: string;
-  full_name: string;
+  fullName: string;
 }
 
 function Popup({ isOpen, title, onClose, children, style }: { isOpen: boolean; title?: string; onClose: () => void; children: React.ReactNode; style?: React.CSSProperties }) {
@@ -45,7 +45,7 @@ export default function CoachesList() {
   const [coachToDelete, setCoachToDelete] = useState<Coach | null>(null);
 
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newCoach, setNewCoach] = useState({ userName: "", email: "", full_name: "", phoneNumber: "", password: "" });
+  const [newCoach, setNewCoach] = useState({ userName: "", email: "", fullName: "", phoneNumber: "", password: "" });
 
   useEffect(() => {
     fetchCoaches();
@@ -108,7 +108,7 @@ export default function CoachesList() {
         {
           userName: newCoach.userName,
           email: newCoach.email,
-          fullName: newCoach.full_name,
+          fullName: newCoach.fullName,
           phoneNumber: newCoach.phoneNumber,
           password: newCoach.password ? newCoach.password : "DefaultPassword123",
           role: "COACH",
@@ -120,7 +120,7 @@ export default function CoachesList() {
         }
       );
       setShowAddModal(false);
-      setNewCoach({ userName: "", email: "", full_name: "", phoneNumber: "", password: "" });
+      setNewCoach({ userName: "", email: "", fullName: "", phoneNumber: "", password: "" });
       fetchCoaches();
     } catch (err) {
       console.error("Failed to add coach: ", err);
@@ -177,7 +177,7 @@ export default function CoachesList() {
                       <td>{index + 1}</td>
                       <td>{coach.userName}</td>
                       <td>{coach.email}</td>
-                      <td>{coach.full_name}</td>
+                      <td>{coach.fullName}</td>
                       <td>
                         <button className="action-button edit-button">Edit</button>
                         <button
@@ -234,8 +234,8 @@ export default function CoachesList() {
               className="add-popup-input"
               type="text"
               placeholder="Full Name"
-              value={newCoach.full_name}
-              onChange={e => setNewCoach({ ...newCoach, full_name: e.target.value })}
+              value={newCoach.fullName}
+              onChange={e => setNewCoach({ ...newCoach, fullName: e.target.value })}
             />
             <input
               className="add-popup-input"

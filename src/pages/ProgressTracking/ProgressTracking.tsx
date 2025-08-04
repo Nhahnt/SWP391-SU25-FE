@@ -179,7 +179,7 @@ export function ProgressTracking() {
       setInputCount("");
     } catch (error) {
       console.error("Lỗi khi gửi dữ liệu báo cáo hôm nay:", error);
-      alert("Có lỗi xảy ra khi gửi dữ liệu. Vui lòng thử lại.");
+      alert("Chưa tới ngày bắt đầu kế hoạch. Không thể lưu dữ liệu.");
     }
   };
 

@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogContent,
   IconButton,
+  CircularProgress,
 } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import Cropper from 'react-easy-crop';
@@ -34,6 +35,7 @@ export default function CreateBlogForm() {
   const [zoom, setZoom] = useState(1);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
   const [croppedImageUrl, setCroppedImageUrl] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const categories = [
     { value: "QUIT_JOURNEY", label: "Quit Journey" },
@@ -64,6 +66,8 @@ export default function CreateBlogForm() {
       return;
     }
 
+    setIsSubmitting(true);
+
     const formData = new FormData();
     formData.append("title", title);
     formData.append("content", content);
@@ -77,7 +81,6 @@ export default function CreateBlogForm() {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
-          // Do NOT set Content-Type here; browser will set it for FormData
         },
         body: formData,
       });
@@ -89,9 +92,12 @@ export default function CreateBlogForm() {
       setContent("");
       setFile(null);
       setCategory("QUIT_JOURNEY");
+      setCroppedImageUrl(null);
     } catch (err) {
       alert("Đã có lỗi xảy ra khi gửi blog");
       console.error(err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -237,6 +243,7 @@ export default function CreateBlogForm() {
                 sx={{ borderRadius: 2, fontWeight: 600, minWidth: 120 }}
                 onClick={() => setPreviewOpen(true)}
                 type="button"
+                disabled={isSubmitting}
               >
                 Preview
               </Button>
@@ -245,8 +252,10 @@ export default function CreateBlogForm() {
                 variant="contained"
                 sx={{ backgroundColor: "#c2410c", borderRadius: 2, fontWeight: 600, minWidth: 140, boxShadow: 1 }}
                 size="large"
+                disabled={isSubmitting}
+                startIcon={isSubmitting ? <CircularProgress size={20} sx={{ color: 'white' }} /> : null}
               >
-                Create Blog
+                {isSubmitting ? "Creating..." : "Create Blog"}
               </Button>
             </Box>
           </Box>
