@@ -1,40 +1,29 @@
 import { useEffect, useState } from "react";
+import {
+  Typography,
+  TextField,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from "@mui/material";
 import DashboardSidebar from "../../../components/Sidebar";
 import axios from "axios";
 import "./StaffsList.css";
+import PopUpDialog from "../components/PopUpDialog";
 
 interface Staff {
-  user_id: number;
+  userId: number;
   userName: string;
   email: string;
   fullName: string;
+  status: string;
+  phoneNumber: string;
+  gender: string;
 }
 
-function Popup({ isOpen, title, onClose, children, style }: { isOpen: boolean; title?: string; onClose: () => void; children: React.ReactNode; style?: React.CSSProperties }) {
-  if (!isOpen) return null;
-  return (
-    <div className="popup-overlay" onClick={onClose}>
-      <div className="popup-content" style={style} onClick={e => e.stopPropagation()}>
-        {title && <h3 style={{ marginTop: 0 }}>{title}</h3>}
-        {children}
-        <button
-          style={{
-            position: "absolute",
-            top: 8,
-            right: 12,
-            background: "none",
-            border: "none",
-            fontSize: 20,
-            cursor: "pointer",
-          }}
-          onClick={onClose}
-        >
-          ×
-        </button>
-      </div>
-    </div>
-  );
-}
+const API_BASE = "http://localhost:8082/api";
 
 export default function StaffsList() {
   const [staffs, setStaffs] = useState<Staff[]>([]);
@@ -43,7 +32,14 @@ export default function StaffsList() {
   const [staffToDelete, setStaffToDelete] = useState<Staff | null>(null);
 
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newStaff, setNewStaff] = useState({ userName: "", email: "", fullName: "", phoneNumber: "", password: "" });
+  const [newStaff, setNewStaff] = useState({
+    userName: "",
+    email: "",
+    fullName: "",
+    phoneNumber: "",
+    password: "",
+    gender: "",
+  });
 
   useEffect(() => {
     fetchStaffs();
@@ -53,14 +49,11 @@ export default function StaffsList() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get(
-        "http://localhost:8082/api/admin/accounts/staff",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await axios.get(`${API_BASE}/admin/accounts/staff`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setStaffs(res.data);
     } catch (err) {
       console.error("Failed to fetch staffs: ", err);
@@ -78,14 +71,11 @@ export default function StaffsList() {
     if (!staffToDelete) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(
-        `http://localhost:8082/api/admin/account/${staffToDelete.user_id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await axios.delete(`${API_BASE}/admin/account/${staffToDelete.userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setShowDeleteModal(false);
       setStaffToDelete(null);
       fetchStaffs();
@@ -102,13 +92,16 @@ export default function StaffsList() {
     try {
       const token = localStorage.getItem("token");
       await axios.post(
-        "http://localhost:8082/api/admin/create-account",
+        `${API_BASE}/admin/create-account`,
         {
           userName: newStaff.userName,
           email: newStaff.email,
           fullName: newStaff.fullName,
           phoneNumber: newStaff.phoneNumber,
-          password: newStaff.password ? newStaff.password : "DefaultPassword123",
+          password: newStaff.password
+            ? newStaff.password
+            : "DefaultPassword123",
+          gender: newStaff.gender,
           role: "STAFF",
         },
         {
@@ -118,7 +111,14 @@ export default function StaffsList() {
         }
       );
       setShowAddModal(false);
-      setNewStaff({ userName: "", email: "", fullName: "", phoneNumber: "", password: "" });
+      setNewStaff({
+        userName: "",
+        email: "",
+        fullName: "",
+        phoneNumber: "",
+        password: "",
+        gender: "MALE",
+      });
       fetchStaffs();
     } catch (err) {
       console.error("Failed to add staff: ", err);
@@ -136,7 +136,7 @@ export default function StaffsList() {
           <div className="bg-[red]">Staff Management</div>
           <button
             className="button primary-button add-btn"
-            style={{ backgroundColor: '#007bff', color: '#fff' }}
+            style={{ backgroundColor: "#007bff", color: "#fff" }}
             onClick={handleAdd}
           >
             Add Staff
@@ -146,7 +146,7 @@ export default function StaffsList() {
           {loading ? (
             <div className="loading-container">
               <div className="loading-spinner"></div>
-              <p>Loading staff...</p>
+              <p>Loading staffs...</p>
             </div>
           ) : (
             <table className="table">
@@ -156,6 +156,8 @@ export default function StaffsList() {
                   <th>Username</th>
                   <th>Email</th>
                   <th>Full Name</th>
+                  <th>Phone Number</th>
+                  <th>Gender</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -164,26 +166,50 @@ export default function StaffsList() {
                   <tr>
                     <td colSpan={5} className="empty-message">
                       <div className="empty-state">
-                        <p>No staff found</p>
-                        <p className="empty-subtitle">There are currently no staff in the system.</p>
+                        <p>No staffs found</p>
+                        <p className="empty-subtitle">
+                          There are currently no staffs in the system.
+                        </p>
                       </div>
                     </td>
                   </tr>
                 ) : (
                   staffs.map((staff, index) => (
-                    <tr key={staff.user_id}>
+                    <tr
+                      key={staff.userId}
+                      style={{
+                        backgroundColor:
+                          staff.status === "INACTIVE"
+                            ? "#ffe6e6"
+                            : undefined,
+                        color:
+                          staff.status === "INACTIVE"
+                            ? "#8b0000"
+                            : undefined,
+                      }}
+                    >
                       <td>{index + 1}</td>
                       <td>{staff.userName}</td>
                       <td>{staff.email}</td>
                       <td>{staff.fullName}</td>
+                      <td>{staff.phoneNumber}</td>
+                      <td>{staff.gender}</td>
                       <td>
-                        <button className="action-button edit-button">Edit</button>
-                        <button
-                          className="action-button delete-button"
-                          onClick={() => handleDelete(staff)}
-                        >
-                          Delete
-                        </button>
+                        {staff.status === "INACTIVE" ? (
+                          <strong>INACTIVE</strong>
+                        ) : (
+                          <>
+                            <button className="action-button edit-button">
+                              Edit
+                            </button>
+                            <button
+                              className="action-button delete-button"
+                              onClick={() => handleDelete(staff)}
+                            >
+                              Delete
+                            </button>
+                          </>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -194,67 +220,119 @@ export default function StaffsList() {
         </div>
 
         {/* Delete Confirmation Popup */}
-        <Popup
+        <PopUpDialog
           isOpen={showDeleteModal}
           title="Confirm Deletion"
           onClose={() => setShowDeleteModal(false)}
         >
-          <p>Are you sure you want to delete <b>{staffToDelete?.userName}</b>?</p>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16 }}>
-            <button className="delete-btn" onClick={confirmDelete}>Yes, Delete</button>
-            <button className="cancel-btn" onClick={() => setShowDeleteModal(false)}>Cancel</button>
+          <Typography>
+            Are you sure you want to delete{" "}
+            <strong>{staffToDelete?.userName}</strong>?
+          </Typography>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              marginTop: 16,
+              gap: 8,
+            }}
+          >
+            <Button variant="contained" color="error" onClick={confirmDelete}>
+              Yes, Delete
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => setShowDeleteModal(false)}
+            >
+              Cancel
+            </Button>
           </div>
-        </Popup>
+        </PopUpDialog>
 
         {/* Add Staff Popup */}
-        <Popup
+        <PopUpDialog
           isOpen={showAddModal}
           title="Add Staff"
           onClose={() => setShowAddModal(false)}
-          style={{ minWidth: 420, maxWidth: 500 }}
         >
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <input
-              className="add-popup-input"
-              type="text"
-              placeholder="Username"
+            <TextField
+              label="Username"
+              variant="outlined"
+              fullWidth
               value={newStaff.userName}
-              onChange={e => setNewStaff({ ...newStaff, userName: e.target.value })}
+              onChange={(e) =>
+                setNewStaff({ ...newStaff, userName: e.target.value })
+              }
             />
-            <input
-              className="add-popup-input"
+            <TextField
+              label="Email"
               type="email"
-              placeholder="Email"
+              variant="outlined"
+              fullWidth
               value={newStaff.email}
-              onChange={e => setNewStaff({ ...newStaff, email: e.target.value })}
+              onChange={(e) =>
+                setNewStaff({ ...newStaff, email: e.target.value })
+              }
             />
-            <input
-              className="add-popup-input"
-              type="text"
-              placeholder="Full Name"
+            <TextField
+              label="Full Name"
+              variant="outlined"
+              fullWidth
               value={newStaff.fullName}
-              onChange={e => setNewStaff({ ...newStaff, fullName: e.target.value })}
+              onChange={(e) =>
+                setNewStaff({ ...newStaff, fullName: e.target.value })
+              }
             />
-            <input
-              className="add-popup-input"
-              type="text"
-              placeholder="Phone Number"
+            <TextField
+              label="Phone Number"
+              variant="outlined"
+              fullWidth
               value={newStaff.phoneNumber}
-              onChange={e => setNewStaff({ ...newStaff, phoneNumber: e.target.value })}
+              onChange={(e) =>
+                setNewStaff({ ...newStaff, phoneNumber: e.target.value })
+              }
             />
-            <input
-              className="add-popup-input"
+            <TextField
+              label="Password (leave empty for DefaultPassword123)"
               type="password"
-              placeholder="Password (leave empty for DefaultPassword123)"
+              variant="outlined"
+              fullWidth
               value={newStaff.password}
-              onChange={e => setNewStaff({ ...newStaff, password: e.target.value })}
+              onChange={(e) =>
+                setNewStaff({ ...newStaff, password: e.target.value })
+              }
             />
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
-              <button className="add-btn-modal" onClick={confirmAdd}>Add</button>
-              <button className="cancel-btn" onClick={() => setShowAddModal(false)}>Cancel</button>
+            <FormControl fullWidth>
+              <InputLabel>Gender</InputLabel>
+              <Select
+                value={newStaff.gender}
+                label="Gender"
+                onChange={(e) =>
+                  setNewStaff({
+                    ...newStaff,
+                    gender: e.target.value as "MALE" | "FEMALE",
+                  })
+                }
+              >
+                <MenuItem value="" disabled><em>Select Gender</em></MenuItem>
+                <MenuItem value="MALE">Male</MenuItem>
+                <MenuItem value="FEMALE">Female</MenuItem>
+              </Select>
+            </FormControl>
+
+            <div
+              style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}
+            >
+              <Button variant="contained" onClick={confirmAdd}>
+                Add
+              </Button>
+              <Button variant="outlined" onClick={() => setShowAddModal(false)}>
+                Cancel
+              </Button>
             </div>
           </div>
-        </Popup>
+        </PopUpDialog>
       </div>
     </div>
   );

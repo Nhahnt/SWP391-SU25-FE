@@ -1,39 +1,26 @@
 import { useEffect, useState } from "react";
+import {
+  Typography,
+  TextField,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from "@mui/material";
 import DashboardSidebar from "../../../components/Sidebar";
 import axios from "axios";
 import "./CoachesList.css";
+import PopUpDialog from "../components/PopUpDialog";
 
 interface Coach {
-  user_id: number;
+  userId: number;
   userName: string;
   email: string;
   fullName: string;
-}
-
-function Popup({ isOpen, title, onClose, children, style }: { isOpen: boolean; title?: string; onClose: () => void; children: React.ReactNode; style?: React.CSSProperties }) {
-  if (!isOpen) return null;
-  return (
-    <div className="popup-overlay" onClick={onClose}>
-      <div className="popup-content" style={style} onClick={e => e.stopPropagation()}>
-        {title && <h3 style={{ marginTop: 0 }}>{title}</h3>}
-        {children}
-        <button
-          style={{
-            position: "absolute",
-            top: 8,
-            right: 12,
-            background: "none",
-            border: "none",
-            fontSize: 20,
-            cursor: "pointer",
-          }}
-          onClick={onClose}
-        >
-          ×
-        </button>
-      </div>
-    </div>
-  );
+  status: string;
+  phoneNumber: string;
+  gender: string;
 }
 
 const API_BASE = "http://localhost:8082/api";
@@ -45,7 +32,14 @@ export default function CoachesList() {
   const [coachToDelete, setCoachToDelete] = useState<Coach | null>(null);
 
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newCoach, setNewCoach] = useState({ userName: "", email: "", fullName: "", phoneNumber: "", password: "" });
+  const [newCoach, setNewCoach] = useState({
+    userName: "",
+    email: "",
+    fullName: "",
+    phoneNumber: "",
+    password: "",
+    gender: "",
+  });
 
   useEffect(() => {
     fetchCoaches();
@@ -55,14 +49,11 @@ export default function CoachesList() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get(
-        `${API_BASE}/admin/accounts/coaches`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await axios.get(`${API_BASE}/admin/accounts/coaches`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setCoaches(res.data);
     } catch (err) {
       console.error("Failed to fetch coaches: ", err);
@@ -80,14 +71,11 @@ export default function CoachesList() {
     if (!coachToDelete) return;
     try {
       const token = localStorage.getItem("token");
-      await axios.delete(
-        `${API_BASE}/admin/account/${coachToDelete.user_id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await axios.delete(`${API_BASE}/admin/account/${coachToDelete.userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setShowDeleteModal(false);
       setCoachToDelete(null);
       fetchCoaches();
@@ -110,7 +98,10 @@ export default function CoachesList() {
           email: newCoach.email,
           fullName: newCoach.fullName,
           phoneNumber: newCoach.phoneNumber,
-          password: newCoach.password ? newCoach.password : "DefaultPassword123",
+          password: newCoach.password
+            ? newCoach.password
+            : "DefaultPassword123",
+          gender: newCoach.gender,
           role: "COACH",
         },
         {
@@ -120,7 +111,14 @@ export default function CoachesList() {
         }
       );
       setShowAddModal(false);
-      setNewCoach({ userName: "", email: "", fullName: "", phoneNumber: "", password: "" });
+      setNewCoach({
+        userName: "",
+        email: "",
+        fullName: "",
+        phoneNumber: "",
+        password: "",
+        gender: "MALE",
+      });
       fetchCoaches();
     } catch (err) {
       console.error("Failed to add coach: ", err);
@@ -138,7 +136,7 @@ export default function CoachesList() {
           <div className="bg-[red]">Coach Management</div>
           <button
             className="button primary-button add-btn"
-            style={{ backgroundColor: '#007bff', color: '#fff' }}
+            style={{ backgroundColor: "#007bff", color: "#fff" }}
             onClick={handleAdd}
           >
             Add Coach
@@ -158,6 +156,8 @@ export default function CoachesList() {
                   <th>Username</th>
                   <th>Email</th>
                   <th>Full Name</th>
+                  <th>Phone Number</th>
+                  <th>Gender</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -167,25 +167,49 @@ export default function CoachesList() {
                     <td colSpan={5} className="empty-message">
                       <div className="empty-state">
                         <p>No coaches found</p>
-                        <p className="empty-subtitle">There are currently no coaches in the system.</p>
+                        <p className="empty-subtitle">
+                          There are currently no coaches in the system.
+                        </p>
                       </div>
                     </td>
                   </tr>
                 ) : (
                   coaches.map((coach, index) => (
-                    <tr key={coach.user_id}>
+                    <tr
+                      key={coach.userId}
+                      style={{
+                        backgroundColor:
+                          coach.status === "INACTIVE"
+                            ? "#ffe6e6"
+                            : undefined,
+                        color:
+                          coach.status === "INACTIVE"
+                            ? "#8b0000"
+                            : undefined,
+                      }}
+                    >
                       <td>{index + 1}</td>
                       <td>{coach.userName}</td>
                       <td>{coach.email}</td>
                       <td>{coach.fullName}</td>
+                      <td>{coach.phoneNumber}</td>
+                      <td>{coach.gender}</td>
                       <td>
-                        <button className="action-button edit-button">Edit</button>
-                        <button
-                          className="action-button delete-button"
-                          onClick={() => handleDelete(coach)}
-                        >
-                          Delete
-                        </button>
+                        {coach.status === "INACTIVE" ? (
+                          <strong>INACTIVE</strong>
+                        ) : (
+                          <>
+                            <button className="action-button edit-button">
+                              Edit
+                            </button>
+                            <button
+                              className="action-button delete-button"
+                              onClick={() => handleDelete(coach)}
+                            >
+                              Delete
+                            </button>
+                          </>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -196,67 +220,119 @@ export default function CoachesList() {
         </div>
 
         {/* Delete Confirmation Popup */}
-        <Popup
+        <PopUpDialog
           isOpen={showDeleteModal}
           title="Confirm Deletion"
           onClose={() => setShowDeleteModal(false)}
         >
-          <p>Are you sure you want to delete <b>{coachToDelete?.userName}</b>?</p>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16 }}>
-            <button className="delete-btn" onClick={confirmDelete}>Yes, Delete</button>
-            <button className="cancel-btn" onClick={() => setShowDeleteModal(false)}>Cancel</button>
+          <Typography>
+            Are you sure you want to delete{" "}
+            <strong>{coachToDelete?.userName}</strong>?
+          </Typography>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              marginTop: 16,
+              gap: 8,
+            }}
+          >
+            <Button variant="contained" color="error" onClick={confirmDelete}>
+              Yes, Delete
+            </Button>
+            <Button
+              variant="outlined"
+              onClick={() => setShowDeleteModal(false)}
+            >
+              Cancel
+            </Button>
           </div>
-        </Popup>
+        </PopUpDialog>
 
         {/* Add Coach Popup */}
-        <Popup
+        <PopUpDialog
           isOpen={showAddModal}
           title="Add Coach"
           onClose={() => setShowAddModal(false)}
-          style={{ minWidth: 420, maxWidth: 500 }}
         >
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <input
-              className="add-popup-input"
-              type="text"
-              placeholder="Username"
+            <TextField
+              label="Username"
+              variant="outlined"
+              fullWidth
               value={newCoach.userName}
-              onChange={e => setNewCoach({ ...newCoach, userName: e.target.value })}
+              onChange={(e) =>
+                setNewCoach({ ...newCoach, userName: e.target.value })
+              }
             />
-            <input
-              className="add-popup-input"
+            <TextField
+              label="Email"
               type="email"
-              placeholder="Email"
+              variant="outlined"
+              fullWidth
               value={newCoach.email}
-              onChange={e => setNewCoach({ ...newCoach, email: e.target.value })}
+              onChange={(e) =>
+                setNewCoach({ ...newCoach, email: e.target.value })
+              }
             />
-            <input
-              className="add-popup-input"
-              type="text"
-              placeholder="Full Name"
+            <TextField
+              label="Full Name"
+              variant="outlined"
+              fullWidth
               value={newCoach.fullName}
-              onChange={e => setNewCoach({ ...newCoach, fullName: e.target.value })}
+              onChange={(e) =>
+                setNewCoach({ ...newCoach, fullName: e.target.value })
+              }
             />
-            <input
-              className="add-popup-input"
-              type="text"
-              placeholder="Phone Number"
+            <TextField
+              label="Phone Number"
+              variant="outlined"
+              fullWidth
               value={newCoach.phoneNumber}
-              onChange={e => setNewCoach({ ...newCoach, phoneNumber: e.target.value })}
+              onChange={(e) =>
+                setNewCoach({ ...newCoach, phoneNumber: e.target.value })
+              }
             />
-            <input
-              className="add-popup-input"
+            <TextField
+              label="Password (leave empty for DefaultPassword123)"
               type="password"
-              placeholder="Password (leave empty for DefaultPassword123)"
+              variant="outlined"
+              fullWidth
               value={newCoach.password}
-              onChange={e => setNewCoach({ ...newCoach, password: e.target.value })}
+              onChange={(e) =>
+                setNewCoach({ ...newCoach, password: e.target.value })
+              }
             />
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
-              <button className="add-btn-modal" onClick={confirmAdd}>Add</button>
-              <button className="cancel-btn" onClick={() => setShowAddModal(false)}>Cancel</button>
+            <FormControl fullWidth>
+              <InputLabel>Gender</InputLabel>
+              <Select
+                value={newCoach.gender}
+                label="Gender"
+                onChange={(e) =>
+                  setNewCoach({
+                    ...newCoach,
+                    gender: e.target.value as "MALE" | "FEMALE",
+                  })
+                }
+              >
+                <MenuItem value="" disabled><em>Select Gender</em></MenuItem>
+                <MenuItem value="MALE">Male</MenuItem>
+                <MenuItem value="FEMALE">Female</MenuItem>
+              </Select>
+            </FormControl>
+
+            <div
+              style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}
+            >
+              <Button variant="contained" onClick={confirmAdd}>
+                Add
+              </Button>
+              <Button variant="outlined" onClick={() => setShowAddModal(false)}>
+                Cancel
+              </Button>
             </div>
           </div>
-        </Popup>
+        </PopUpDialog>
       </div>
     </div>
   );
