@@ -40,23 +40,23 @@ const quizQuestions: Question[] = [
   {
     question: "Bạn hút điếu thuốc đầu tiên sau khi thức dậy bao lâu?",
     options: [
-      { text: "Dưới 5 phút", points: 3 },
-      { text: "Từ 6 - 30 phút", points: 2 },
-      { text: "Từ 31 - 60 phút", points: 1 },
+      { text: "Dưới 5 phút", points: 6 }, // Previously 3
+      { text: "Từ 6 - 30 phút", points: 4 }, // Previously 2
+      { text: "Từ 31 - 60 phút", points: 2 }, // Previously 1
       { text: "Sau 60 phút", points: 0 },
     ],
   },
   {
     question: "Bạn có thấy khó khăn khi không được hút thuốc ở nơi cấm không?",
     options: [
-      { text: "Có", points: 1 },
+      { text: "Có", points: 2 }, // Previously 1
       { text: "Không", points: 0 },
     ],
   },
   {
     question: "Điếu thuốc nào bạn thấy khó bỏ nhất?",
     options: [
-      { text: "Điếu đầu tiên trong ngày", points: 1 },
+      { text: "Điếu đầu tiên trong ngày", points: 2 }, // Previously 1
       { text: "Bất kỳ điếu nào khác", points: 0 },
     ],
   },
@@ -64,23 +64,23 @@ const quizQuestions: Question[] = [
     question: "Bạn hút bao nhiêu điếu thuốc mỗi ngày?",
     options: [
       { text: "Dưới 10 điếu", points: 0 },
-      { text: "Từ 11 - 20 điếu", points: 1 },
-      { text: "Từ 21 - 30 điếu", points: 2 },
-      { text: "Trên 31 điếu", points: 3 },
+      { text: "Từ 11 - 20 điếu", points: 2 }, // Previously 1
+      { text: "Từ 21 - 30 điếu", points: 4 }, // Previously 2
+      { text: "Trên 31 điếu", points: 6 }, // Previously 3
     ],
   },
   {
     question:
       "Bạn có hút nhiều hơn vào buổi sáng so với phần còn lại của ngày không?",
     options: [
-      { text: "Có", points: 1 },
+      { text: "Có", points: 2 }, // Previously 1
       { text: "Không", points: 0 },
     ],
   },
   {
     question: "Bạn có hút thuốc khi bị ốm, nằm liệt giường cả ngày không?",
     options: [
-      { text: "Có", points: 1 },
+      { text: "Có", points: 2 }, // Previously 1
       { text: "Không", points: 0 },
     ],
   },
@@ -97,6 +97,7 @@ export default function SmokeQuiz() {
     null
   );
   const [loading, setLoading] = useState(false);
+  const [quizResult, setQuizResult] = useState<QuizResult | null>(null);
   const navigate = useNavigate();
 
   const handleNext = async () => {
@@ -168,42 +169,44 @@ export default function SmokeQuiz() {
     };
 
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/api/assessments`,
-        requestBody,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          withCredentials: true,
-        }
-      );
-      const { id, dependencyLevel, score } = response.data;
+      await axios.post(`${API_BASE_URL}/api/assessments`, requestBody, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        withCredentials: true,
+      });
 
+      const score = answers.reduce((acc, curr) => acc + curr.points, 0);
       const { level, message } = getResult(score);
-
-      const quizResult: QuizResult = {
-        score: score,
-        level: level,
-        message: message,
-        assessmentId: id,
+      const result: QuizResult = {
+        score,
+        level,
+        message,
+        assessmentId: -1,
       };
-
-      navigate("/quit-plan/suggested", { state: { quizResult } });
+      setQuizResult(result);
     } catch (error) {
       console.error("Failed to submit quiz results:", error);
       const score = answers.reduce((acc, curr) => acc + curr.points, 0);
       const { level, message } = getResult(score);
-      const quizResult: QuizResult = {
+      const result: QuizResult = {
         score,
         level,
         message,
-        assessmentId: -1, 
+        assessmentId: -1,
       };
-      navigate("/quit-plan/suggested", { state: { quizResult } });
+      setQuizResult(result);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoToSuggestedPlan = () => {
+    navigate("/quit-plan/suggested", { state: { quizResult } });
+  };
+
+  const handleGoToCustomizePlan = () => {
+    navigate("/quit-plan/customize", { state: { quizResult } });
   };
 
   const currentQuestion = quizQuestions[currentQuestionIndex];
@@ -222,90 +225,145 @@ export default function SmokeQuiz() {
           boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
         }}
       >
-        <Typography
-          variant="h4"
-          component="h1"
-          sx={{ fontWeight: "bold", color: "#c2410c", mb: 2 }}
-        >
-          Bài kiểm tra mức độ phụ thuộc Nicotine
-        </Typography>
-
-        <LinearProgress
-          variant="determinate"
-          value={progress}
-          sx={{
-            height: 10,
-            borderRadius: 5,
-            bgcolor: "#e5e7eb",
-            "& .MuiLinearProgress-bar": {
-              bgcolor: "#c2410c",
-            },
-            mb: 4,
-          }}
-        />
-
-        {loading ? (
-          <Box
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              py: 12,
-            }}
-          >
-            <CircularProgress sx={{ color: "#c2410c" }} size={50} />
-            <Typography variant="h6" sx={{ mt: 2, color: "#4b5563" }}>
-              Đang xử lý kết quả...
-            </Typography>
-          </Box>
-        ) : (
+        {quizResult ? (
+          // Result screen
           <Box>
             <Typography
-              variant="h5"
-              sx={{ fontWeight: "semibold", color: "#1a202c", mb: 4 }}
+              variant="h4"
+              component="h1"
+              sx={{ fontWeight: "bold", color: "#c2410c", mb: 2 }}
             >
-              Câu hỏi {currentQuestionIndex + 1} trên {quizQuestions.length}
+              Kết quả của bạn
             </Typography>
             <Typography
-              variant="h5"
-              sx={{ color: "#4b5563", mb: 4, fontWeight: "bold" }}
+              variant="h6"
+              sx={{ fontWeight: "semibold", color: "#1a202c", mb: 1 }}
             >
-              {currentQuestion.question}
+              Mức độ phụ thuộc: {quizResult.level}
             </Typography>
-
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {currentQuestion.options.map((option, index) => (
-                <Button
-                  key={index}
-                  variant={
-                    selectedAnswerIndex === index ? "contained" : "outlined"
-                  }
-                  onClick={() => setSelectedAnswerIndex(index)}
-                  sx={{
-                    py: 2,
-                    borderRadius: "8px",
-                    fontSize: "1rem",
-                    fontWeight: "bold",
-                    textTransform: "none",
-                    bgcolor:
-                      selectedAnswerIndex === index ? "#c2410c" : "white",
-                    color: selectedAnswerIndex === index ? "white" : "#c2410c",
-                    borderColor: "#c2410c",
-                    "&:hover": {
-                      bgcolor:
-                        selectedAnswerIndex === index
-                          ? "#a0300a"
-                          : "rgba(194, 65, 12, 0.1)",
-                      borderColor: "#a0300a",
-                    },
-                  }}
-                >
-                  {option.text}
-                </Button>
-              ))}
+            <Typography variant="body1" sx={{ color: "#4a5568", mb: 4 }}>
+              Điểm số của bạn:{" "}
+              <span className="font-bold text-lg">{quizResult.score}</span>
+            </Typography>
+            <Typography variant="body1" sx={{ color: "#4a5568", mb: 4 }}>
+              {quizResult.message}
+            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-around",
+                gap: 2,
+                mt: 4,
+              }}
+            >
+              <Button
+                variant="contained"
+                onClick={handleGoToSuggestedPlan}
+                sx={{
+                  bgcolor: "#c2410c",
+                  "&:hover": { bgcolor: "#a0300a" },
+                  py: 1,
+                  px: 3,
+                  borderRadius: "8px",
+                  fontWeight: "bold",
+                  textTransform: "none",
+                }}
+              >
+                Kế hoạch gợi ý
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={handleGoToCustomizePlan}
+                sx={{
+                  borderColor: "#6b7280",
+                  color: "#6b7280",
+                  "&:hover": {
+                    bgcolor: "rgba(107, 114, 128, 0.1)",
+                    borderColor: "#4b5563",
+                  },
+                  py: 1,
+                  px: 3,
+                  borderRadius: "8px",
+                  fontWeight: "bold",
+                  textTransform: "none",
+                }}
+              >
+                Tạo kế hoạch tùy chỉnh
+              </Button>
             </Box>
-
+          </Box>
+        ) : (
+          // Quiz screen
+          <Box>
+            <Typography
+              variant="h4"
+              component="h1"
+              sx={{ fontWeight: "bold", color: "#c2410c", mb: 2 }}
+            >
+              Bài kiểm tra mức độ phụ thuộc Nicotine
+            </Typography>
+            <LinearProgress
+              variant="determinate"
+              value={progress}
+              sx={{
+                height: 10,
+                borderRadius: 5,
+                bgcolor: "#e5e7eb",
+                "& .MuiLinearProgress-bar": { bgcolor: "#c2410c" },
+                mb: 4,
+              }}
+            />
+            {loading ? (
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  minHeight: "200px",
+                }}
+              >
+                <CircularProgress />
+              </Box>
+            ) : (
+              <Box>
+                <Typography variant="h6" sx={{ mb: 4 }}>
+                  {currentQuestion.question}
+                </Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                  {currentQuestion.options.map((option, index) => (
+                    <Button
+                      key={index}
+                      variant={
+                        selectedAnswerIndex === index ? "contained" : "outlined"
+                      }
+                      onClick={() => setSelectedAnswerIndex(index)}
+                      sx={{
+                        py: 2,
+                        px: 4,
+                        borderRadius: "8px",
+                        fontWeight: "bold",
+                        textTransform: "none",
+                        bgcolor:
+                          selectedAnswerIndex === index ? "#c2410c" : "white",
+                        color:
+                          selectedAnswerIndex === index ? "white" : "#c2410c",
+                        borderColor:
+                          selectedAnswerIndex === index ? "#c2410c" : "#e5e7eb",
+                        "&:hover": {
+                          bgcolor:
+                            selectedAnswerIndex === index
+                              ? "#a0300a"
+                              : "#f3f4f6",
+                          borderColor: "#c2410c",
+                        },
+                      }}
+                    >
+                      {option.text}
+                    </Button>
+                  ))}
+                </Box>
+              </Box>
+            )}
             <Box
               sx={{
                 display: "flex",

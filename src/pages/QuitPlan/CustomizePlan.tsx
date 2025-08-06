@@ -2,8 +2,13 @@ import { useEffect, useState } from "react";
 import {
   Box,
   TextField,
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl,
   Typography,
   Button,
+  CardMedia,
   Snackbar,
   Alert,
   CircularProgress,
@@ -19,10 +24,12 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import Card from "../../components/shared/Card";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { ExpandMore } from "@mui/icons-material";
 import QuitPlanStatus from "./Components/QuitPlanStatus";
 
 const options = ["2", "3", "4", "5", "6"];
+
 const reasonsList = [
   { id: "r1", value: "HEALTH", label: "Sức khỏe", icon: HeartPulse },
   { id: "r2", value: "FAMILY_FRIENDS", label: "Gia đình", icon: Users },
@@ -41,6 +48,7 @@ const reasonsList = [
     icon: AlarmClock,
   },
 ];
+
 const groupedTriggers = [
   {
     group: "Các tình huống xã hội",
@@ -91,7 +99,11 @@ const groupedTriggers = [
         value: "STRONG_CRAVINGS",
         label: "Cơn thèm thuốc lá mãnh liệt",
       },
-      { id: "t10", value: "HARD_TIME_CONCENTRATING", label: "Khó tập trung" },
+      {
+        id: "t10",
+        value: "HARD_TIME_CONCENTRATING",
+        label: "Khó tập trung",
+      },
       { id: "t11", value: "WAKING_UP", label: "Thức dậy vào buổi sáng" },
     ],
   },
@@ -139,6 +151,7 @@ const groupedTriggers = [
     ],
   },
 ];
+
 const groupedSupportMethods = [
   {
     group: "Sự hỗ trợ từ mọi người",
@@ -178,7 +191,10 @@ const groupedSupportMethods = [
         value: "EX_SIGNUP_SMOKEFREE_TEXT",
         label: "Đăng ký nhận tin nhắn từ SmokeFree",
       },
-      { value: "EX_DOWNLOAD_SMOKEFREE_APP", label: "Tải ứng dụng SmokeFree" },
+      {
+        value: "EX_DOWNLOAD_SMOKEFREE_APP",
+        label: "Tải ứng dụng SmokeFree",
+      },
       {
         value: "EX_CHAT_ONLINE_COUNSELOR",
         label: "Trò chuyện với một cố vấn trực tuyến",
@@ -216,35 +232,42 @@ const groupedSupportMethods = [
   },
 ];
 
-const API_BASE_URL = "http://localhost:8082";
-
-export default function SuggestedPlan() {
-  const navigate = useNavigate();
-  const location = useLocation();
-
+export default function CreateQuitPlan() {
   const [quitDate, setQuitDate] = useState("");
+  const [duration, setDuration] = useState("");
   const [dailyCigarettes, setDailyCigarettes] = useState("");
   const [cigaretteCost, setCigaretteCost] = useState("");
   const [reasons, setReasons] = useState<string[]>([]);
   const [triggers, setTriggers] = useState<string[]>([]);
   const [strategies, setStrategies] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [suggestedDuration, setSuggestedDuration] = useState("");
-
-  const [hasAssessment, setHasAssessment] = useState<boolean | null>(null);
-  const [isRedirectingQuiz, setIsRedirectingQuiz] = useState(false);
 
   const [snackbarMessages, setSnackbarMessages] = useState<
     { id: number; message: string; severity: "success" | "error" }[]
   >([]);
   const [nextSnackbarId, setNextSnackbarId] = useState(0);
 
+  const navigate = useNavigate();
+
   const toggleSelect = (list: string[], setList: Function, value: string) => {
     if (list.includes(value)) {
       setList(list.filter((item) => item !== value));
     } else {
       setList([...list, value]);
+    }
+  };
+
+  const toggleGroupSelect = (
+    list: string[],
+    setList: Function,
+    groupItems: string[]
+  ) => {
+    const allSelected = groupItems.every((item) => list.includes(item));
+    if (allSelected) {
+      setList(list.filter((item) => !groupItems.includes(item)));
+    } else {
+      const newSelections = new Set([...list, ...groupItems]);
+      setList(Array.from(newSelections));
     }
   };
 
@@ -258,27 +281,6 @@ export default function SuggestedPlan() {
     setSnackbarMessages((prev) => prev.filter((msg) => msg.id !== id));
   };
 
-  const fetchSuggestedDuration = async () => {
-    const token = localStorage.getItem("token");
-
-    try {
-      const res = await axios.get(`${API_BASE_URL}/api/assessments`, 
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          }
-      });
-
-      setSuggestedDuration(res.data.durationWeek);
-    } catch (err) {
-      console.log("Error: ", err);
-    }
-  }
-
-  useEffect(() => {
-    fetchSuggestedDuration();
-  })
-
   const handleSubmit = async () => {
     setSnackbarMessages([]);
     let hasError = false;
@@ -287,10 +289,15 @@ export default function SuggestedPlan() {
       showSnackbar("Vui lòng chọn ngày bắt đầu cai thuốc!", "error");
       hasError = true;
     }
-    if (!dailyCigarettes || parseInt(dailyCigarettes) <= 0) {
-      showSnackbar("Vui lòng nhập số điếu hút trung bình mỗi ngày!", "error");
+    if (!duration) {
+      showSnackbar("Vui lòng chọn thời lượng của kế hoạch!", "error");
       hasError = true;
     }
+    if (!dailyCigarettes || parseInt(dailyCigarettes) <= 0) {
+      showSnackbar("Vui lòng nhập số điếu hút mỗi ngày!", "error");
+      hasError = true;
+    }
+    // Updated validation for cigarette cost to check for a multiple of 1000
     const cost = parseInt(cigaretteCost);
     if (!cigaretteCost || cost < 1000 || cost % 1000 !== 0) {
       showSnackbar(
@@ -321,6 +328,7 @@ export default function SuggestedPlan() {
     try {
       const payload = {
         startDate: quitDate,
+        durationWeeks: parseInt(duration),
         numberOfCigarettes: parseInt(dailyCigarettes),
         pricePerPack: cost,
         reasons,
@@ -329,8 +337,8 @@ export default function SuggestedPlan() {
       };
       const token = localStorage.getItem("token");
 
-      const res = await axios.post(
-        `${API_BASE_URL}/api/system-generated`,
+      const response = await axios.post(
+        "http://localhost:8082/api/user-defined",
         payload,
         {
           headers: {
@@ -340,110 +348,18 @@ export default function SuggestedPlan() {
       );
 
       showSnackbar("Kế hoạch của bạn đã được tạo thành công!", "success");
-      showSnackbar("Đang chuyển đến trang kế hoạch của bạn...", "success");
       setTimeout(() => {
-        navigate(`/view-quit-plan`);
+        navigate("/view-quit-plan");
       }, 2000);
     } catch (err: any) {
       console.error(err);
       const errorMessage =
-        err.response?.data?.message ||
-        err.response?.data ||
-        "Đã xảy ra lỗi khi tạo kế hoạch.";
+        err.response?.data || "Đã xảy ra lỗi khi tạo kế hoạch.";
       showSnackbar(errorMessage, "error");
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  // Check existing assessment/quiz
-  useEffect(() => {
-    const checkAssessmentStatus = async () => {
-      const userId = localStorage.getItem("userID");
-      const token = localStorage.getItem("token");
-
-      if (!userId || !token) {
-        setHasAssessment(false);
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const response = await axios.get(
-          `${API_BASE_URL}/api/assessments/check/${userId}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        setHasAssessment(response.data);
-      } catch (error) {
-        console.error("Error checking assessment status:", error);
-        setHasAssessment(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAssessmentStatus();
-  }, []);
-
-  // Routing
-  useEffect(() => {
-    if (hasAssessment === false) {
-      setIsRedirectingQuiz(true);
-      const timer = setTimeout(() => {
-        navigate("/quiz");
-      }, 3000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [hasAssessment, navigate]);
-
-  if (isLoading || hasAssessment === null) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <CircularProgress />
-      </div>
-    );
-  }
-
-  if (hasAssessment === false) {
-    return (
-      <div className="w-full flex flex-col items-center justify-center min-h-screen">
-        <Typography
-          variant="h5"
-          sx={{
-            color: "#c2410c",
-            fontWeight: "bold",
-            mb: 2,
-            textAlign: "center",
-          }}
-        >
-          Bạn cần hoàn thành bài đánh giá để sử dụng tính năng này!
-        </Typography>
-        <Typography variant="body1" sx={{ mb: 2, textAlign: "center" }}>
-          Đang chuyển hướng đến trang bài đánh giá...
-        </Typography>
-        <CircularProgress sx={{ color: "#c2410c" }} />
-
-        {isRedirectingQuiz && (
-          <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              width: "100vw",
-              height: "100vh",
-              zIndex: 9999,
-              pointerEvents: "none",
-              cursor: "not-allowed",
-              background: "rgba(255, 255, 255, 0.01)",
-            }}
-          />
-        )}
-      </div>
-    );
-  }
 
   return (
     <QuitPlanStatus>
@@ -456,12 +372,12 @@ export default function SuggestedPlan() {
               gutterBottom
               sx={{ color: "#c2410c" }}
             >
-              Kế hoạch cai thuốc gợi ý
+              Xây dựng kế hoạch cai thuốc cá nhân hóa của bạn
             </Typography>
             <Typography className="text-gray-600">
-              Dựa trên kết quả bài kiểm tra, chúng tôi sẽ đề xuất một thời lượng
-              kế hoạch phù hợp. Vui lòng hoàn thành các thông tin còn lại để tạo
-              kế hoạch cá nhân hóa của bạn.
+              Điền vào các mục dưới đây để tạo một kế hoạch cai thuốc phù hợp
+              với nhu cầu của bạn. Điều này sẽ giúp bạn duy trì động lực và sự
+              chuẩn bị!
             </Typography>
           </div>
 
@@ -482,27 +398,30 @@ export default function SuggestedPlan() {
             </Card>
           </div>
 
-          {/* Suggested Duration */}
+          {/* Section 2 */}
           <div className="my-8">
-            <Typography variant="h6">2. Thời lượng kế hoạch đề xuất</Typography>
+            <Typography variant="h6">
+              2. Thời lượng của kế hoạch cai thuốc
+            </Typography>
             <Card>
-              <TextField
-                fullWidth
-                disabled
-                label="Thời lượng kế hoạch"
-                value={suggestedDuration}
-                sx={{
-                  "& .MuiInputBase-input.Mui-disabled": {
-                    WebkitTextFillColor: "black"
-                  }
-                }}
-              >
-                {suggestedDuration}
-              </TextField>
+              <FormControl fullWidth>
+                <InputLabel>Chọn thời lượng</InputLabel>
+                <Select
+                  value={duration}
+                  label="Chọn thời lượng"
+                  onChange={(e) => setDuration(e.target.value)}
+                >
+                  {options.map((week) => (
+                    <MenuItem key={week} value={week}>
+                      {week} tuần {week === "6" && "(được khuyến khích)"}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Card>
           </div>
 
-          {/* Section 3 (old 2) */}
+          {/* Section 3 */}
           <div className="my-8">
             <Typography variant="h6">3. Tình trạng hút thuốc</Typography>
             <Card>
@@ -525,7 +444,7 @@ export default function SuggestedPlan() {
             </Card>
           </div>
 
-          {/* Section 4 (old 3) */}
+          {/* Section 4 */}
           <div className="my-8">
             <Typography variant="h6">4. Tại sao bạn lại cai thuốc?</Typography>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -555,7 +474,7 @@ export default function SuggestedPlan() {
             </div>
           </div>
 
-          {/* Section 5 (old 4) */}
+          {/* Section 5 */}
           <div className="my-8">
             <Typography variant="h6">
               5. Nhận diện các yếu tố kích thích
@@ -598,7 +517,7 @@ export default function SuggestedPlan() {
             </div>
           </div>
 
-          {/* Section 6 (old 5) */}
+          {/* Section 6 */}
           <div className="my-8">
             <Typography variant="h6">
               6. Bạn sẽ làm điều đó như thế nào? (Các phương pháp hỗ trợ)

@@ -14,7 +14,7 @@ import BlogDetail from "./pages/BlogDetail/PostDetail";
 import CreateBlogForm from "./pages/CreateBlog/CreateBlog";
 import NotFound from "./pages/NotFound/NotFound";
 import UserProfile from "./pages/Profile/Profile";
-import CreateQuitPlan from "./pages/QuitPlan/QuitPlan";
+import CreateQuitPlan from "./pages/QuitPlan/CustomizePlan";
 import Unauthorized from "./pages/Unauthorized/Unauthorized";
 import MoodTracker from "./components/MoodTracker";
 import QuitPlanDetail from "./pages/QuitPlan/QuitPlanDetail";
@@ -32,6 +32,7 @@ import Payment from "./pages/Payment/Payment";
 import Return from "./pages/Payment/Return";
 import Ranking from "./pages/Ranking/Ranking";
 import SuggestedPlan from "./pages/QuitPlan/SuggestedPlan";
+import AssignCoach from "./pages/AssignCoach/AssignCoach";
 
 function AppRoutesWithExtras() {
   const location = useLocation();
@@ -123,6 +124,15 @@ function AppRoutesWithExtras() {
             element={
               <ProtectedRoute allowedRoles={["member"]}>
                 <QuitPlanDetail />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/coach-assign/"
+            element={
+              <ProtectedRoute allowedRoles={["member"]}>
+                <AssignCoach />
               </ProtectedRoute>
             }
           />

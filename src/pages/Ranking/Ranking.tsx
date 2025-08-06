@@ -1,140 +1,158 @@
-import React from 'react';
-import { Paper, Typography, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import React, { useEffect, useState } from "react";
+import {
+  Paper,
+  Typography,
+  Box,
+  CircularProgress,
+  Avatar,
+  Grid,
+} from "@mui/material";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import axios from "axios";
+import { styled } from "@mui/system";
 
-// Hardcoded data for demonstration
-const participationData = [
-  { name: 'Nguyễn Văn A', points: 1500 },
-  { name: 'Trần Thị B', points: 1200 },
-  { name: 'Lê Văn C', points: 950 },
-  { name: 'Phạm Thị D', points: 800 },
-  { name: 'Hoàng Văn E', points: 720 },
-  { name: 'Vũ Thị F', points: 650 },
-];
+interface UserRankingDTO {
+  id: number;
+  username: string;
+  avatarUrl: string;
+  totalMoneySaved: number;
+  participationScore: number;
+}
 
-const moneySavedData = [
-  { name: 'Nguyễn Văn A', amount: 500000 },
-  { name: 'Đặng Văn G', amount: 480000 },
-  { name: 'Phan Thị H', amount: 450000 },
-  { name: 'Trần Thị B', amount: 420000 },
-  { name: 'Hà Văn K', amount: 390000 },
-  { name: 'Mai Thị L', amount: 350000 },
-];
+const getRankColor = (index: number) => {
+  switch (index) {
+    case 0:
+      return "gold";
+    case 1:
+      return "silver";
+    case 2:
+      return "#cd7f32"; // Bronze
+    default:
+      return "#4b5563"; // gray-700
+  }
+};
 
-const Ranking = () => {
-  const getRankColor = (index: number) => {
-    switch (index) {
-      case 0:
-        return 'gold';
-      case 1:
-        return 'silver';
-      case 2:
-        return '#cd7f32'; // Bronze
-      default:
-        return '#e2e8f0';
-    }
-  };
+const LeaderboardItem = styled(Paper)(({ theme }) => ({
+  display: "flex",
+  alignItems: "center",
+  padding: "16px",
+  marginBottom: "12px",
+  borderRadius: "12px",
+  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+  backgroundColor: "#ffffff",
+  "&.top-3": {
+    background: "linear-gradient(135deg, #fef3c7 0%, #fffbe6 100%)",
+  },
+}));
 
-  const getRankIcon = (index: number) => {
-    if (index < 3) {
-      return <EmojiEventsIcon sx={{ color: getRankColor(index) }} />;
-    }
-    return null;
-  };
+const API_BASE_URL = "http://localhost:8082/api";
 
-  const renderRankingTable = (data: any[], title: string, columnHeader: string) => (
-    <Paper
-      elevation={6}
-      sx={{
-        bgcolor: '#fef3c7',
-        borderRadius: '16px',
-        p: 3,
-        mb: 4,
-        width: '100%',
-      }}
-    >
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-        <Typography
-          variant="h5"
-          sx={{
-            fontWeight: 'bold',
-            color: '#c2410c',
-            textAlign: 'center',
-            letterSpacing: '1px',
-            borderBottom: '2px solid #FFD700',
-            pb: 1,
-            display: 'inline-block',
-          }}
-        >
-          {title}
-        </Typography>
+export default function Ranking() {
+  const [participationRankings, setParticipationRankings] = useState<
+    UserRankingDTO[]
+  >([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRankings = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const participationRes = await axios.get(
+          `${API_BASE_URL}/ranking/participation/top/10`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setParticipationRankings(participationRes.data);
+      } catch (err) {
+        console.error("Error fetching ranking data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchRankings();
+  }, []);
+
+  if (loading) {
+    return (
+      <Box className="w-full flex justify-center items-center h-64">
+        <CircularProgress sx={{ color: "#c2410c" }} />
       </Box>
-      <TableContainer>
-        <Table aria-label={`${title} ranking`}>
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ fontWeight: 'bold', color: '#c2410c' }}>Hạng</TableCell>
-              <TableCell sx={{ fontWeight: 'bold', color: '#c2410c' }}>Tên</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 'bold', color: '#c2410c' }}>{columnHeader}</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {data.map((row, index) => (
-              <TableRow
-                key={row.name}
-                sx={{
-                  '&:nth-of-type(odd)': { backgroundColor: '#fffbe0' },
-                  '&:nth-of-type(even)': { backgroundColor: '#fef9e7' },
-                  '&:last-child td, &:last-child th': { border: 0 },
-                }}
-              >
-                <TableCell component="th" scope="row" sx={{ fontWeight: index < 3 ? 'bold' : 'normal', display: 'flex', alignItems: 'center', gap: 1 }}>
-                  {getRankIcon(index)}
-                  {index + 1}
-                </TableCell>
-                <TableCell sx={{ fontWeight: index < 3 ? 'bold' : 'normal' }}>{row.name}</TableCell>
-                <TableCell align="right" sx={{ fontWeight: index < 3 ? 'bold' : 'normal', color: index < 3 ? getRankColor(index) : 'inherit' }}>
-                  {row.points || `${row.amount.toLocaleString()} VND`}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Paper>
-  );
+    );
+  }
 
   return (
-    <div className="min-h-screen p-8 bg-gray-100">
-      <Box sx={{ maxWidth: '800px', mx: 'auto', textAlign: 'center', mb: 6 }}>
+    <div className="min-h-screen p-8 bg-gray-100 font-sans">
+      <Box className="max-w-xl mx-auto text-center mb-8">
         <Typography
           variant="h3"
           component="h1"
-          sx={{
-            fontWeight: 'extrabold',
-            color: '#c2410c',
-            mb: 2,
-            textShadow: '2px 2px 4px rgba(0,0,0,0.1)',
-          }}
+          className="font-extrabold text-[#c2410c] mb-2 drop-shadow-md"
+          sx={{ fontWeight: 900 }}
         >
           Bảng xếp hạng
         </Typography>
-        <Typography
-          variant="body1"
-          sx={{
-            color: '#4b5563',
-            fontWeight: 'medium',
-          }}
-        >
+        <Typography variant="body1" className="text-gray-600 font-medium">
           Theo dõi thành tích của mọi người và cùng cố gắng nhé!
         </Typography>
       </Box>
-      <Box sx={{ maxWidth: '900px', mx: 'auto', p: 2 }}>
-        {renderRankingTable(participationData, 'Bảng xếp hạng Điểm tham gia', 'Điểm')}
-        {renderRankingTable(moneySavedData, 'Bảng xếp hạng Tiền tiết kiệm', 'Tiền tiết kiệm')}
+
+      <Box className="max-w-xl mx-auto">
+        <Box className="p-4 bg-[#c2410c] text-white rounded-t-lg">
+          <Typography variant="h6" className="font-bold">
+            Điểm tham gia
+          </Typography>
+        </Box>
+        <Paper elevation={3} className="bg-white rounded-b-lg p-4">
+          {participationRankings.length > 0 ? (
+            participationRankings.map((row, index) => (
+              <LeaderboardItem key={row.id} className={index < 3 ? "top-3" : ""}>
+                <Box className="flex items-center w-1/5">
+                  {index < 3 ? (
+                    <EmojiEventsIcon
+                      sx={{ color: getRankColor(index), fontSize: 32 }}
+                    />
+                  ) : (
+                    <Typography
+                      variant="h6"
+                      className="font-bold"
+                      sx={{
+                        color: getRankColor(index),
+                        width: 32,
+                        textAlign: "center",
+                      }}
+                    >
+                      {index + 1}
+                    </Typography>
+                  )}
+                </Box>
+                <Box className="flex items-center space-x-4 w-3/5">
+                  <Avatar
+                    src={
+                      row.avatarUrl ||
+                      "https://placehold.co/400x400/cccccc/000000?text=No+Image"
+                    }
+                    alt={row.username}
+                    className="w-12 h-12 rounded-full border-2 border-[#c2410c]"
+                  />
+                  <Typography variant="body1" className="font-semibold text-lg">
+                    {row.username}
+                  </Typography>
+                </Box>
+                <Box className="flex-grow text-right">
+                  <Typography variant="h6" className="font-bold text-[#c2410c]">
+                    {`${row.participationScore}`} pts
+                  </Typography>
+                </Box>
+              </LeaderboardItem>
+            ))
+          ) : (
+            <Box className="text-center p-4">
+              <Typography>No ranking data available.</Typography>
+            </Box>
+          )}
+        </Paper>
       </Box>
     </div>
   );
-};
-
-export default Ranking;
+}

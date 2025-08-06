@@ -149,8 +149,6 @@ export default function Register() {
       if (memberId) localStorage.setItem("memberId", memberId.toString());
       if (coachId) localStorage.setItem("coachId", coachId.toString());
       
-      
-      // Step 3: Navigate to the quiz page
       navigate("/quiz");
     } catch (error: any) {
       const errorMessage =

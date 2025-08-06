@@ -18,3 +18,24 @@ export type WeeklyReport = {
   cigarettesReduction: number;
   dailyProgress: DailyProgress[];
 };
+
+export interface MemberShortDTO {
+  memberId: number;
+  fullName: string;
+  status: string;
+  userId: number;
+  avatarUrl?: string | null;
+}
+
+export interface WeeklyProgressStats {
+  weekNumber: number;
+  weekStartDate: string;
+  weekEndDate: string;
+  targetCigarettesPerDay: number;
+  totalCigarettesSmoked: number;
+  cigarettesReduction: number;
+  daysOverTarget: number;
+  daysOnTarget: number;
+  daysUnderTarget: number;
+  dailyProgress: DailyProgress[];
+}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, SyntheticEvent, ChangeEvent } from "react";
 import {
   Typography,
   TextField,
@@ -7,6 +7,11 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  CircularProgress,
+  Snackbar,
+  Alert,
+  SelectChangeEvent,
+  Box,
 } from "@mui/material";
 import DashboardSidebar from "../../../components/Sidebar";
 import axios from "axios";
@@ -14,13 +19,14 @@ import "./CoachesList.css";
 import PopUpDialog from "../components/PopUpDialog";
 
 interface Coach {
-  userId: number;
+  userId: string;
   userName: string;
   email: string;
   fullName: string;
-  status: string;
   phoneNumber: string;
+  isVip: string;
   gender: string;
+  status: string;
 }
 
 const API_BASE = "http://localhost:8082/api";
@@ -38,8 +44,32 @@ export default function CoachesList() {
     fullName: "",
     phoneNumber: "",
     password: "",
-    gender: "",
+    gender: "MALE",
   });
+
+  // State for loading indicators
+  const [isAdding, setIsAdding] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // State for Snackbar notifications
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<
+    "success" | "error" | "info" | "warning"
+  >("success");
+
+  // State for form validation errors
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  // State for pagination
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const totalPages = Math.ceil(coaches.length / rowsPerPage);
+  const currentCoaches = coaches.slice(
+    (page - 1) * rowsPerPage,
+    page * rowsPerPage
+  );
 
   useEffect(() => {
     fetchCoaches();
@@ -54,12 +84,35 @@ export default function CoachesList() {
           Authorization: `Bearer ${token}`,
         },
       });
+
       setCoaches(res.data);
     } catch (err) {
-      console.error("Failed to fetch coaches: ", err);
+      console.error("Error fetching coaches:", err);
+      showSnackbar("Không thể tải danh sách coach", "error");
     } finally {
       setLoading(false);
     }
+  };
+
+  // Function to show the Snackbar
+  const showSnackbar = (
+    message: string,
+    severity: "success" | "error" | "info" | "warning"
+  ) => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
+  };
+
+  // Function to close the Snackbar
+  const handleSnackbarClose = (
+    event?: SyntheticEvent | Event,
+    reason?: string
+  ) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setSnackbarOpen(false);
   };
 
   const handleDelete = (coach: Coach) => {
@@ -68,27 +121,72 @@ export default function CoachesList() {
   };
 
   const confirmDelete = async () => {
-    if (!coachToDelete) return;
-    try {
-      const token = localStorage.getItem("token");
-      await axios.delete(`${API_BASE}/admin/account/${coachToDelete.userId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setShowDeleteModal(false);
-      setCoachToDelete(null);
-      fetchCoaches();
-    } catch (err) {
-      console.error("Failed to delete coach: ", err);
+    if (coachToDelete) {
+      try {
+        const token = localStorage.getItem("token");
+        await axios.delete(
+          `${API_BASE}/admin/account/${coachToDelete.userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setShowDeleteModal(false);
+        setCoachToDelete(null);
+        fetchCoaches();
+        showSnackbar("Huấn luyện viên đã được xoá thành công.", "success");
+      } catch (err: any) {
+        console.error("Error deleting coach:", err);
+        const errorMessage =
+          err.response?.data?.message ||
+          "Đã xảy ra lỗi khi xoá huấn luyện viên.";
+        showSnackbar(errorMessage, "error");
+      } finally {
+        setIsDeleting(false);
+      }
     }
   };
 
   const handleAdd = () => {
     setShowAddModal(true);
+    setEmailError("");
+    setPasswordError("");
+  };
+
+  const validateForm = () => {
+    if (
+      !newCoach.userName ||
+      !newCoach.email ||
+      !newCoach.fullName ||
+      !newCoach.phoneNumber ||
+      !newCoach.gender
+    ) {
+      showSnackbar("Please fill in all required fields.", "warning");
+      return false;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newCoach.email)) {
+      showSnackbar("Please enter a valid email address.", "warning");
+      return false;
+    }
+    const phoneRegex = /^\d{10,15}$/;
+    if (!phoneRegex.test(newCoach.phoneNumber)) {
+      showSnackbar(
+        "Please enter a valid phone number (10-15 digits).",
+        "warning"
+      );
+      return false;
+    }
+    return true;
   };
 
   const confirmAdd = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsAdding(true);
     try {
       const token = localStorage.getItem("token");
       await axios.post(
@@ -120,9 +218,27 @@ export default function CoachesList() {
         gender: "MALE",
       });
       fetchCoaches();
-    } catch (err) {
-      console.error("Failed to add coach: ", err);
+      showSnackbar("Huấn luyện viên mới được thêm thành công.", "success");
+    } catch (err: any) {
+      console.error("Error adding coach:", err);
+      const errorMessage =
+        err.response?.data?.message ||
+        "Đã xảy ra lỗi khi thêm huấn luyện viên.";
+      showSnackbar(errorMessage, "error");
+    } finally {
+      setIsAdding(false);
     }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+    }
+  };
+
+  const handleRowsPerPageChange = (event: SelectChangeEvent<number>) => {
+    setRowsPerPage(Number(event.target.value));
+    setPage(1); // Reset to first page
   };
 
   return (
@@ -145,77 +261,119 @@ export default function CoachesList() {
         <div className="table-wrapper">
           {loading ? (
             <div className="loading-container">
-              <div className="loading-spinner"></div>
-              <p>Loading coaches...</p>
+              <CircularProgress />
+              <p>Đang tải danh sách huấn luyện viên...</p>
             </div>
           ) : (
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>No.</th>
-                  <th>Username</th>
-                  <th>Email</th>
-                  <th>Full Name</th>
-                  <th>Phone Number</th>
-                  <th>Gender</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {coaches.length === 0 ? (
+            <>
+              <table className="table">
+                <thead>
                   <tr>
-                    <td colSpan={5} className="empty-message">
-                      <div className="empty-state">
-                        <p>No coaches found</p>
-                        <p className="empty-subtitle">
-                          There are currently no coaches in the system.
-                        </p>
-                      </div>
-                    </td>
+                    <th>No.</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Full Name</th>
+                    <th>Phone Number</th>
+                    <th>Gender</th>
+                    <th>Action</th>
                   </tr>
-                ) : (
-                  coaches.map((coach, index) => (
-                    <tr
-                      key={coach.userId}
-                      style={{
-                        backgroundColor:
-                          coach.status === "INACTIVE"
-                            ? "#ffe6e6"
-                            : undefined,
-                        color:
-                          coach.status === "INACTIVE"
-                            ? "#8b0000"
-                            : undefined,
-                      }}
-                    >
-                      <td>{index + 1}</td>
-                      <td>{coach.userName}</td>
-                      <td>{coach.email}</td>
-                      <td>{coach.fullName}</td>
-                      <td>{coach.phoneNumber}</td>
-                      <td>{coach.gender}</td>
-                      <td>
-                        {coach.status === "INACTIVE" ? (
-                          <strong>INACTIVE</strong>
-                        ) : (
-                          <>
-                            <button className="action-button edit-button">
-                              Edit
-                            </button>
-                            <button
-                              className="action-button delete-button"
-                              onClick={() => handleDelete(coach)}
-                            >
-                              Delete
-                            </button>
-                          </>
-                        )}
+                </thead>
+                <tbody>
+                  {currentCoaches.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="empty-message">
+                        <div className="empty-state">
+                          <p>Không tìm thấy huấn luyện viên nào</p>
+                          <p className="empty-subtitle">
+                            Hiện tại chưa có huấn luyện viên nào trong hệ thống.
+                          </p>
+                        </div>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    currentCoaches.map((coach, index) => (
+                      <tr
+                        key={coach.userId}
+                        style={{
+                          backgroundColor:
+                            coach.status === "INACTIVE"
+                              ? "#ffe6e6"
+                              : undefined,
+                          color:
+                            coach.status === "INACTIVE"
+                              ? "#8b0000"
+                              : undefined,
+                        }}
+                      >
+                        <td>{(page - 1) * rowsPerPage + index + 1}</td>
+                        <td>{coach.userName}</td>
+                        <td>{coach.email}</td>
+                        <td>{coach.fullName}</td>
+                        <td>{coach.phoneNumber}</td>
+                        <td>{coach.gender}</td>
+                        <td>
+                          {coach.status === "INACTIVE" ? (
+                            <strong>INACTIVE</strong>
+                          ) : (
+                            <>
+                              <button className="action-button edit-button">
+                                Edit
+                              </button>
+                              <button
+                                className="action-button delete-button"
+                                onClick={() => handleDelete(coach)}
+                                disabled={isDeleting}
+                              >
+                                {isDeleting &&
+                                coachToDelete?.userId === coach.userId ? (
+                                  <CircularProgress size={20} color="inherit" />
+                                ) : (
+                                  "Delete"
+                                )}
+                              </button>
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+
+              <div className="pagination-container">
+                <FormControl variant="outlined" size="small">
+                  <InputLabel>Rows per page</InputLabel>
+                  <Select
+                    value={rowsPerPage}
+                    onChange={handleRowsPerPageChange}
+                    label="Rows per page"
+                  >
+                    <MenuItem value={5}>5</MenuItem>
+                    <MenuItem value={8}>8</MenuItem>
+                    <MenuItem value={10}>10</MenuItem>
+                  </Select>
+                </FormControl>
+                <div className="page-navigation">
+                  <Typography variant="body2">
+                    Page {page} of {totalPages}
+                  </Typography>
+                  <Button
+                    onClick={() => handlePageChange(page - 1)}
+                    disabled={page === 1}
+                    size="small"
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    onClick={() => handlePageChange(page + 1)}
+                    disabled={page === totalPages}
+                    size="small"
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </>
           )}
         </div>
 
@@ -226,8 +384,8 @@ export default function CoachesList() {
           onClose={() => setShowDeleteModal(false)}
         >
           <Typography>
-            Are you sure you want to delete{" "}
-            <strong>{coachToDelete?.userName}</strong>?
+            Bạn có chắc muốn xóa huấn luyện viên{" "}
+            <strong>{coachToDelete?.userName}</strong> không?
           </Typography>
           <div
             style={{
@@ -237,8 +395,17 @@ export default function CoachesList() {
               gap: 8,
             }}
           >
-            <Button variant="contained" color="error" onClick={confirmDelete}>
-              Yes, Delete
+            <Button
+              variant="contained"
+              color="error"
+              onClick={confirmDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                "Yes, Delete"
+              )}
             </Button>
             <Button
               variant="outlined"
@@ -271,9 +438,12 @@ export default function CoachesList() {
               variant="outlined"
               fullWidth
               value={newCoach.email}
-              onChange={(e) =>
-                setNewCoach({ ...newCoach, email: e.target.value })
-              }
+              onChange={(e) => {
+                setNewCoach({ ...newCoach, email: e.target.value });
+                setEmailError("");
+              }}
+              error={!!emailError}
+              helperText={emailError}
             />
             <TextField
               label="Full Name"
@@ -299,9 +469,12 @@ export default function CoachesList() {
               variant="outlined"
               fullWidth
               value={newCoach.password}
-              onChange={(e) =>
-                setNewCoach({ ...newCoach, password: e.target.value })
-              }
+              onChange={(e) => {
+                setNewCoach({ ...newCoach, password: e.target.value });
+                setPasswordError("");
+              }}
+              error={!!passwordError}
+              helperText={passwordError}
             />
             <FormControl fullWidth>
               <InputLabel>Gender</InputLabel>
@@ -315,7 +488,9 @@ export default function CoachesList() {
                   })
                 }
               >
-                <MenuItem value="" disabled><em>Select Gender</em></MenuItem>
+                <MenuItem value="" disabled>
+                  <em>Select Gender</em>
+                </MenuItem>
                 <MenuItem value="MALE">Male</MenuItem>
                 <MenuItem value="FEMALE">Female</MenuItem>
               </Select>
@@ -324,8 +499,16 @@ export default function CoachesList() {
             <div
               style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}
             >
-              <Button variant="contained" onClick={confirmAdd}>
-                Add
+              <Button
+                variant="contained"
+                onClick={confirmAdd}
+                disabled={isAdding}
+              >
+                {isAdding ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  "Add"
+                )}
               </Button>
               <Button variant="outlined" onClick={() => setShowAddModal(false)}>
                 Cancel
@@ -333,7 +516,24 @@ export default function CoachesList() {
             </div>
           </div>
         </PopUpDialog>
+
+        {/* Snackbar for notifications */}
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={10000}
+          onClose={handleSnackbarClose}
+        >
+          <Alert
+            onClose={handleSnackbarClose}
+            severity={snackbarSeverity}
+            sx={{ width: "100%" }}
+          >
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
       </div>
     </div>
   );
+
+
 }

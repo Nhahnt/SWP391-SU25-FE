@@ -19,7 +19,7 @@ export default function DashboardSidebar() {
       "/dashboard/staffs",
       "/dashboard/feedback",
     ];
-    return userPaths.some((path) => location.pathname === path);
+    return userPaths.some((path) => location.pathname.startsWith(path));
   };
 
   useEffect(() => {
@@ -39,7 +39,6 @@ export default function DashboardSidebar() {
         background: "#fff7ed",
         boxShadow: "2px 0 8px rgba(0,0,0,0.04)",
         borderRight: "2px solid #f3f3f3",
-        borderTopRightRadius: "16px",
         paddingTop: "32px",
         paddingBottom: "16px",
       }}
@@ -47,7 +46,7 @@ export default function DashboardSidebar() {
       <Menu
         menuItemStyles={{
           button: ({ active }) => ({
-            backgroundColor: active ? "#fed7aa" : "#fff",
+            backgroundColor: active ? "#fed7aa" : "transparent",
             color: active ? "#c2410c" : "#374151",
             margin: "0 12px",
             borderRadius: "8px",
@@ -56,7 +55,7 @@ export default function DashboardSidebar() {
             boxShadow: active ? "0 2px 8px rgba(252,174,123,0.15)" : "none",
             "&:hover": {
               backgroundColor: "#fed7aa",
-              color: "#000",
+              color: "#c2410c",
               fontWeight: "bold",
             },
           }),

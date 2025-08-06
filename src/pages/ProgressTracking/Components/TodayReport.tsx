@@ -6,7 +6,6 @@ import { DailyProgress } from "../models/type";
 
 interface Props {
   reportDate: string;
-  setReportDate: (val: string) => void;
   inputCount: number | "";
   onChange: (val: number | "") => void;
   onSubmit: () => void;
@@ -22,7 +21,6 @@ const getTodayString = (): string => {
 
 export const TodayReportCard = ({
   reportDate,
-  setReportDate,
   inputCount,
   onChange,
   onSubmit,
@@ -34,15 +32,9 @@ export const TodayReportCard = ({
         <Typography variant="h6" sx={{ color: "#c2410c" }}>
           Today's Report
         </Typography>
-        <TextField
-          type="date"
-          value={reportDate}
-          onChange={(e) => setReportDate(e.target.value)}
-          fullWidth
-          inputProps={{
-            max: getTodayString(), // vẫn giới hạn không được chọn tương lai
-          }}
-        />
+        <Typography variant="body2" color="text.secondary">
+          Recording for: <strong>{reportDate}</strong>
+        </Typography>
 
         <Typography variant="body2">
           How many cigarettes did you smoke?

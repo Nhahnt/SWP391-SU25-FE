@@ -2,9 +2,10 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import Sidebar from "./components/Sidebar";
 import ChatBox from "./components/Chatbox";
 import { Client, StompSubscription } from "@stomp/stompjs";
-import { Button, Box } from "@mui/material";
+import { Button } from "@mui/material";
 import { Link } from "react-router-dom";
 import AssessmentIcon from '@mui/icons-material/Assessment';
+import MemberCheck from "./components/MemberCheck";
 
 const ChatScreen = () => {
   const [selectedMemberId, setSelectedMemberId] = useState<number | null>(
@@ -15,19 +16,18 @@ const ChatScreen = () => {
   );
 
   const [stompClient, setStompClient] = useState<Client | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
-  const currentSubRef = useRef<StompSubscription | null>(null);
+  const [isConnected, setIsConnected] = useState(false); // State to track WebSocket connection status
+  const currentSubRef = useRef<StompSubscription | null>(null); // Ref to hold the current STOMP subscription
 
-  const coachId = localStorage.getItem("coachId");
-  const role = localStorage.getItem("role");
+  const coachId = localStorage.getItem("coachId"); 
+  const role = localStorage.getItem("role"); 
 
-  // Initialize STOMP client
   useEffect(() => {
     const client = new Client({
-      brokerURL: "ws://localhost:8082/ws",
-      reconnectDelay: 5000,
+      brokerURL: "ws://localhost:8082/ws", // WebSocket broker URL
+      reconnectDelay: 5000, // Delay before attempting to reconnect
       onConnect: () => {
-        setIsConnected(true);
+        setIsConnected(true); // Set connection status to true on successful connect
         console.log("Connected to WebSocket");
       },
       onStompError: (frame) => {
@@ -36,40 +36,42 @@ const ChatScreen = () => {
       },
     });
 
-    client.activate();
+    client.activate(); 
     setStompClient(client);
 
+    // Cleanup function: deactivate STOMP client when the component unmounts
     return () => {
       if (client && client.connected) client.deactivate();
     };
   }, []);
 
-  // Handle member selection
   const handleSelectMember = useCallback(
     (memberId: number) => {
-      setSelectedMemberId(memberId);
+      setSelectedMemberId(memberId); 
       localStorage.setItem("memberId", memberId.toString());
 
+      // If no coach ID, no STOMP client, or client not connected, return early
       if (!coachId || !stompClient || !stompClient.connected) return;
 
-      // Unsubscribe previous
+      // Unsubscribe from the previous topic if a subscription exists
       currentSubRef.current?.unsubscribe();
 
-      // Subscribe to new topic
+      // Subscribe to the new chat topic for the selected member and coach
       const topic = `/topic/chat.${memberId}.${coachId}`;
-      currentSubRef.current = stompClient.subscribe(topic, () => {});
+      currentSubRef.current = stompClient.subscribe(topic, () => {}); // Subscribe without a message handler for now
     },
-    [coachId, stompClient]
+    [coachId, stompClient] 
   );
 
   return (
-    <div className="flex min-h-[80vh] bg-gray-50 rounded-lg shadow p-4 gap-4 max-w-7xl mx-auto mt-6">
-      {(role === "coach" || role === "COACH") && (
-        <Sidebar onSelectMember={handleSelectMember} selectedMemberId={selectedMemberId} />
-      )}
-        
+    <MemberCheck>
+      <div className="flex min-h-[80vh] bg-gray-50 rounded-lg shadow p-4 gap-4 max-w-7xl mx-auto mt-6">
+        {(role === "coach" || role === "COACH") && (
+          <Sidebar onSelectMember={handleSelectMember} selectedMemberId={selectedMemberId} />
+        )}
+          
         <div className="flex-1 flex flex-col">
-          {/* Coach Navigation Button */}
+          {/* Coach Navigation Button - visible only to coaches */}
           {(role === "coach" || role === "COACH") && (
             <div className="mb-4 flex justify-end">
               <Link to="/coach-tracking">
@@ -84,6 +86,8 @@ const ChatScreen = () => {
                     borderRadius: 2,
                     textTransform: 'none',
                     fontWeight: 600,
+                    px: 4,
+                    py: 1.5,
                   }}
                 >
                   Track Progress
@@ -94,12 +98,14 @@ const ChatScreen = () => {
           
           <div className="flex-1 flex items-center justify-center">
             {selectedMemberId ? (
+              // Render ChatBox if a member is selected
               <ChatBox
                 memberId={selectedMemberId}
                 coachId={coachId ? parseInt(coachId, 10) : 0}
                 stompClient={stompClient}
               />
             ) : (
+              // Display a message if no member is selected
               <div className="text-gray-400 text-lg font-medium text-center">
                 Chọn một thành viên để bắt đầu chat
               </div>
@@ -107,6 +113,7 @@ const ChatScreen = () => {
           </div>
         </div>
       </div>
+    </MemberCheck>
   );
 };
 

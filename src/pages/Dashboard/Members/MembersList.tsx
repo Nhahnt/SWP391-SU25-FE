@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, SyntheticEvent, ChangeEvent } from "react";
 import {
   Typography,
   TextField,
@@ -7,6 +7,10 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  CircularProgress,
+  Snackbar,
+  Alert,
+  SelectChangeEvent,
 } from "@mui/material";
 import DashboardSidebar from "../../../components/Sidebar";
 import axios from "axios";
@@ -39,8 +43,32 @@ export default function MembersList() {
     fullName: "",
     phoneNumber: "",
     password: "",
-    gender: "",
+    gender: "MALE",
   });
+
+  // State for loading indicators
+  const [isAdding, setIsAdding] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // State for Snackbar notifications
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<
+    "success" | "error" | "info" | "warning"
+  >("success");
+
+  // State for form validation errors
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  // State for pagination
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const totalPages = Math.ceil(members.length / rowsPerPage);
+  const currentMembers = members.slice(
+    (page - 1) * rowsPerPage,
+    page * rowsPerPage
+  );
 
   useEffect(() => {
     fetchMembers();
@@ -58,9 +86,31 @@ export default function MembersList() {
       setMembers(res.data);
     } catch (err) {
       console.error("Failed to fetch members: ", err);
+      showSnackbar("Không thể tải danh sách thành viên.", "error");
     } finally {
       setLoading(false);
     }
+  };
+
+  // Function to show the Snackbar
+  const showSnackbar = (
+    message: string,
+    severity: "success" | "error" | "info" | "warning"
+  ) => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
+  };
+
+  // Function to close the Snackbar
+  const handleSnackbarClose = (
+    event?: SyntheticEvent | Event,
+    reason?: string
+  ) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setSnackbarOpen(false);
   };
 
   const handleDelete = (member: Member) => {
@@ -70,6 +120,7 @@ export default function MembersList() {
 
   const confirmDelete = async () => {
     if (!memberToDelete) return;
+    setIsDeleting(true);
     try {
       const token = localStorage.getItem("token");
       await axios.delete(`${API_BASE}/admin/account/${memberToDelete.userId}`, {
@@ -80,16 +131,50 @@ export default function MembersList() {
       setShowDeleteModal(false);
       setMemberToDelete(null);
       fetchMembers();
-    } catch (err) {
+      showSnackbar("Thành viên đã được xóa thành công.", "success");
+    } catch (err: any) {
       console.error("Failed to delete member: ", err);
+      const errorMessage =
+        err.response?.data?.message || "Đã xảy ra lỗi khi xóa thành viên.";
+      showSnackbar(errorMessage, "error");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   const handleAdd = () => {
     setShowAddModal(true);
+    // Reset validation errors when opening the modal
+    setEmailError("");
+    setPasswordError("");
+  };
+
+  const validateForm = () => {
+    let isValid = true;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newMember.email)) {
+      setEmailError("Email không hợp lệ.");
+      isValid = false;
+    } else {
+      setEmailError("");
+    }
+
+    if (newMember.password && newMember.password.length < 8) {
+      setPasswordError("Mật khẩu phải có ít nhất 8 ký tự.");
+      isValid = false;
+    } else {
+      setPasswordError("");
+    }
+
+    return isValid;
   };
 
   const confirmAdd = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsAdding(true);
     try {
       const token = localStorage.getItem("token");
       await axios.post(
@@ -121,9 +206,26 @@ export default function MembersList() {
         gender: "MALE",
       });
       fetchMembers();
-    } catch (err) {
+      showSnackbar("Thành viên mới đã được thêm thành công.", "success");
+    } catch (err: any) {
       console.error("Failed to add member: ", err);
+      const errorMessage =
+        err.response?.data?.message || "Đã xảy ra lỗi khi thêm thành viên.";
+      showSnackbar(errorMessage, "error");
+    } finally {
+      setIsAdding(false);
     }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+    }
+  };
+
+  const handleRowsPerPageChange = (event: SelectChangeEvent<number>) => {
+    setRowsPerPage(Number(event.target.value));
+    setPage(1); // Reset to first page
   };
 
   return (
@@ -146,77 +248,119 @@ export default function MembersList() {
         <div className="table-wrapper">
           {loading ? (
             <div className="loading-container">
-              <div className="loading-spinner"></div>
-              <p>Loading members...</p>
+              <CircularProgress />
+              <p>Đang tải danh sách thành viên...</p>
             </div>
           ) : (
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>No.</th>
-                  <th>Username</th>
-                  <th>Email</th>
-                  <th>Full Name</th>
-                  <th>Phone Number</th>
-                  <th>Gender</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {members.length === 0 ? (
+            <>
+              <table className="table">
+                <thead>
                   <tr>
-                    <td colSpan={5} className="empty-message">
-                      <div className="empty-state">
-                        <p>No members found</p>
-                        <p className="empty-subtitle">
-                          There are currently no members in the system.
-                        </p>
-                      </div>
-                    </td>
+                    <th>No.</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Full Name</th>
+                    <th>Phone Number</th>
+                    <th>Gender</th>
+                    <th>Action</th>
                   </tr>
-                ) : (
-                  members.map((member, index) => (
-                    <tr
-                      key={member.userId}
-                      style={{
-                        backgroundColor:
-                          member.status === "DEACTIVATED"
-                            ? "#ffe6e6"
-                            : undefined,
-                        color:
-                          member.status === "DEACTIVATED"
-                            ? "#8b0000"
-                            : undefined,
-                      }}
-                    >
-                      <td>{index + 1}</td>
-                      <td>{member.userName}</td>
-                      <td>{member.email}</td>
-                      <td>{member.fullName}</td>
-                      <td>{member.phoneNumber}</td>
-                      <td>{member.gender}</td>
-                      <td>
-                        {member.status === "DEACTIVATED" ? (
-                          <strong>DEACTIVATED</strong>
-                        ) : (
-                          <>
-                            <button className="action-button edit-button">
-                              Edit
-                            </button>
-                            <button
-                              className="action-button delete-button"
-                              onClick={() => handleDelete(member)}
-                            >
-                              Delete
-                            </button>
-                          </>
-                        )}
+                </thead>
+                <tbody>
+                  {currentMembers.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="empty-message">
+                        <div className="empty-state">
+                          <p>Không tìm thấy thành viên nào</p>
+                          <p className="empty-subtitle">
+                            Hiện tại chưa có thành viên nào trong hệ thống.
+                          </p>
+                        </div>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    currentMembers.map((member, index) => (
+                      <tr
+                        key={member.userId}
+                        style={{
+                          backgroundColor:
+                            member.status === "DEACTIVATED"
+                              ? "#ffe6e6"
+                              : undefined,
+                          color:
+                            member.status === "DEACTIVATED"
+                              ? "#8b0000"
+                              : undefined,
+                        }}
+                      >
+                        <td>{(page - 1) * rowsPerPage + index + 1}</td>
+                        <td>{member.userName}</td>
+                        <td>{member.email}</td>
+                        <td>{member.fullName}</td>
+                        <td>{member.phoneNumber}</td>
+                        <td>{member.gender}</td>
+                        <td>
+                          {member.status === "DEACTIVATED" ? (
+                            <strong>DEACTIVATED</strong>
+                          ) : (
+                            <>
+                              <button className="action-button edit-button">
+                                Edit
+                              </button>
+                              <button
+                                className="action-button delete-button"
+                                onClick={() => handleDelete(member)}
+                                disabled={isDeleting}
+                              >
+                                {isDeleting &&
+                                memberToDelete?.userId === member.userId ? (
+                                  <CircularProgress size={20} color="inherit" />
+                                ) : (
+                                  "Delete"
+                                )}
+                              </button>
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+
+              <div className="pagination-container">
+                <FormControl variant="outlined" size="small">
+                  <InputLabel>Rows per page</InputLabel>
+                  <Select
+                    value={rowsPerPage}
+                    onChange={handleRowsPerPageChange}
+                    label="Rows per page"
+                  >
+                    <MenuItem value={5}>5</MenuItem>
+                    <MenuItem value={8}>8</MenuItem>
+                    <MenuItem value={10}>10</MenuItem>
+                  </Select>
+                </FormControl>
+                <div className="page-navigation">
+                  <Typography variant="body2">
+                    Page {page} of {totalPages}
+                  </Typography>
+                  <Button
+                    onClick={() => handlePageChange(page - 1)}
+                    disabled={page === 1}
+                    size="small"
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    onClick={() => handlePageChange(page + 1)}
+                    disabled={page === totalPages}
+                    size="small"
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </>
           )}
         </div>
 
@@ -227,8 +371,8 @@ export default function MembersList() {
           onClose={() => setShowDeleteModal(false)}
         >
           <Typography>
-            Are you sure you want to delete{" "}
-            <strong>{memberToDelete?.userName}</strong>?
+            Bạn có chắc muốn xóa thành viên{" "}
+            <strong>{memberToDelete?.userName}</strong> không?
           </Typography>
           <div
             style={{
@@ -238,8 +382,17 @@ export default function MembersList() {
               gap: 8,
             }}
           >
-            <Button variant="contained" color="error" onClick={confirmDelete}>
-              Yes, Delete
+            <Button
+              variant="contained"
+              color="error"
+              onClick={confirmDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                "Yes, Delete"
+              )}
             </Button>
             <Button
               variant="outlined"
@@ -272,9 +425,12 @@ export default function MembersList() {
               variant="outlined"
               fullWidth
               value={newMember.email}
-              onChange={(e) =>
-                setNewMember({ ...newMember, email: e.target.value })
-              }
+              onChange={(e) => {
+                setNewMember({ ...newMember, email: e.target.value });
+                setEmailError("");
+              }}
+              error={!!emailError}
+              helperText={emailError}
             />
             <TextField
               label="Full Name"
@@ -300,9 +456,12 @@ export default function MembersList() {
               variant="outlined"
               fullWidth
               value={newMember.password}
-              onChange={(e) =>
-                setNewMember({ ...newMember, password: e.target.value })
-              }
+              onChange={(e) => {
+                setNewMember({ ...newMember, password: e.target.value });
+                setPasswordError("");
+              }}
+              error={!!passwordError}
+              helperText={passwordError}
             />
             <FormControl fullWidth>
               <InputLabel>Gender</InputLabel>
@@ -316,7 +475,9 @@ export default function MembersList() {
                   })
                 }
               >
-                <MenuItem value="" disabled><em>Select Gender</em></MenuItem>
+                <MenuItem value="" disabled>
+                  <em>Select Gender</em>
+                </MenuItem>
                 <MenuItem value="MALE">Male</MenuItem>
                 <MenuItem value="FEMALE">Female</MenuItem>
               </Select>
@@ -325,8 +486,16 @@ export default function MembersList() {
             <div
               style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}
             >
-              <Button variant="contained" onClick={confirmAdd}>
-                Add
+              <Button
+                variant="contained"
+                onClick={confirmAdd}
+                disabled={isAdding}
+              >
+                {isAdding ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  "Add"
+                )}
               </Button>
               <Button variant="outlined" onClick={() => setShowAddModal(false)}>
                 Cancel
@@ -334,6 +503,21 @@ export default function MembersList() {
             </div>
           </div>
         </PopupDialog>
+
+        {/* Snackbar for notifications */}
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={10000}
+          onClose={handleSnackbarClose}
+        >
+          <Alert
+            onClose={handleSnackbarClose}
+            severity={snackbarSeverity}
+            sx={{ width: "100%" }}
+          >
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
       </div>
     </div>
   );

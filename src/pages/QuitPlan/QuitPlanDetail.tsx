@@ -191,31 +191,34 @@ export default function QuitPlanDetail() {
           variant="h5"
           sx={{ color: "#c2410c", fontWeight: "bold", mb: 2 }}
         >
-          You have no Quit Plan
+          Bạn chưa có kế hoạch cai thuốc!
         </Typography>
-        <Typography variant="body1" sx={{ mb: 2 }}>
-          Click the button below to create one!
+        <Typography variant="body1" sx={{ mb: 2, textAlign: "center" }}>
+          Hãy bắt đầu với một bài đánh giá để hiểu rõ hơn về bản thân và hành trình cai thuốc của bạn.
         </Typography>
-        <Button
-          component={Link}
-          to="/quit-plan"
-          variant="contained"
-          size="large"
-          sx={{
-            bgcolor: "#c2410c",
-            "&:hover": {
-              bgcolor: "#9a3412",
-              transform: "translateY(-1px)",
-            },
-            px: 4,
-            py: 1.5,
-            textTransform: "none",
-            fontSize: "1.1rem",
-            transition: "all 0.2s ease",
-          }}
-        >
-          Create a Quit Plan
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-4 mt-4">
+          <Button
+            component={Link}
+            to="/quiz"
+            variant="contained"
+            size="large"
+            sx={{
+              bgcolor: "#c2410c",
+              "&:hover": {
+                bgcolor: "#9a3412",
+                transform: "translateY(-1px)",
+              },
+              px: 4,
+              py: 1.5,
+              textTransform: "none",
+              fontSize: "1.1rem",
+              transition: "all 0.2s ease",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Bắt đầu bài đánh giá
+          </Button>
+        </div>
       </div>
     );
   }

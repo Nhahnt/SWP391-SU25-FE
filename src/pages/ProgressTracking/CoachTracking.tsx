@@ -2,56 +2,21 @@ import { useState, useEffect } from "react";
 import {
   Box,
   Typography,
-  Card,
-  CardContent,
   CircularProgress,
-  Avatar,
-  Chip,
   LinearProgress,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
 } from "@mui/material";
 import axios from "axios";
+import { DailyProgress, MemberShortDTO, WeeklyProgressStats } from "./models/type";
+import MemberCard from "./CoachComponents/MemberCard";
+import WeeklyProgressCard from "./CoachComponents/WeeklyProgressCard";
+import DailyProgressCard from "./CoachComponents/DailyProgressCard";
 
 const API_BASE = "http://localhost:8082/api";
-
-interface MemberShortDTO {
-  memberId: number;
-  fullName: string;
-  status: string;
-  userId: number;
-  avatarUrl?: string | null;
-}
-
-interface WeeklyProgressStats {
-  weekNumber: number;
-  weekStartDate: string;
-  weekEndDate: string;
-  targetCigarettesPerDay: number;
-  totalCigarettesSmoked: number;
-  cigarettesReduction: number;
-  daysOverTarget: number;
-  daysOnTarget: number;
-  daysUnderTarget: number;
-  dailyProgress: DailyProgress[];
-}
-
-interface DailyProgress {
-  date: string;
-  targetCigarettes: number;
-  cigarettesSmoked: number;
-  status: "OVER" | "ON_TARGET" | "UNDER" | "NO_RECORD";
-}
 
 export default function CoachTracking() {
   const [members, setMembers] = useState<MemberShortDTO[]>([]);
@@ -90,15 +55,14 @@ export default function CoachTracking() {
 
   const fetchMemberProgress = async (memberId: number) => {
     if (!coachId) return;
-    
+
     try {
       setLoadingMember(true);
       const token = localStorage.getItem("token");
       const res = await axios.get(`${API_BASE}/coach/${coachId}/members/${memberId}/progress/all-weeks`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      
-      // Update the progress data with real-time status checks
+
       const updatedProgress = await updateProgressStatus(res.data, memberId);
       setMemberProgress(updatedProgress);
     } catch (error) {
@@ -111,27 +75,23 @@ export default function CoachTracking() {
   const updateProgressStatus = async (progressData: WeeklyProgressStats[], memberId: number) => {
     try {
       const token = localStorage.getItem("token");
-      
+
       // Get today's date in the correct timezone and format
       const now = new Date();
-      
-      // Account for timezone difference - use yesterday's date if server is behind
+
       const yesterday = new Date(now);
       yesterday.setDate(yesterday.getDate() - 1);
-      
+
       let todayString = now.toLocaleDateString('en-CA'); // YYYY-MM-DD format
       let yesterdayString = yesterday.toLocaleDateString('en-CA'); // YYYY-MM-DD format
-      
-      // Debug: Log the dates being sent
+
       console.log('Sending today date to API:', todayString);
       console.log('Sending yesterday date to API:', yesterdayString);
       console.log('Current local time:', now.toLocaleString());
       console.log('ISO string:', now.toISOString());
-      
-      // Try to get today's smoking record
+
       let todayRecordRes;
       try {
-        // First try today's date
         todayRecordRes = await axios.get(`${API_BASE}/smoking-records/date/${todayString}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -139,33 +99,30 @@ export default function CoachTracking() {
       } catch (dateError) {
         console.log('Today date failed, trying yesterday...');
         try {
-          // Try yesterday's date (timezone adjustment)
           todayRecordRes = await axios.get(`${API_BASE}/smoking-records/date/${yesterdayString}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           console.log('Success with yesterday date:', yesterdayString);
         } catch (yesterdayError) {
           console.log('Yesterday date also failed, trying alternative format...');
-          // Try alternative date format (DD/MM/YYYY)
           const alternativeDate = now.toLocaleDateString('en-GB').split('/').reverse().join('-');
           console.log('Trying alternative date format:', alternativeDate);
-          
+
           todayRecordRes = await axios.get(`${API_BASE}/smoking-records/date/${alternativeDate}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
         }
       }
-      
+
       console.log('API response:', todayRecordRes.data);
-      
+
       const todayRecord = todayRecordRes.data;
-      
-      // Update the current week's progress if it exists
+
       const updatedProgress = progressData.map(week => {
         const weekStart = new Date(week.weekStartDate);
         const weekEnd = new Date(week.weekEndDate);
         const today = new Date();
-        
+
         // Check if this week includes today
         if (today >= weekStart && today <= weekEnd) {
           const updatedDailyProgress = week.dailyProgress.map(day => {
@@ -173,7 +130,7 @@ export default function CoachTracking() {
               // Update today's status based on actual smoking record
               const actualSmoked = todayRecord?.cigarettesSmoked || 0;
               const target = day.targetCigarettes;
-              
+
               let newStatus: "OVER" | "ON_TARGET" | "UNDER" | "NO_RECORD";
               if (actualSmoked === 0) {
                 newStatus = "NO_RECORD";
@@ -184,7 +141,7 @@ export default function CoachTracking() {
               } else {
                 newStatus = "UNDER";
               }
-              
+
               return {
                 ...day,
                 cigarettesSmoked: actualSmoked,
@@ -193,10 +150,9 @@ export default function CoachTracking() {
             }
             return day;
           });
-          
-          // Recalculate week statistics
+
           const updatedStats = calculateWeekStats(updatedDailyProgress, week.targetCigarettesPerDay);
-          
+
           return {
             ...week,
             dailyProgress: updatedDailyProgress,
@@ -205,7 +161,7 @@ export default function CoachTracking() {
         }
         return week;
       });
-      
+
       return updatedProgress;
     } catch (error) {
       console.error("Failed to update progress status:", error);
@@ -218,7 +174,7 @@ export default function CoachTracking() {
     let daysOnTarget = 0;
     let daysUnderTarget = 0;
     let totalSmoked = 0;
-    
+
     dailyProgress.forEach(day => {
       totalSmoked += day.cigarettesSmoked;
       switch (day.status) {
@@ -236,10 +192,10 @@ export default function CoachTracking() {
           break;
       }
     });
-    
+
     const totalTarget = dailyProgress.length * targetPerDay;
     const reduction = Math.max(0, totalTarget - totalSmoked);
-    
+
     return {
       totalCigarettesSmoked: totalSmoked,
       cigarettesReduction: reduction,
@@ -265,42 +221,10 @@ export default function CoachTracking() {
     return "error";
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "OVER":
-        return "error";
-      case "ON_TARGET":
-        return "success";
-      case "UNDER":
-        return "info";
-      default:
-        return "default";
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "OVER":
-        return "Vượt mục tiêu";
-      case "ON_TARGET":
-        return "Đúng mục tiêu";
-      case "UNDER":
-        return "Dưới mục tiêu";
-      case "NO_RECORD":
-        return "Chưa ghi nhận";
-      default:
-        return status;
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("vi-VN");
-  };
-
   const calculateOverallProgress = (progress: WeeklyProgressStats[]) => {
     if (progress.length === 0) return 0;
     const totalWeeks = progress.length;
-    const completedWeeks = progress.filter(week => 
+    const completedWeeks = progress.filter(week =>
       week.daysUnderTarget + week.daysOnTarget >= 4
     ).length;
     return (completedWeeks / totalWeeks) * 100;
@@ -341,59 +265,7 @@ export default function CoachTracking() {
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
         {members.map((member) => (
           <Box key={member.memberId} sx={{ width: { xs: '100%', md: 'calc(50% - 12px)', lg: 'calc(33.33% - 16px)' } }}>
-            <Card sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
-              <CardContent sx={{ flexGrow: 1 }}>
-                <Box display="flex" alignItems="center" mb={2}>
-                  <Avatar
-                    src={member.avatarUrl || undefined}
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      mr: 2,
-                      bgcolor: "#c2410c",
-                      fontSize: "1.5rem",
-                      border: "2px solid #f5f5f5",
-                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                    }}
-                  >
-                    {member.fullName?.charAt(0) || "M"}
-                  </Avatar>
-                  <Box>
-                    <Typography variant="h6" fontWeight="bold">
-                      {member.fullName}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Thành viên
-                    </Typography>
-                    <Chip 
-                      label={member.status} 
-                      size="small" 
-                      color={member.status === "ACTIVE" ? "success" : "default"}
-                      sx={{ mt: 1 }}
-                    />
-                  </Box>
-                </Box>
-
-                <Box mb={2}>
-                  <Typography variant="body2" color="text.secondary" mb={1}>
-                    Nhấn "Xem chi tiết" để xem tiến độ
-                  </Typography>
-                </Box>
-
-                <Button
-                  variant="contained"
-                  fullWidth
-                  onClick={() => handleViewDetails(member)}
-                  sx={{
-                    bgcolor: "#c2410c",
-                    "&:hover": { bgcolor: "#a0300a" },
-                    mt: "auto",
-                  }}
-                >
-                  Xem chi tiết
-                </Button>
-              </CardContent>
-            </Card>
+            <MemberCard member={member} onViewDetails={handleViewDetails} />
           </Box>
         ))}
       </Box>
@@ -431,67 +303,11 @@ export default function CoachTracking() {
                   </Typography>
                 </Box>
               )}
-              
+
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 {memberProgress.map((week) => (
                   <Box key={week.weekNumber} sx={{ width: { xs: '100%', md: 'calc(50% - 8px)' } }}>
-                    <Card variant="outlined">
-                      <CardContent>
-                        <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                          <Typography variant="h6">
-                            Tuần {week.weekNumber}
-                          </Typography>
-                          <Chip
-                            label={`${week.daysUnderTarget + week.daysOnTarget}/7 ngày tốt`}
-                            color={week.daysOverTarget > 3 ? "error" : "success"}
-                            size="small"
-                          />
-                        </Box>
-
-                        <Typography variant="body2" color="text.secondary" mb={1}>
-                          {formatDate(week.weekStartDate)} - {formatDate(week.weekEndDate)}
-                        </Typography>
-
-                        <Box mb={2}>
-                          <Typography variant="body2" mb={1}>
-                            Mục tiêu: {week.targetCigarettesPerDay} điếu/ngày
-                          </Typography>
-                          <Typography variant="body2" mb={1}>
-                            Tổng đã hút: {week.totalCigarettesSmoked} điếu
-                          </Typography>
-                          <Typography variant="body2" color="success.main" fontWeight="bold">
-                            Giảm được: {week.cigarettesReduction} điếu
-                          </Typography>
-                        </Box>
-
-                        <Box display="flex" gap={1} mb={2}>
-                          <Chip
-                            label={`${week.daysUnderTarget} dưới`}
-                            color="success"
-                            size="small"
-                          />
-                          <Chip
-                            label={`${week.daysOnTarget} đúng`}
-                            color="primary"
-                            size="small"
-                          />
-                          <Chip
-                            label={`${week.daysOverTarget} vượt`}
-                            color="error"
-                            size="small"
-                          />
-                        </Box>
-
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          onClick={() => handleViewWeekDetails(week)}
-                          fullWidth
-                        >
-                          Xem chi tiết ngày
-                        </Button>
-                      </CardContent>
-                    </Card>
+                    <WeeklyProgressCard week={week} onViewWeekDetails={handleViewWeekDetails} />
                   </Box>
                 ))}
               </Box>
@@ -504,53 +320,11 @@ export default function CoachTracking() {
       </Dialog>
 
       {/* Week Details Dialog */}
-      <Dialog
-        open={!!selectedWeekStats}
+      <DailyProgressCard
+        selectedWeekStats={selectedWeekStats}
+        selectedMember={selectedMember}
         onClose={() => setSelectedWeekStats(null)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>
-          <Typography variant="h6">
-            Chi tiết tuần {selectedWeekStats?.weekNumber} - {selectedMember?.fullName}
-          </Typography>
-        </DialogTitle>
-        <DialogContent>
-          {selectedWeekStats && (
-            <TableContainer component={Paper}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Ngày</TableCell>
-                    <TableCell align="center">Mục tiêu</TableCell>
-                    <TableCell align="center">Đã hút</TableCell>
-                    <TableCell align="center">Trạng thái</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {selectedWeekStats.dailyProgress.map((day) => (
-                    <TableRow key={day.date}>
-                      <TableCell>{formatDate(day.date)}</TableCell>
-                      <TableCell align="center">{day.targetCigarettes}</TableCell>
-                      <TableCell align="center">{day.cigarettesSmoked}</TableCell>
-                      <TableCell align="center">
-                        <Chip
-                          label={getStatusText(day.status)}
-                          color={getStatusColor(day.status) as any}
-                          size="small"
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setSelectedWeekStats(null)}>Đóng</Button>
-        </DialogActions>
-      </Dialog>
+      />
     </Box>
   );
-} 
+}

@@ -86,14 +86,13 @@ export default function UserFeedback() {
       if (res.data && res.data.id) {
         setAssignedCoach(res.data);
       } else {
-        setCoachError("No coach assigned to you yet.");
+        setCoachError("Bạn chưa có Huấn luyện viên. Vui lòng nạp tiền và chọn một Huấn luyện viên để có thể đánh giá.");
       }
     } catch (e: any) {
-      console.error("Error fetching assigned coach:", e);
       if (e.response?.status === 404) {
-        setCoachError("No coach assigned to you yet.");
+        setCoachError("Bạn chưa có Huấn luyện viên. Vui lòng nạp tiền và chọn một Huấn luyện viên để có thể đánh giá.");
       } else {
-        setCoachError("Failed to load assigned coach.");
+        setCoachError("Bạn chưa có Huấn luyện viên. Vui lòng nạp tiền và chọn một Huấn luyện viên để có thể đánh giá.");
       }
     } finally {
       setCoachLoading(false);

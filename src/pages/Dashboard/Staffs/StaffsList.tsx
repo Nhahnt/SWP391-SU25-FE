@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { SyntheticEvent, useEffect, useState } from "react";
 import {
   Typography,
   TextField,
@@ -7,6 +7,10 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  CircularProgress,
+  Snackbar,
+  Alert,
+  SelectChangeEvent,
 } from "@mui/material";
 import DashboardSidebar from "../../../components/Sidebar";
 import axios from "axios";
@@ -38,8 +42,32 @@ export default function StaffsList() {
     fullName: "",
     phoneNumber: "",
     password: "",
-    gender: "",
+    gender: "MALE",
   });
+
+  // State for loading indicators
+  const [isAdding, setIsAdding] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // State for Snackbar notifications
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<
+    "success" | "error" | "info" | "warning"
+  >("success");
+
+  // State for form validation errors
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  // State for pagination
+  const [page, setPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const totalPages = Math.ceil(staffs.length / rowsPerPage);
+  const currentStaffs = staffs.slice(
+    (page - 1) * rowsPerPage,
+    page * rowsPerPage
+  );
 
   useEffect(() => {
     fetchStaffs();
@@ -54,12 +82,35 @@ export default function StaffsList() {
           Authorization: `Bearer ${token}`,
         },
       });
+
       setStaffs(res.data);
     } catch (err) {
-      console.error("Failed to fetch staffs: ", err);
+      console.error("Error fetching staffs:", err);
+      showSnackbar("Không thể tải danh sách staff", "error");
     } finally {
       setLoading(false);
     }
+  };
+
+  // Function to show the Snackbar
+  const showSnackbar = (
+    message: string,
+    severity: "success" | "error" | "info" | "warning"
+  ) => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
+  };
+
+  // Function to close the Snackbar
+  const handleSnackbarClose = (
+    event?: SyntheticEvent | Event,
+    reason?: string
+  ) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setSnackbarOpen(false);
   };
 
   const handleDelete = (staff: Staff) => {
@@ -68,27 +119,72 @@ export default function StaffsList() {
   };
 
   const confirmDelete = async () => {
-    if (!staffToDelete) return;
-    try {
-      const token = localStorage.getItem("token");
-      await axios.delete(`${API_BASE}/admin/account/${staffToDelete.userId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setShowDeleteModal(false);
-      setStaffToDelete(null);
-      fetchStaffs();
-    } catch (err) {
-      console.error("Failed to delete staff: ", err);
+    if (staffToDelete) {
+      try {
+        const token = localStorage.getItem("token");
+        await axios.delete(
+          `${API_BASE}/admin/account/${staffToDelete.userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setShowDeleteModal(false);
+        setStaffToDelete(null);
+        fetchStaffs();
+        showSnackbar("Huấn luyện viên đã được xoá thành công.", "success");
+      } catch (err: any) {
+        console.error("Error deleting staff:", err);
+        const errorMessage =
+          err.response?.data?.message ||
+          "Đã xảy ra lỗi khi xoá nhân viên.";
+        showSnackbar(errorMessage, "error");
+      } finally {
+        setIsDeleting(false);
+      }
     }
   };
 
   const handleAdd = () => {
     setShowAddModal(true);
+    setEmailError("");
+    setPasswordError("");
+  };
+
+  const validateForm = () => {
+    if (
+      !newStaff.userName ||
+      !newStaff.email ||
+      !newStaff.fullName ||
+      !newStaff.phoneNumber ||
+      !newStaff.gender
+    ) {
+      showSnackbar("Please fill in all required fields.", "warning");
+      return false;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newStaff.email)) {
+      showSnackbar("Please enter a valid email address.", "warning");
+      return false;
+    }
+    const phoneRegex = /^\d{10,15}$/;
+    if (!phoneRegex.test(newStaff.phoneNumber)) {
+      showSnackbar(
+        "Please enter a valid phone number (10-15 digits).",
+        "warning"
+      );
+      return false;
+    }
+    return true;
   };
 
   const confirmAdd = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsAdding(true);
     try {
       const token = localStorage.getItem("token");
       await axios.post(
@@ -120,9 +216,27 @@ export default function StaffsList() {
         gender: "MALE",
       });
       fetchStaffs();
-    } catch (err) {
-      console.error("Failed to add staff: ", err);
+      showSnackbar("Huấn luyện viên mới được thêm thành công.", "success");
+    } catch (err: any) {
+      console.error("Error adding staff:", err);
+      const errorMessage =
+        err.response?.data?.message ||
+        "Đã xảy ra lỗi khi thêm nhân viên.";
+      showSnackbar(errorMessage, "error");
+    } finally {
+      setIsAdding(false);
     }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+    }
+  };
+
+  const handleRowsPerPageChange = (event: SelectChangeEvent<number>) => {
+    setRowsPerPage(Number(event.target.value));
+    setPage(1); // Reset to first page
   };
 
   return (
@@ -145,77 +259,119 @@ export default function StaffsList() {
         <div className="table-wrapper">
           {loading ? (
             <div className="loading-container">
-              <div className="loading-spinner"></div>
-              <p>Loading staffs...</p>
+              <CircularProgress />
+              <p>Đang tải danh sách nhân viên...</p>
             </div>
           ) : (
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>No.</th>
-                  <th>Username</th>
-                  <th>Email</th>
-                  <th>Full Name</th>
-                  <th>Phone Number</th>
-                  <th>Gender</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {staffs.length === 0 ? (
+            <>
+              <table className="table">
+                <thead>
                   <tr>
-                    <td colSpan={5} className="empty-message">
-                      <div className="empty-state">
-                        <p>No staffs found</p>
-                        <p className="empty-subtitle">
-                          There are currently no staffs in the system.
-                        </p>
-                      </div>
-                    </td>
+                    <th>No.</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Full Name</th>
+                    <th>Phone Number</th>
+                    <th>Gender</th>
+                    <th>Action</th>
                   </tr>
-                ) : (
-                  staffs.map((staff, index) => (
-                    <tr
-                      key={staff.userId}
-                      style={{
-                        backgroundColor:
-                          staff.status === "INACTIVE"
-                            ? "#ffe6e6"
-                            : undefined,
-                        color:
-                          staff.status === "INACTIVE"
-                            ? "#8b0000"
-                            : undefined,
-                      }}
-                    >
-                      <td>{index + 1}</td>
-                      <td>{staff.userName}</td>
-                      <td>{staff.email}</td>
-                      <td>{staff.fullName}</td>
-                      <td>{staff.phoneNumber}</td>
-                      <td>{staff.gender}</td>
-                      <td>
-                        {staff.status === "INACTIVE" ? (
-                          <strong>INACTIVE</strong>
-                        ) : (
-                          <>
-                            <button className="action-button edit-button">
-                              Edit
-                            </button>
-                            <button
-                              className="action-button delete-button"
-                              onClick={() => handleDelete(staff)}
-                            >
-                              Delete
-                            </button>
-                          </>
-                        )}
+                </thead>
+                <tbody>
+                  {currentStaffs.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="empty-message">
+                        <div className="empty-state">
+                          <p>Không tìm thấy nhân viên nào</p>
+                          <p className="empty-subtitle">
+                            Hiện tại chưa có nhân viên nào trong hệ thống.
+                          </p>
+                        </div>
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    currentStaffs.map((staff, index) => (
+                      <tr
+                        key={staff.userId}
+                        style={{
+                          backgroundColor:
+                            staff.status === "INACTIVE"
+                              ? "#ffe6e6"
+                              : undefined,
+                          color:
+                            staff.status === "INACTIVE"
+                              ? "#8b0000"
+                              : undefined,
+                        }}
+                      >
+                        <td>{(page - 1) * rowsPerPage + index + 1}</td>
+                        <td>{staff.userName}</td>
+                        <td>{staff.email}</td>
+                        <td>{staff.fullName}</td>
+                        <td>{staff.phoneNumber}</td>
+                        <td>{staff.gender}</td>
+                        <td>
+                          {staff.status === "INACTIVE" ? (
+                            <strong>INACTIVE</strong>
+                          ) : (
+                            <>
+                              <button className="action-button edit-button">
+                                Edit
+                              </button>
+                              <button
+                                className="action-button delete-button"
+                                onClick={() => handleDelete(staff)}
+                                disabled={isDeleting}
+                              >
+                                {isDeleting &&
+                                staffToDelete?.userId === staff.userId ? (
+                                  <CircularProgress size={20} color="inherit" />
+                                ) : (
+                                  "Delete"
+                                )}
+                              </button>
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+
+              <div className="pagination-container">
+                <FormControl variant="outlined" size="small">
+                  <InputLabel>Rows per page</InputLabel>
+                  <Select
+                    value={rowsPerPage}
+                    onChange={handleRowsPerPageChange}
+                    label="Rows per page"
+                  >
+                    <MenuItem value={5}>5</MenuItem>
+                    <MenuItem value={8}>8</MenuItem>
+                    <MenuItem value={10}>10</MenuItem>
+                  </Select>
+                </FormControl>
+                <div className="page-navigation">
+                  <Typography variant="body2">
+                    Page {page} of {totalPages}
+                  </Typography>
+                  <Button
+                    onClick={() => handlePageChange(page - 1)}
+                    disabled={page === 1}
+                    size="small"
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    onClick={() => handlePageChange(page + 1)}
+                    disabled={page === totalPages}
+                    size="small"
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </>
           )}
         </div>
 
@@ -226,8 +382,8 @@ export default function StaffsList() {
           onClose={() => setShowDeleteModal(false)}
         >
           <Typography>
-            Are you sure you want to delete{" "}
-            <strong>{staffToDelete?.userName}</strong>?
+            Bạn có chắc muốn xóa nhân viên{" "}
+            <strong>{staffToDelete?.userName}</strong> không?
           </Typography>
           <div
             style={{
@@ -237,8 +393,17 @@ export default function StaffsList() {
               gap: 8,
             }}
           >
-            <Button variant="contained" color="error" onClick={confirmDelete}>
-              Yes, Delete
+            <Button
+              variant="contained"
+              color="error"
+              onClick={confirmDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                "Yes, Delete"
+              )}
             </Button>
             <Button
               variant="outlined"
@@ -271,9 +436,12 @@ export default function StaffsList() {
               variant="outlined"
               fullWidth
               value={newStaff.email}
-              onChange={(e) =>
-                setNewStaff({ ...newStaff, email: e.target.value })
-              }
+              onChange={(e) => {
+                setNewStaff({ ...newStaff, email: e.target.value });
+                setEmailError("");
+              }}
+              error={!!emailError}
+              helperText={emailError}
             />
             <TextField
               label="Full Name"
@@ -299,9 +467,12 @@ export default function StaffsList() {
               variant="outlined"
               fullWidth
               value={newStaff.password}
-              onChange={(e) =>
-                setNewStaff({ ...newStaff, password: e.target.value })
-              }
+              onChange={(e) => {
+                setNewStaff({ ...newStaff, password: e.target.value });
+                setPasswordError("");
+              }}
+              error={!!passwordError}
+              helperText={passwordError}
             />
             <FormControl fullWidth>
               <InputLabel>Gender</InputLabel>
@@ -315,7 +486,9 @@ export default function StaffsList() {
                   })
                 }
               >
-                <MenuItem value="" disabled><em>Select Gender</em></MenuItem>
+                <MenuItem value="" disabled>
+                  <em>Select Gender</em>
+                </MenuItem>
                 <MenuItem value="MALE">Male</MenuItem>
                 <MenuItem value="FEMALE">Female</MenuItem>
               </Select>
@@ -324,8 +497,16 @@ export default function StaffsList() {
             <div
               style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}
             >
-              <Button variant="contained" onClick={confirmAdd}>
-                Add
+              <Button
+                variant="contained"
+                onClick={confirmAdd}
+                disabled={isAdding}
+              >
+                {isAdding ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  "Add"
+                )}
               </Button>
               <Button variant="outlined" onClick={() => setShowAddModal(false)}>
                 Cancel
@@ -333,7 +514,24 @@ export default function StaffsList() {
             </div>
           </div>
         </PopUpDialog>
+
+        {/* Snackbar for notifications */}
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={10000}
+          onClose={handleSnackbarClose}
+        >
+          <Alert
+            onClose={handleSnackbarClose}
+            severity={snackbarSeverity}
+            sx={{ width: "100%" }}
+          >
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
       </div>
     </div>
   );
+
+
 }

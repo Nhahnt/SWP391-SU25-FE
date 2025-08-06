@@ -1,10 +1,6 @@
 import {
   Typography,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
   Avatar,
   CircularProgress,
   Tabs,
@@ -12,19 +8,23 @@ import {
   Box,
   Button,
   TextField,
-  IconButton
 } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import EditIcon from '@mui/icons-material/Edit';
-import SaveIcon from '@mui/icons-material/Save';
-import CancelIcon from '@mui/icons-material/Cancel';
+import EditIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/Save";
+import CancelIcon from "@mui/icons-material/Cancel";
 import Cropper from "react-easy-crop";
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Slider from '@mui/material/Slider';
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
+import WorkIcon from "@mui/icons-material/Work";
+import SupportAgentIcon from "@mui/icons-material/SupportAgent";
+import PersonIcon from "@mui/icons-material/Person";
+import DiamondIcon from "@mui/icons-material/Diamond";
+import Slider from "@mui/material/Slider";
 
 function TabPanel(props: any) {
   const { children, value, index, ...other } = props;
@@ -66,15 +66,12 @@ export default function UserProfile() {
     const token = localStorage.getItem("token");
 
     try {
-      const res = await axios.get(
-        `${API_BASE}/avatar/current`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          withCredentials: true,
-        }
-      );
+      const res = await axios.get(`${API_BASE}/avatar/current`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        withCredentials: true,
+      });
       if (res.data && res.data.avatarUrl) {
         setAvatar(res.data.avatarUrl);
       } else {
@@ -105,13 +102,29 @@ export default function UserProfile() {
       setEditData({
         fullName: response.data.fullName || "",
         email: response.data.email || "",
-        phone: response.data.phone || ""
+        phone: response.data.phone || "",
+        vip: response.data.isVip || "",
       });
       fetchAvatar();
     } catch (err: any) {
       setError("Failed to load profile");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const getRoleIcon = (role: string, isVip: boolean) => {
+    if (isVip) return <DiamondIcon sx={{ color: "#ffc107" }} />;
+
+    switch (role.toUpperCase()) {
+      case "ADMIN":
+        return <AdminPanelSettingsIcon sx={{ color: "#ef4444" }} />;
+      case "STAFF":
+        return <WorkIcon sx={{ color: "#3b82f6" }} />;
+      case "COACH":
+        return <SupportAgentIcon sx={{ color: "#10b981" }} />;
+      case "MEMBER":
+        return <PersonIcon sx={{ color: "6b7280" }} />;
     }
   };
 
@@ -143,24 +156,20 @@ export default function UserProfile() {
     setUploadMsg("");
     const token = localStorage.getItem("token");
     try {
-      const { getCroppedImg } = await import ("./cropImage");
+      const { getCroppedImg } = await import("./cropImage");
       const croppedBlob = await getCroppedImg(
         URL.createObjectURL(selectedImage),
         croppedAreaPixels
       );
       const formData = new FormData();
       formData.append("file", croppedBlob, "avatar.jpg");
-      await axios.post(
-        `${API_BASE}/avatar/upload`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-          withCredentials: true,
-        }
-      );
+      await axios.post(`${API_BASE}/avatar/upload`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+        withCredentials: true,
+      });
       setUploadMsg("Avatar uploaded successfully!");
       await fetchAvatar();
       setShowCropper(false);
@@ -185,7 +194,7 @@ export default function UserProfile() {
     setEditData({
       fullName: user.fullName || "",
       email: user.email || "",
-      phone: user.phone || ""
+      phone: user.phone || "",
     });
   };
 
@@ -204,12 +213,12 @@ export default function UserProfile() {
         {
           fullName: editData.fullName,
           email: editData.email,
-          phone: editData.phone
+          phone: editData.phone,
         },
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
           },
           withCredentials: true,
         }
@@ -303,9 +312,32 @@ export default function UserProfile() {
               >
                 {user.fullName || user.userName}
               </Typography>
-              <Typography variant="body1" sx={{ color: "#757575" }}>
-                Role: {user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : ""}
-              </Typography>
+
+              {/* Box for role and role icon */}
+              <Box
+                sx={{
+                  p: 1,
+                  borderBottom: { xs: "1px solid #eee", sm: "none" },
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{ color: "#9e9e9e", fontWeight: "medium" }}
+                >
+                  Role
+                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  {getRoleIcon(user.role, user.vip)}
+                  <Typography
+                    variant="body1"
+                    sx={{ color: "#424242", fontWeight: "bold" }}
+                  >
+                    {user.role
+                      ? user.role.charAt(0).toUpperCase() + user.role.slice(1)
+                      : ""}
+                  </Typography>
+                </Box>
+              </Box>
             </Box>
             <Box
               sx={{
@@ -340,10 +372,20 @@ export default function UserProfile() {
                 style={{ display: "none" }}
                 onChange={handleAvatarChange}
               />
-              <Dialog open={showCropper} onClose={() => { setShowCropper(false); setSelectedImage(null); }} maxWidth="sm" fullWidth>
+              <Dialog
+                open={showCropper}
+                onClose={() => {
+                  setShowCropper(false);
+                  setSelectedImage(null);
+                }}
+                maxWidth="sm"
+                fullWidth
+              >
                 <DialogTitle>Crop your avatar</DialogTitle>
                 <DialogContent>
-                  <div style={{ position: 'relative', width: '100%', height: 300 }}>
+                  <div
+                    style={{ position: "relative", width: "100%", height: 300 }}
+                  >
                     {selectedImage && (
                       <Cropper
                         image={URL.createObjectURL(selectedImage)}
@@ -369,8 +411,22 @@ export default function UserProfile() {
                   />
                 </DialogContent>
                 <DialogActions>
-                  <Button onClick={() => { setShowCropper(false); setSelectedImage(null); }} color="secondary">Cancel</Button>
-                  <Button onClick={handleCroppedAvatarUpload} color="primary" disabled={uploading}>Save</Button>
+                  <Button
+                    onClick={() => {
+                      setShowCropper(false);
+                      setSelectedImage(null);
+                    }}
+                    color="secondary"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleCroppedAvatarUpload}
+                    color="primary"
+                    disabled={uploading}
+                  >
+                    Save
+                  </Button>
                 </DialogActions>
               </Dialog>
               {uploadMsg && (
@@ -548,7 +604,14 @@ export default function UserProfile() {
               </Box>
             </Box>
             {editMode ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 3 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  gap: 2,
+                  mt: 3,
+                }}
+              >
                 <Button
                   variant="contained"
                   color="primary"
@@ -569,7 +632,7 @@ export default function UserProfile() {
                 </Button>
               </Box>
             ) : (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+              <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
                 <Button
                   variant="contained"
                   sx={{

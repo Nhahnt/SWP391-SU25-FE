@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link as RouterLink } from "react-router-dom";
+import { Link, Link as RouterLink, useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   Box,
@@ -46,6 +46,12 @@ export function ProgressTracking() {
   const [deleteSuccess, setDeleteSuccess] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [hasPlan, setHasPlan] = useState<boolean | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const navigate = useNavigate();
+
+  const [moneySaved, setMoneySaved] = useState<number | null>(null);
+  const [totalMoneySaved, setTotalMoneySaved] = useState<number | null>(null);
+  const [dailyMessage, setDailyMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const checkPlan = async () => {
@@ -58,7 +64,7 @@ export function ProgressTracking() {
       } catch (err: any) {
         if (err?.response?.status === 404) {
           setHasPlan(false);
-        } 
+        }
       }
     };
     checkPlan();
@@ -114,18 +120,18 @@ export function ProgressTracking() {
     const validDays = week.dailyProgress.filter(
       (d) => d.status !== "NO_RECORD"
     );
-    const total = validDays.reduce((sum, d) => sum + d.cigarettesSmoked, 0);
-    const avg = total / validDays.length;
-    const over = validDays.filter((d) => d.status === "OVER").length;
-    const below = validDays.filter((d) => d.status === "UNDER").length;
-    const target = week.targetCigarettesPerDay;
+    const Total = validDays.reduce((sum, d) => sum + d.cigarettesSmoked, 0);
+    const Avg = Total / validDays.length;
+    const Over = validDays.filter((d) => d.status === "OVER").length;
+    const Below = validDays.filter((d) => d.status === "UNDER").length;
+    const Target = week.targetCigarettesPerDay;
 
     return {
-      total,
-      avg: avg.toFixed(1),
-      over,
-      below,
-      target,
+      Total,
+      Avg: Avg.toFixed(1),
+      Over,
+      Below,
+      Target,
     };
   };
 
@@ -157,17 +163,22 @@ export function ProgressTracking() {
 
     try {
       const token = localStorage.getItem("token");
-      await axios.post(
+      const res = await axios.post(
         `${API_BASE}/smoking-records/record`,
         { date, cigarettesSmoked: count, message },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      const res = await axios.get(
+      // Capture and set new state variables from the backend response
+      setMoneySaved(res.data.moneySaved);
+      setTotalMoneySaved(res.data.totalMoneySaved);
+      setDailyMessage(res.data.message);
+
+      const progressRes = await axios.get(
         `${API_BASE}/smoking-records/progress/all-weeks`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setReportData(res.data);
+      setReportData(progressRes.data);
 
       setTodayReport({
         date,
@@ -199,12 +210,38 @@ export function ProgressTracking() {
       });
       setDeleteSuccess(true);
       setReportData([]);
+      setIsRedirecting(true);
+      setTimeout(() => {
+        navigate("/");
+      }, 3000); // Redirect to homepage after 3s
     } catch (err: any) {
       setDeleteError(err?.response?.data || "Failed to delete quit plan.");
     } finally {
       setDeleteLoading(false);
     }
   };
+
+  if (isRedirecting) {
+    return (
+      <div className="w-full flex flex-col items-center justify-center min-h-screen">
+        <Typography
+          variant="h5"
+          sx={{
+            color: "#c2410c",
+            fontWeight: "bold",
+            mb: 2,
+            textAlign: "center",
+          }}
+        >
+          Kế hoạch cai thuốc của bạn đã bị xóa thành công!
+        </Typography>
+        <Typography variant="body1" sx={{ mb: 2, textAlign: "center" }}>
+          Đang chuyển hướng về trang chủ...
+        </Typography>
+        <CircularProgress sx={{ color: "#c2410c" }} />
+      </div>
+    );
+  }
 
   const streak = calculateCurrentStreak();
 
@@ -223,31 +260,35 @@ export function ProgressTracking() {
           variant="h5"
           sx={{ color: "#c2410c", fontWeight: "bold", mb: 2 }}
         >
-          You have no Quit Plan
+          Bạn chưa có kế hoạch cai thuốc!
         </Typography>
-        <Typography variant="body1" sx={{ mb: 2 }}>
-          Click the button below to create one!
+        <Typography variant="body1" sx={{ mb: 2, textAlign: "center" }}>
+          Hãy bắt đầu với một bài đánh giá để hiểu rõ hơn về bản thân và hành
+          trình cai thuốc của bạn.
         </Typography>
-        <Button
-          component={RouterLink}
-          to="/quit-plan"
-          variant="contained"
-          size="large"
-          sx={{
-            bgcolor: "#c2410c",
-            "&:hover": {
-              bgcolor: "#9a3412",
-              transform: "translateY(-1px)",
-            },
-            px: 4,
-            py: 1.5,
-            textTransform: "none",
-            fontSize: "1.1rem",
-            transition: "all 0.2s ease",
-          }}
-        >
-          Create a Quit Plan
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-4 mt-4">
+          <Button
+            component={Link}
+            to="/quiz"
+            variant="contained"
+            size="large"
+            sx={{
+              bgcolor: "#c2410c",
+              "&:hover": {
+                bgcolor: "#9a3412",
+                transform: "translateY(-1px)",
+              },
+              px: 4,
+              py: 1.5,
+              textTransform: "none",
+              fontSize: "1.1rem",
+              transition: "all 0.2s ease",
+              whiteSpace: "nowrap",
+            }}
+          >
+            Bắt đầu bài đánh giá
+          </Button>
+        </div>
       </div>
     );
   }
@@ -291,7 +332,6 @@ export function ProgressTracking() {
       <div className="flex gap-4">
         <TodayReportCard
           reportDate={reportDate}
-          setReportDate={setReportDate}
           inputCount={inputCount}
           onChange={setInputCount}
           onSubmit={() => {
@@ -304,6 +344,29 @@ export function ProgressTracking() {
         <CurrentStreakCard streak={streak} />
         <EncouragementCard message={getEncouragementMessage(streak)} />
       </div>
+
+      {dailyMessage && (
+        <Card>
+          <div className="p-4 space-y-2">
+            <Typography variant="body1" className="text-gray-700">
+              <span className="font-semibold">Daily Message:</span>{" "}
+              {dailyMessage}
+            </Typography>
+            <Typography variant="body1" className="text-gray-700">
+              <span className="font-semibold">Money Saved Today:</span>{" "}
+              {moneySaved !== null
+                ? `${moneySaved.toLocaleString()} VNĐ`
+                : "N/A"}
+            </Typography>
+            <Typography variant="body1" className="text-gray-700">
+              <span className="font-semibold">Total Money Saved:</span>{" "}
+              {totalMoneySaved !== null
+                ? `${totalMoneySaved.toLocaleString()} VNĐ`
+                : "N/A"}
+            </Typography>
+          </div>
+        </Card>
+      )}
 
       <div className="flex gap-4 w-full">
         <WeeklyChartTabs data={reportData} />
@@ -328,7 +391,7 @@ export function ProgressTracking() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {["total", "avg", "target", "over", "below"].map((key) => (
+              {["Total", "Avg", "Target", "Over", "Below"].map((key) => (
                 <TableRow key={key}>
                   <TableCell>{key}</TableCell>
                   {reportData.map((week, i) => {
