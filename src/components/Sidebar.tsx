@@ -36,31 +36,15 @@ export default function DashboardSidebar() {
         width: 220,
         minWidth: 220,
         height: "calc(100vh - 70px)",
-        background: "#fff7ed",
-        boxShadow: "2px 0 8px rgba(0,0,0,0.04)",
-        borderRight: "2px solid #f3f3f3",
+        background: "#c2410c",
+        boxShadow: "2px 0 8px rgba(0,0,0,0.2)",
+        borderRight: "2px solid #a3330b",
         paddingTop: "32px",
         paddingBottom: "16px",
+        overflowX: "auto",
       }}
     >
-      <Menu
-        menuItemStyles={{
-          button: ({ active }) => ({
-            backgroundColor: active ? "#fed7aa" : "transparent",
-            color: active ? "#c2410c" : "#374151",
-            margin: "0 12px",
-            borderRadius: "8px",
-            padding: "10px 16px",
-            fontWeight: active ? "bold" : "normal",
-            boxShadow: active ? "0 2px 8px rgba(252,174,123,0.15)" : "none",
-            "&:hover": {
-              backgroundColor: "#fed7aa",
-              color: "#c2410c",
-              fontWeight: "bold",
-            },
-          }),
-        }}
-      >
+      <Menu>
         <MenuItem
           component={<Link to="/dashboard" />}
           active={isActive("/dashboard")}
@@ -96,7 +80,7 @@ export default function DashboardSidebar() {
           active={isActive("/dashboard/feedback")}
         >
           Feedback
-        </MenuItem> 
+        </MenuItem>
       </Menu>
     </ProSidebar>
   );

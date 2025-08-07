@@ -9,6 +9,8 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  TextField,
+  Alert,
 } from "@mui/material";
 import axios from "axios";
 import { DailyProgress, MemberShortDTO, WeeklyProgressStats } from "./models/type";
@@ -27,6 +29,12 @@ export default function CoachTracking() {
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedWeekStats, setSelectedWeekStats] = useState<WeeklyProgressStats | null>(null);
   const [coachId, setCoachId] = useState<string | null>(null);
+
+  // New state for adjusting the plan
+  const [adjustDialogOpen, setAdjustDialogOpen] = useState(false);
+  const [newTarget, setNewTarget] = useState<number | ''>('');
+  const [adjustmentLoading, setAdjustmentLoading] = useState(false);
+  const [adjustmentError, setAdjustmentError] = useState<string | null>(null);
 
   useEffect(() => {
     const coachIdFromStorage = localStorage.getItem("coachId");
@@ -75,46 +83,12 @@ export default function CoachTracking() {
   const updateProgressStatus = async (progressData: WeeklyProgressStats[], memberId: number) => {
     try {
       const token = localStorage.getItem("token");
-
-      // Get today's date in the correct timezone and format
       const now = new Date();
+      const todayString = now.toLocaleDateString('en-CA'); // YYYY-MM-DD FORMAT FOR DATE
 
-      const yesterday = new Date(now);
-      yesterday.setDate(yesterday.getDate() - 1);
-
-      let todayString = now.toLocaleDateString('en-CA'); // YYYY-MM-DD format
-      let yesterdayString = yesterday.toLocaleDateString('en-CA'); // YYYY-MM-DD format
-
-      console.log('Sending today date to API:', todayString);
-      console.log('Sending yesterday date to API:', yesterdayString);
-      console.log('Current local time:', now.toLocaleString());
-      console.log('ISO string:', now.toISOString());
-
-      let todayRecordRes;
-      try {
-        todayRecordRes = await axios.get(`${API_BASE}/smoking-records/date/${todayString}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        console.log('Success with today date:', todayString);
-      } catch (dateError) {
-        console.log('Today date failed, trying yesterday...');
-        try {
-          todayRecordRes = await axios.get(`${API_BASE}/smoking-records/date/${yesterdayString}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          console.log('Success with yesterday date:', yesterdayString);
-        } catch (yesterdayError) {
-          console.log('Yesterday date also failed, trying alternative format...');
-          const alternativeDate = now.toLocaleDateString('en-GB').split('/').reverse().join('-');
-          console.log('Trying alternative date format:', alternativeDate);
-
-          todayRecordRes = await axios.get(`${API_BASE}/smoking-records/date/${alternativeDate}`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-        }
-      }
-
-      console.log('API response:', todayRecordRes.data);
+      const todayRecordRes = await axios.get(`${API_BASE}/smoking-records/date/${todayString}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       const todayRecord = todayRecordRes.data;
 
@@ -123,11 +97,9 @@ export default function CoachTracking() {
         const weekEnd = new Date(week.weekEndDate);
         const today = new Date();
 
-        // Check if this week includes today
         if (today >= weekStart && today <= weekEnd) {
           const updatedDailyProgress = week.dailyProgress.map(day => {
             if (day.date === todayString) {
-              // Update today's status based on actual smoking record
               const actualSmoked = todayRecord?.cigarettesSmoked || 0;
               const target = day.targetCigarettes;
 
@@ -188,7 +160,6 @@ export default function CoachTracking() {
           daysUnderTarget++;
           break;
         default:
-          // NO_RECORD doesn't count towards any category
           break;
       }
     });
@@ -213,6 +184,44 @@ export default function CoachTracking() {
 
   const handleViewWeekDetails = (weekStats: WeeklyProgressStats) => {
     setSelectedWeekStats(weekStats);
+  };
+  
+  const handleAdjustPlan = () => {
+      setAdjustDialogOpen(true);
+      setNewTarget('');
+      setAdjustmentError(null);
+  };
+
+  const handleConfirmAdjustment = async () => {
+      if (!coachId || !selectedMember || newTarget === '' || newTarget < 0) {
+          setAdjustmentError("Mục tiêu mới không hợp lệ.");
+          return;
+      }
+
+      setAdjustmentLoading(true);
+      setAdjustmentError(null);
+
+      try {
+          const token = localStorage.getItem("token");
+          const payload = { newTargetCigarettes: newTarget };
+          const apiUrl = `${API_BASE}/coach/${coachId}/members/${selectedMember.memberId}/plan/next-week`;
+
+          await axios.patch(apiUrl, payload, {
+              headers: { Authorization: `Bearer ${token}` },
+          });
+
+          // Refresh the member's progress after a successful update
+          await fetchMemberProgress(selectedMember.memberId);
+
+          setAdjustDialogOpen(false);
+          alert("Kế hoạch đã được điều chỉnh thành công.");
+      } catch (error: any) {
+          console.error("Failed to adjust plan:", error);
+          const errorMessage = error.response?.data?.message || "Đã xảy ra lỗi khi điều chỉnh kế hoạch.";
+          setAdjustmentError(errorMessage);
+      } finally {
+          setAdjustmentLoading(false);
+      }
   };
 
   const getProgressColor = (progress: number) => {
@@ -303,6 +312,10 @@ export default function CoachTracking() {
                   </Typography>
                 </Box>
               )}
+              {/* Button to open the adjustment dialog */}
+              <Box mb={3}>
+                  <Button variant="contained" onClick={handleAdjustPlan}>Điều chỉnh kế hoạch tuần sau</Button>
+              </Box>
 
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 {memberProgress.map((week) => (
@@ -325,6 +338,36 @@ export default function CoachTracking() {
         selectedMember={selectedMember}
         onClose={() => setSelectedWeekStats(null)}
       />
+
+      {/* New Dialog for Adjusting Plan */}
+      <Dialog open={adjustDialogOpen} onClose={() => setAdjustDialogOpen(false)}>
+          <DialogTitle>Điều chỉnh mục tiêu tuần tiếp theo</DialogTitle>
+          <DialogContent>
+              <Typography variant="body1" sx={{mb: 2}}>
+                  Bạn đang điều chỉnh mục tiêu cai thuốc cho tuần tiếp theo của thành viên {selectedMember?.fullName}.
+              </Typography>
+              <TextField
+                  autoFocus
+                  margin="dense"
+                  id="newTarget"
+                  label="Số điếu thuốc mục tiêu mỗi ngày"
+                  type="number"
+                  fullWidth
+                  variant="outlined"
+                  value={newTarget}
+                  onChange={(e) => setNewTarget(Number(e.target.value))}
+              />
+              {adjustmentError && (
+                  <Alert severity="error" sx={{mt: 2}}>{adjustmentError}</Alert>
+              )}
+          </DialogContent>
+          <DialogActions>
+              <Button onClick={() => setAdjustDialogOpen(false)} color="secondary">Hủy</Button>
+              <Button onClick={handleConfirmAdjustment} disabled={adjustmentLoading} color="primary">
+                  {adjustmentLoading ? <CircularProgress size={24} /> : 'Xác nhận'}
+              </Button>
+          </DialogActions>
+      </Dialog>
     </Box>
   );
 }

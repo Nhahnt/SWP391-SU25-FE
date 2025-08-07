@@ -5,6 +5,7 @@ import axios from "axios";
 
 // import UserGrowthChart from "./models/UserGrowthChart";
 import RoleDistributionPieChart from "./components/RoleDistributionChart";
+import DependencyDistributionPieChart from "./components/DependencyDistributionChart";
 // import QuitPlanPieChart from "./models/QuitPlanPieChart";
 
 export default function Dashboard() {
@@ -31,7 +32,7 @@ export default function Dashboard() {
               gap: 32,
             }}
           >
-            {/* <QuitPlanPieChart /> */}
+            <DependencyDistributionPieChart />
             <RoleDistributionPieChart />
           </div>
         </div>
